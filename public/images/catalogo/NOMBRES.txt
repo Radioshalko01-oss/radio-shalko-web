@@ -1,0 +1,22 @@
+Imágenes del catálogo — Compra por categoría
+============================================
+
+Deposita aquí tus archivos en ALTA RESOLUCIÓN (PNG o JPG).
+No las redimensiones: el sitio las usa tal cual las subas.
+
+Nombres exactos (elige .png o .jpg):
+
+  guitarras-electricas   →  Guitarras eléctricas (tarjeta grande)
+  guitarras-acusticas    →  Guitarras acústicas
+  bajos                  →  Bajos
+  docerolas              →  Docerolas
+  violines               →  Violines
+  ukuleles               →  Ukuleles
+  baterias               →  Baterías
+  teclados               →  Teclados
+  bafles-y-audio         →  Bafles y audio
+  accesorios             →  Accesorios
+
+Ejemplo: ukuleles.png  o  bajos.jpg
+
+Cuando subas una imagen nueva con el nombre correcto, avisa y se enlazará sola.
