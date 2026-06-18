@@ -13,10 +13,21 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { BRANDS, CATEGORY_TREE, PRODUCTS, formatPrice } from "@/lib/products";
+import { BRANDS, CATEGORY_TREE, formatPrice } from "@/lib/products";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useQuote } from "@/hooks/use-quote";
 const LOGO_SRC = "/images/logo-radio-shalko.svg";
+
+/** Índice ligero de productos (Supabase) para búsqueda y drawers del header. */
+export type HeaderProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  subcategory: string;
+  price: number;
+  image: string;
+};
 
 const MEGA_ITEM =
   "text-left transition-[color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
@@ -48,7 +59,7 @@ const QUICK_SEARCHES = [
 
 const FEATURED_BRANDS_HOME = ["Fender", "Gibson", "Yamaha", "Roland", "Shure", "Pearl"];
 
-export function SiteHeader() {
+export function SiteHeader({ products }: { products: HeaderProduct[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"productos" | "marcas" | null>(null);
@@ -62,8 +73,14 @@ export function SiteHeader() {
   const router = useRouter();
   const { ids: favIds, remove: removeFav, count: favCount } = useFavorites();
   const { ids: quoteIds, remove: removeQuote, count: quoteCount } = useQuote();
-  const favProducts = useMemo(() => PRODUCTS.filter((p) => favIds.includes(p.id)), [favIds]);
-  const quoteProducts = useMemo(() => PRODUCTS.filter((p) => quoteIds.includes(p.id)), [quoteIds]);
+  const favProducts = useMemo(
+    () => products.filter((p) => favIds.includes(p.id)),
+    [products, favIds],
+  );
+  const quoteProducts = useMemo(
+    () => products.filter((p) => quoteIds.includes(p.id)),
+    [products, quoteIds],
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -502,6 +519,7 @@ export function SiteHeader() {
           </SheetHeader>
 
           <SearchPanel
+            products={products}
             query={query}
             setQuery={setQuery}
             onSubmit={submitSearch}
@@ -517,7 +535,12 @@ export function SiteHeader() {
               setQuery("");
               router.push(`/productos?sub=${encodeURIComponent(sub)}`);
             }}
-            onPickProduct={(term) => submitSearch(term)}
+            onPickTerm={(term) => submitSearch(term)}
+            onPickProductSlug={(slug) => {
+              setSearchOpen(false);
+              setQuery("");
+              router.push(`/productos/${slug}`);
+            }}
           />
         </SheetContent>
       </Sheet>
@@ -548,7 +571,7 @@ export function SiteHeader() {
               {quoteProducts.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 py-3">
                   <Link
-                    href={`/productos?sub=${encodeURIComponent(p.subcategory)}`}
+                    href={`/productos/${p.slug}`}
                     onClick={() => setQuoteOpen(false)}
                     className="flex flex-1 items-center gap-3"
                   >
@@ -636,7 +659,7 @@ export function SiteHeader() {
               {favProducts.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 py-3">
                   <Link
-                    href={`/productos?sub=${encodeURIComponent(p.subcategory)}`}
+                    href={`/productos/${p.slug}`}
                     onClick={() => setFavOpen(false)}
                     className="flex flex-1 items-center gap-3"
                   >
@@ -746,6 +769,7 @@ function MobileAccordion({
 }
 
 function SearchPanel({
+  products,
   query,
   setQuery,
   onSubmit,
@@ -753,8 +777,10 @@ function SearchPanel({
   clearRecent,
   onPickBrand,
   onPickSub,
-  onPickProduct,
+  onPickTerm,
+  onPickProductSlug,
 }: {
+  products: HeaderProduct[];
   query: string;
   setQuery: (v: string) => void;
   onSubmit: (q: string) => void;
@@ -762,7 +788,8 @@ function SearchPanel({
   clearRecent: () => void;
   onPickBrand: (b: string) => void;
   onPickSub: (sub: string) => void;
-  onPickProduct: (term: string) => void;
+  onPickTerm: (term: string) => void;
+  onPickProductSlug: (slug: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -776,13 +803,15 @@ function SearchPanel({
 
   const results = useMemo(() => {
     if (!hasQuery) return [];
-    return PRODUCTS.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        p.subcategory.toLowerCase().includes(q),
-    ).slice(0, 5);
-  }, [q, hasQuery]);
+    return products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q) ||
+          p.subcategory.toLowerCase().includes(q),
+      )
+      .slice(0, 5);
+  }, [products, q, hasQuery]);
 
   const SUGGESTIONS = ["Guitarras eléctricas", "Teclados", "Baterías", "Mezcladoras"];
   const FAV_BRANDS = ["Fender", "Yamaha", "Shure", "Roland", "Pearl"];
@@ -840,7 +869,7 @@ function SearchPanel({
                   {recent.slice(0, 4).map((r) => (
                     <li key={r}>
                       <button
-                        onClick={() => onPickProduct(r)}
+                        onClick={() => onPickTerm(r)}
                         className="group flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-foreground/85 hover:bg-muted"
                       >
                         <span className="flex items-center gap-3 truncate">
@@ -905,7 +934,7 @@ function SearchPanel({
                 {results.map((p) => (
                   <li key={p.id}>
                     <button
-                      onClick={() => onPickProduct(p.name)}
+                      onClick={() => onPickProductSlug(p.slug)}
                       className="group flex w-full items-center gap-4 py-3 text-left"
                     >
                       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-inset ring-border">

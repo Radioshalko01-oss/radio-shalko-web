@@ -1,4 +1,5 @@
 import { ProductosPage } from "@/components/pages/productos-page";
+import { getCatalogProducts } from "@/lib/catalog";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -8,7 +9,9 @@ export const metadata: Metadata = {
     "Catálogo completo de instrumentos musicales y audio profesional: guitarras, baterías, teclados, mezcladoras y más.",
 };
 
-export default function ProductosRoute() {
+export default async function ProductosRoute() {
+  const products = await getCatalogProducts();
+
   return (
     <Suspense
       fallback={
@@ -17,7 +20,7 @@ export default function ProductosRoute() {
         </div>
       }
     >
-      <ProductosPage />
+      <ProductosPage products={products} />
     </Suspense>
   );
 }

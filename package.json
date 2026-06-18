@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "node scripts/apply-supabase-migrations.mjs"
+    "db:migrate": "node scripts/apply-supabase-migrations.mjs",
+    "db:import": "npx tsx scripts/import-catalog-from-mock.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

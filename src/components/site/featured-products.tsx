@@ -1,29 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { PRODUCTS, type Product } from "@/lib/products";
-import { FeaturedProductCard } from "@/components/site/featured-product-card";
+import type { CatalogProduct } from "@/lib/catalog/types";
+import { ProductCard } from "@/components/catalog/product-card";
 
-type Tab = { id: "novedades" | "destacados"; label: string };
+type TabId = "novedades" | "destacados";
 
-const TABS: Tab[] = [
+const TABS: { id: TabId; label: string }[] = [
   { id: "novedades", label: "Novedades" },
   { id: "destacados", label: "Destacados" },
 ];
 
-function pickProducts(tab: Tab["id"]): Product[] {
-  if (tab === "novedades") {
-    return PRODUCTS.filter((p) => p.isNew).slice(0, 4);
-  }
-  const ids = ["prod-008", "prod-015", "prod-019", "prod-033"];
-  return ids.map((id) => PRODUCTS.find((p) => p.id === id)!).filter(Boolean);
-}
+type FeaturedProductsProps = {
+  novedades: CatalogProduct[];
+  destacados: CatalogProduct[];
+};
 
-export function FeaturedProducts() {
-  const [active, setActive] = useState<Tab["id"]>("novedades");
-  const items = useMemo(() => pickProducts(active), [active]);
+export function FeaturedProducts({ novedades, destacados }: FeaturedProductsProps) {
+  const [active, setActive] = useState<TabId>("novedades");
+  const items = active === "novedades" ? novedades : destacados;
 
   return (
     <section className="border-b border-border pt-12 pb-8 md:pt-16 md:pb-10">
@@ -62,7 +59,7 @@ export function FeaturedProducts() {
 
         <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
           {items.map((p) => (
-            <FeaturedProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} variant="featured" />
           ))}
         </div>
 

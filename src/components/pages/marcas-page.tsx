@@ -3,27 +3,35 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
-import { BRANDS, PRODUCTS, formatPrice } from "@/lib/products";
+import { BRANDS } from "@/lib/products";
+import { formatPrice } from "@/lib/catalog/format";
+import type { CatalogProduct } from "@/lib/catalog/types";
 import { ArrowUpRight } from "lucide-react";
 
 
-export function MarcasPage() {
+export function MarcasPage({ products }: { products: CatalogProduct[] }) {
   const searchParams = useSearchParams();
   const search = { b: searchParams.get("b") ?? undefined };
   const targetRef = useRef<HTMLDivElement | null>(null);
 
   // Brands grouped with their products (only brands that have products)
   const brandSections = useMemo(() => {
-    const map = new Map<string, typeof PRODUCTS>();
-    PRODUCTS.forEach((p) => {
-      if (!map.has(p.brand)) map.set(p.brand, []);
-      map.get(p.brand)!.push(p);
+    const map = new Map<string, CatalogProduct[]>();
+    products.forEach((p) => {
+      const brand = p.brand?.name;
+      if (!brand) return;
+      if (!map.has(brand)) map.set(brand, []);
+      map.get(brand)!.push(p);
     });
-    // include all known brands order, but only those with products
-    return BRANDS
-      .filter((b) => map.has(b))
-      .map((b) => ({ brand: b, products: map.get(b)! }));
-  }, []);
+    // BRANDS order first (only those with products), then any extra real brands.
+    const ordered = [
+      ...BRANDS.filter((b) => map.has(b)),
+      ...Array.from(map.keys())
+        .filter((b) => !BRANDS.includes(b))
+        .sort(),
+    ];
+    return ordered.map((b) => ({ brand: b, products: map.get(b)! }));
+  }, [products]);
 
   // Brands without products yet (for the "próximamente" strip)
   const upcomingBrands = useMemo(
@@ -115,16 +123,18 @@ export function MarcasPage() {
                     {visible.map((p) => (
                       <Link
                         key={p.id}
-                        href={`/productos?brand=${encodeURIComponent(brand)}`}
+                        href={`/productos/${p.slug}`}
                         className="group overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-copper/50"
                       >
                         <div className="relative aspect-square overflow-hidden bg-muted">
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
-                          />
+                          {p.images[0] && (
+                            <img
+                              src={p.images[0].url}
+                              alt={p.images[0].alt ?? p.name}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                            />
+                          )}
                           {p.isNew && (
                             <span className="absolute left-3 top-3 rounded-full bg-copper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-background">
                               Nuevo
@@ -133,7 +143,7 @@ export function MarcasPage() {
                         </div>
                         <div className="p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                            {p.subcategory}
+                            {p.subcategory?.name}
                           </p>
                           <h3 className="mt-1.5 line-clamp-2 font-display text-sm font-medium leading-snug">
                             {p.name}

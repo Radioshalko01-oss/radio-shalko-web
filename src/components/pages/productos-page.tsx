@@ -2,18 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  PRODUCTS,
-  CATEGORY_TREE,
-  formatPrice,
-  type Category,
-  type Subcategory,
-  type Product,
-} from "@/lib/products";
-import { LayoutGrid, Grid2x2, List, Plus, ArrowUpRight, SlidersHorizontal, X, Heart } from "lucide-react";
-import { useFavorites } from "@/hooks/use-favorites";
-import { useQuote } from "@/hooks/use-quote";
-import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/catalog/format";
+import type { CatalogProduct } from "@/lib/catalog/types";
+import { ProductCard } from "@/components/catalog/product-card";
+import { LayoutGrid, Grid2x2, List, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -33,13 +25,13 @@ type SortKey =
   | "za"
   | "new";
 
-const ALL_CATEGORIES: Category[] = ["Instrumentos", "Accesorios", "Equipos de Audio"];
-const ALL_SUBS = Object.values(CATEGORY_TREE).flat() as Subcategory[];
+/** Orden preferido de categorías; las no listadas van al final. */
+const CATEGORY_ORDER = ["Instrumentos", "Accesorios", "Equipos de Audio"];
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000;
 
-export function ProductosPage() {
+export function ProductosPage({ products }: { products: CatalogProduct[] }) {
   const searchParams = useSearchParams();
   const search = {
     cat: searchParams.get("cat") ?? undefined,
@@ -49,48 +41,69 @@ export function ProductosPage() {
   };
   const [size, setSize] = useState<"lg" | "md" | "list">("md");
   const [sort, setSort] = useState<SortKey>("default");
-  const [openCat, setOpenCat] = useState<Category | null>("Instrumentos");
-  const [activeCats, setActiveCats] = useState<Set<Category>>(new Set());
-  const [activeSubs, setActiveSubs] = useState<Set<Subcategory>>(new Set());
+  const [openCat, setOpenCat] = useState<string | null>("Instrumentos");
+  const [activeCats, setActiveCats] = useState<Set<string>>(new Set());
+  const [activeSubs, setActiveSubs] = useState<Set<string>>(new Set());
   const [activeBrands, setActiveBrands] = useState<Set<string>>(new Set());
   const [price, setPrice] = useState<[number, number]>([PRICE_MIN, PRICE_MAX]);
   const [query, setQuery] = useState("");
 
+  // Taxonomía derivada de los productos reales (categoría → subcategorías).
+  const { categoryTree, allCategories, allSubs } = useMemo(() => {
+    const tree: Record<string, string[]> = {};
+    for (const p of products) {
+      const cat = p.category?.name;
+      const sub = p.subcategory?.name;
+      if (!cat) continue;
+      if (!tree[cat]) tree[cat] = [];
+      if (sub && !tree[cat].includes(sub)) tree[cat].push(sub);
+    }
+    const cats = Object.keys(tree).sort((a, b) => {
+      const ia = CATEGORY_ORDER.indexOf(a);
+      const ib = CATEGORY_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+    return { categoryTree: tree, allCategories: cats, allSubs: Object.values(tree).flat() };
+  }, [products]);
+
+  const allBrands = useMemo(
+    () =>
+      Array.from(
+        new Set(products.map((p) => p.brand?.name).filter((b): b is string => Boolean(b))),
+      ).sort(),
+    [products],
+  );
+
   useEffect(() => {
-    if (search.cat && (ALL_CATEGORIES as string[]).includes(search.cat)) {
-      setActiveCats(new Set([search.cat as Category]));
-      setOpenCat(search.cat as Category);
+    if (search.cat && allCategories.includes(search.cat)) {
+      setActiveCats(new Set([search.cat]));
+      setOpenCat(search.cat);
     } else {
       setActiveCats(new Set());
     }
-    if (search.sub && (ALL_SUBS as string[]).includes(search.sub)) {
-      const sub = search.sub as Subcategory;
-      setActiveSubs(new Set([sub]));
-      const parent = (Object.keys(CATEGORY_TREE) as Category[]).find((c) =>
-        CATEGORY_TREE[c].includes(sub),
-      );
+    if (search.sub && allSubs.includes(search.sub)) {
+      setActiveSubs(new Set([search.sub]));
+      const parent = allCategories.find((c) => categoryTree[c]?.includes(search.sub!));
       if (parent) setOpenCat(parent);
     } else {
       setActiveSubs(new Set());
     }
     setActiveBrands(search.brand ? new Set([search.brand]) : new Set());
     setQuery(search.q ?? "");
-  }, [search.cat, search.sub, search.brand, search.q]);
-
-  const allBrands = useMemo(
-    () => Array.from(new Set(PRODUCTS.map((p) => p.brand))).sort(),
-    [],
-  );
+  }, [search.cat, search.sub, search.brand, search.q, allCategories, allSubs, categoryTree]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = PRODUCTS.filter((p) => {
-      if (activeCats.size && !activeCats.has(p.category)) return false;
-      if (activeSubs.size && !activeSubs.has(p.subcategory)) return false;
-      if (activeBrands.size && !activeBrands.has(p.brand)) return false;
+    let list = products.filter((p) => {
+      const cat = p.category?.name ?? "";
+      const sub = p.subcategory?.name ?? "";
+      const brand = p.brand?.name ?? "";
+      if (activeCats.size && !activeCats.has(cat)) return false;
+      if (activeSubs.size && !activeSubs.has(sub)) return false;
+      if (activeBrands.size && !activeBrands.has(brand)) return false;
       if (p.price < price[0] || p.price > price[1]) return false;
       if (q) {
-        const hay = `${p.name} ${p.brand} ${p.subcategory}`.toLowerCase();
+        const hay = `${p.name} ${brand} ${sub}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -103,16 +116,16 @@ export function ProductosPage() {
       case "za": list = [...list].sort((a, b) => b.name.localeCompare(a.name)); break;
       case "new": list = [...list].sort((a, b) => Number(b.isNew) - Number(a.isNew)); break;
       default: {
-        const order = { Instrumentos: 0, Accesorios: 1, "Equipos de Audio": 2 } as const;
+        const order: Record<string, number> = { Instrumentos: 0, Accesorios: 1, "Equipos de Audio": 2 };
         list = [...list].sort((a, b) => {
-          const c = order[a.category] - order[b.category];
+          const c = (order[a.category?.name ?? ""] ?? 99) - (order[b.category?.name ?? ""] ?? 99);
           if (c !== 0) return c;
-          return a.subcategory.localeCompare(b.subcategory);
+          return (a.subcategory?.name ?? "").localeCompare(b.subcategory?.name ?? "");
         });
       }
     }
     return list;
-  }, [activeCats, activeSubs, activeBrands, price, sort, query]);
+  }, [products, activeCats, activeSubs, activeBrands, price, sort, query]);
 
   const toggle = <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => {
     const next = new Set(set);
@@ -153,7 +166,7 @@ export function ProductosPage() {
             Productos
           </h1>
           <p className="mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-            {PRODUCTS.length}+ instrumentos seleccionados y equipo de audio profesional para todos los niveles.
+            {products.length}+ instrumentos seleccionados y equipo de audio profesional para todos los niveles.
           </p>
         </section>
 
@@ -195,6 +208,8 @@ export function ProductosPage() {
                       price={price}
                       setPrice={setPrice}
                       allBrands={allBrands}
+                      allCategories={allCategories}
+                      categoryTree={categoryTree}
                       toggle={toggle}
                       clearFilters={clearFilters}
                     />
@@ -225,7 +240,7 @@ export function ProductosPage() {
             </div>
 
             <p className="hidden text-sm text-muted-foreground lg:block">
-              Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {PRODUCTS.length} productos
+              Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {products.length} productos
             </p>
 
             <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
@@ -279,6 +294,8 @@ export function ProductosPage() {
               price={price}
               setPrice={setPrice}
               allBrands={allBrands}
+              allCategories={allCategories}
+              categoryTree={categoryTree}
               toggle={toggle}
               clearFilters={clearFilters}
             />
@@ -296,9 +313,13 @@ export function ProductosPage() {
               </div>
             ) : (
               <div className={gridClass}>
-                {filtered.map((p) =>
-                  size === "list" ? <RowCard key={p.id} p={p} /> : <Card key={p.id} p={p} compact={size === "md"} />,
-                )}
+                {filtered.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    variant={size === "list" ? "row" : size === "md" ? "compact" : "grid"}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -308,17 +329,19 @@ export function ProductosPage() {
 }
 
 type FiltersPanelProps = {
-  openCat: Category | null;
-  setOpenCat: (c: Category | null) => void;
-  activeCats: Set<Category>;
-  setActiveCats: (s: Set<Category>) => void;
-  activeSubs: Set<Subcategory>;
-  setActiveSubs: (s: Set<Subcategory>) => void;
+  openCat: string | null;
+  setOpenCat: (c: string | null) => void;
+  activeCats: Set<string>;
+  setActiveCats: (s: Set<string>) => void;
+  activeSubs: Set<string>;
+  setActiveSubs: (s: Set<string>) => void;
   activeBrands: Set<string>;
   setActiveBrands: (s: Set<string>) => void;
   price: [number, number];
   setPrice: (p: [number, number]) => void;
   allBrands: string[];
+  allCategories: string[];
+  categoryTree: Record<string, string[]>;
   toggle: <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => void;
   clearFilters: () => void;
 };
@@ -326,7 +349,7 @@ type FiltersPanelProps = {
 function FiltersPanel({
   openCat, setOpenCat, activeCats, setActiveCats,
   activeSubs, setActiveSubs, activeBrands, setActiveBrands,
-  price, setPrice, allBrands, toggle, clearFilters,
+  price, setPrice, allBrands, allCategories, categoryTree, toggle, clearFilters,
 }: FiltersPanelProps) {
   return (
     <div>
@@ -338,7 +361,7 @@ function FiltersPanel({
       <div className="mt-5">
         <p className="font-display text-base font-medium">Tipos de productos</p>
         <ul className="mt-3 space-y-1.5">
-          {ALL_CATEGORIES.map((cat) => (
+          {allCategories.map((cat) => (
             <li key={cat}>
               <button
                 onClick={() => {
@@ -356,7 +379,7 @@ function FiltersPanel({
               </button>
               {openCat === cat && (
                 <ul className="mt-1 space-y-1 border-l border-border pl-3">
-                  {CATEGORY_TREE[cat].map((sub) => (
+                  {(categoryTree[cat] ?? []).map((sub) => (
                     <li key={sub}>
                       <label className="flex cursor-pointer items-center gap-2 py-1 text-[13px] text-muted-foreground hover:text-foreground">
                         <Checkbox
@@ -408,107 +431,5 @@ function FiltersPanel({
         </div>
       </div>
     </div>
-  );
-}
-
-function Card({ p, compact }: { p: Product; compact: boolean }) {
-  const { has, toggle } = useFavorites();
-  const isFav = has(p.id);
-  const { has: inQuote, toggle: toggleQuote } = useQuote();
-  const isQuoted = inQuote(p.id);
-  return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.25)]">
-      <div className="relative aspect-square overflow-hidden bg-muted">
-        <img
-          src={p.image}
-          alt={p.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        {p.isNew && (
-          <span className="absolute left-3 top-3 rounded-full bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
-            Nuevo
-          </span>
-        )}
-        <button
-          onClick={(e) => { e.preventDefault(); toggle(p.id); }}
-          aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-foreground hover:text-background"
-        >
-          <Heart className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
-        </button>
-      </div>
-      <div className={`flex flex-1 flex-col ${compact ? "p-3" : "p-5"}`}>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper">
-          {p.brand}
-        </p>
-        <h3 className={`mt-1 font-display font-medium leading-tight text-foreground line-clamp-2 ${compact ? "text-sm" : "text-base"}`}>
-          {p.name}
-        </h3>
-        <div className="mt-auto pt-3">
-          <p className={`font-display font-semibold ${compact ? "text-base" : "text-lg"}`}>
-            {formatPrice(p.price)}
-          </p>
-          <button
-            type="button"
-            onClick={() => toggleQuote(p.id)}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
-            className={cn(
-              "mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
-              isQuoted
-                ? "bg-secondary text-foreground ring-1 ring-foreground/20 hover:bg-secondary/80"
-                : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",
-            )}
-          >
-            <Plus className="h-3 w-3" /> {isQuoted ? "En cotización" : "Cotizar"}
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function RowCard({ p }: { p: Product }) {
-  const { has, toggle } = useFavorites();
-  const isFav = has(p.id);
-  const { has: inQuote, toggle: toggleQuote } = useQuote();
-  const isQuoted = inQuote(p.id);
-  return (
-    <article className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-3 transition-colors hover:border-copper/40 md:p-4">
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted md:h-24 md:w-24">
-        <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper">{p.brand}</p>
-        <h3 className="truncate font-display text-base font-medium md:text-lg">{p.name}</h3>
-        <p className="text-xs text-muted-foreground">{p.subcategory}</p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <p className="font-display text-base font-semibold md:text-lg">{formatPrice(p.price)}</p>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => toggle(p.id)}
-            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="grid h-8 w-8 place-items-center rounded-full border border-border text-foreground/80 hover:border-foreground hover:text-foreground"
-          >
-            <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleQuote(p.id)}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
-              isQuoted
-                ? "bg-secondary text-foreground ring-1 ring-foreground/20"
-                : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",
-            )}
-          >
-            <Plus className="h-3 w-3" /> {isQuoted ? "Añadido" : "Cotizar"}
-            <ArrowUpRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
-    </article>
   );
 }
