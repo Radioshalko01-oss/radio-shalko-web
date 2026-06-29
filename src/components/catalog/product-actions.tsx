@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Check, FileText, MessageCircle, Phone } from "lucide-react";
+import { Check, Heart, MessageCircle, Phone, ShoppingBag } from "lucide-react";
 import { useQuote } from "@/hooks/use-quote";
+import { useFavorites } from "@/hooks/use-favorites";
 import { SITE_CONTACT, telHref } from "@/lib/site-contact";
 import { buildProductWhatsAppHref } from "@/lib/whatsapp/product-message";
 import type { CatalogProduct } from "@/lib/catalog/types";
@@ -19,7 +20,9 @@ import { cn } from "@/lib/utils";
  */
 export function ProductActions({ product }: { product: CatalogProduct }) {
   const { has, toggle } = useQuote();
+  const { has: hasFav, toggle: toggleFav } = useFavorites();
   const inQuote = has(product.id);
+  const isFav = hasFav(product.id);
 
   const whatsappUrl = buildProductWhatsAppHref(
     {
@@ -46,13 +49,28 @@ export function ProductActions({ product }: { product: CatalogProduct }) {
       >
         {inQuote ? (
           <>
-            <Check className="h-4 w-4" /> En cotización
+            <Check className="h-4 w-4" /> En carrito
           </>
         ) : (
           <>
-            <FileText className="h-4 w-4" /> Solicitar cotización
+            <ShoppingBag className="h-4 w-4" /> Agregar al carrito
           </>
         )}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => toggleFav(product.id)}
+        aria-pressed={isFav}
+        className={cn(
+          "inline-flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors",
+          isFav
+            ? "border-foreground/30 bg-secondary text-foreground hover:bg-secondary/80"
+            : "border-border bg-card text-foreground hover:border-foreground",
+        )}
+      >
+        <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+        {isFav ? "Guardado en favoritos" : "Guardar en favoritos"}
       </button>
 
       <div className="grid grid-cols-2 gap-3">
@@ -74,10 +92,10 @@ export function ProductActions({ product }: { product: CatalogProduct }) {
 
       {inQuote && (
         <Link
-          href="/cotizacion"
+          href="/carrito"
           className="text-center text-sm font-medium text-copper hover:underline"
         >
-          Ver mi cotización
+          Ver mi carrito
         </Link>
       )}
     </div>

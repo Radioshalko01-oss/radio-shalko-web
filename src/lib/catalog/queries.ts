@@ -213,15 +213,46 @@ export async function getCategoriesTree(): Promise<CatalogCategoryTree[]> {
     .filter((x): x is CatalogCategoryTree => x !== null);
 }
 
-/** Todas las marcas, ordenadas. */
-export async function getBrands(): Promise<CatalogBrand[]> {
+/**
+ * Nombres de taxonomía activa (categorías y subcategorías con is_active=true).
+ * Se usa para filtrar las superficies públicas (menú/filtros) que derivan la
+ * taxonomía de los productos, sin alterar el listado de productos en sí.
+ */
+export async function getActiveTaxonomyNames(): Promise<{
+  categoryNames: string[];
+  subcategoryNames: string[];
+}> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const [{ data: cats }, { data: subs }] = await Promise.all([
+    supabase.from("categories").select("name").eq("is_active", true),
+    supabase.from("subcategories").select("name").eq("is_active", true),
+  ]);
+
+  return {
+    categoryNames: ((cats ?? []) as { name: string }[]).map((c) => c.name),
+    subcategoryNames: ((subs ?? []) as { name: string }[]).map((s) => s.name),
+  };
+}
+
+/**
+ * Marcas ordenadas. Por defecto devuelve todas (admin/formulario de producto).
+ * Pasa `{ activeOnly: true }` en superficies públicas para excluir ocultas.
+ */
+export async function getBrands(
+  opts: { activeOnly?: boolean } = {},
+): Promise<CatalogBrand[]> {
+  const supabase = await createClient();
+
+  let query = supabase
     .from("brands")
     .select("id, name, slug, logo_url")
     .order("sort_order")
     .order("name");
+
+  if (opts.activeOnly) query = query.eq("is_active", true);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 

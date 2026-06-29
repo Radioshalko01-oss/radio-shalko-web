@@ -9,12 +9,22 @@ import type { CatalogProduct } from "@/lib/catalog/types";
 import { ArrowUpRight } from "lucide-react";
 
 
-export function MarcasPage({ products }: { products: CatalogProduct[] }) {
+export function MarcasPage({
+  products,
+  brandNames,
+}: {
+  products: CatalogProduct[];
+  /** Marcas activas reales (orden por sort_order). Fallback estático. */
+  brandNames?: string[];
+}) {
   const searchParams = useSearchParams();
   const search = { b: searchParams.get("b") ?? undefined };
   const targetRef = useRef<HTMLDivElement | null>(null);
 
-  // Brands grouped with their products (only brands that have products)
+  // Fuente de marcas: reales activas si se proveen; si no, listado estático.
+  const activeBrands = brandNames && brandNames.length > 0 ? brandNames : BRANDS;
+
+  // Brand sections: solo marcas activas que tienen productos, en su orden real.
   const brandSections = useMemo(() => {
     const map = new Map<string, CatalogProduct[]>();
     products.forEach((p) => {
@@ -23,20 +33,15 @@ export function MarcasPage({ products }: { products: CatalogProduct[] }) {
       if (!map.has(brand)) map.set(brand, []);
       map.get(brand)!.push(p);
     });
-    // BRANDS order first (only those with products), then any extra real brands.
-    const ordered = [
-      ...BRANDS.filter((b) => map.has(b)),
-      ...Array.from(map.keys())
-        .filter((b) => !BRANDS.includes(b))
-        .sort(),
-    ];
-    return ordered.map((b) => ({ brand: b, products: map.get(b)! }));
-  }, [products]);
+    return activeBrands
+      .filter((b) => map.has(b))
+      .map((b) => ({ brand: b, products: map.get(b)! }));
+  }, [products, activeBrands]);
 
-  // Brands without products yet (for the "próximamente" strip)
+  // Marcas activas sin productos todavía (franja "próximamente").
   const upcomingBrands = useMemo(
-    () => BRANDS.filter((b) => !brandSections.some((s) => s.brand === b)),
-    [brandSections],
+    () => activeBrands.filter((b) => !brandSections.some((s) => s.brand === b)),
+    [activeBrands, brandSections],
   );
 
   useEffect(() => {

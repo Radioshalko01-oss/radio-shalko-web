@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingBag, Menu, X, ChevronDown, ArrowUpRight, Clock, Heart, Trash2 } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, ChevronDown, ArrowUpRight, Clock, Heart, Trash2, User, LogOut, Shield, Lock, MessageCircle, Package, Bell } from "lucide-react";
 import { whatsappHref } from "@/lib/site-contact";
+import { CartShareActions } from "@/components/cart/cart-share-actions";
+import { buildQuoteWhatsAppHref } from "@/lib/whatsapp/product-message";
+import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Sheet,
@@ -16,7 +20,9 @@ import { Button } from "@/components/ui/button";
 import { BRANDS, CATEGORY_TREE, formatPrice } from "@/lib/products";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useQuote } from "@/hooks/use-quote";
-const LOGO_SRC = "/images/logo-radio-shalko.svg";
+import { signOut } from "@/lib/auth/actions";
+import { SiteLogo } from "@/components/brand/site-logo";
+import { BRAND_ARIA_LABEL } from "@/lib/brand/assets";
 
 /** Índice ligero de productos (Supabase) para búsqueda y drawers del header. */
 export type HeaderProduct = {
@@ -28,6 +34,18 @@ export type HeaderProduct = {
   price: number;
   image: string;
 };
+
+/** Identidad mínima de la sesión para la UI del header. */
+export type HeaderAccount = {
+  email: string | null;
+  isAdmin: boolean;
+  hasOrderAttention?: boolean;
+  unreadNotifications?: number;
+  cartItemCount?: number;
+};
+
+const ACCOUNT_ITEM =
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground/85 transition-colors hover:bg-muted hover:text-foreground";
 
 const MEGA_ITEM =
   "text-left transition-[color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
@@ -57,22 +75,155 @@ const QUICK_SEARCHES = [
   "Mezcladoras",
 ];
 
-const FEATURED_BRANDS_HOME = ["Fender", "Gibson", "Yamaha", "Roland", "Shure", "Pearl"];
+/**
+ * Taxonomía comercial del mega menú de Productos.
+ *
+ * `sub` apunta al nombre EXACTO de una subcategoría que existe en el catálogo.
+ * Si una hoja tiene `sub` y esa subcategoría existe en Supabase, navega al filtro
+ * real (`/productos?sub=...`). Si no tiene `sub` (o aún no existe en BD), se trata
+ * como categoría futura: estilo sutil y enlace a `/productos` sin filtrar.
+ *
+ * No modifica filtros ni base de datos: es solo la capa de presentación del menú.
+ */
+type MegaLeaf = { label: string; sub?: string };
+type MegaGroup = { title: string; items: MegaLeaf[] };
+type MegaColumn = { title: string; cat: string; groups: MegaGroup[] };
 
-export function SiteHeader({ products }: { products: HeaderProduct[] }) {
+const PRODUCT_MENU: MegaColumn[] = [
+  {
+    title: "Instrumentos",
+    cat: "Instrumentos",
+    groups: [
+      {
+        title: "Cuerda",
+        items: [
+          { label: "Guitarras acústicas", sub: "Guitarras acústicas" },
+          { label: "Guitarras eléctricas", sub: "Guitarras eléctricas" },
+          { label: "Bajos eléctricos", sub: "Bajos" },
+          { label: "Bajos acústicos" },
+          { label: "Docerolas", sub: "Docerolas" },
+          { label: "Violines", sub: "Violines" },
+          { label: "Ukuleles", sub: "Ukuleles" },
+          { label: "Mandolinas" },
+        ],
+      },
+      {
+        title: "Teclados",
+        items: [{ label: "Teclados", sub: "Teclados" }],
+      },
+      {
+        title: "Percusión",
+        items: [
+          { label: "Baterías", sub: "Baterías" },
+          { label: "Bongos" },
+          { label: "Tarolas" },
+          { label: "Xilófonos" },
+        ],
+      },
+      {
+        title: "Viento",
+        items: [
+          { label: "Trompetas" },
+          { label: "Cornetas" },
+          { label: "Flautas" },
+          { label: "Melódicas" },
+          { label: "Armónicas" },
+          { label: "Acordeones" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Accesorios",
+    cat: "Accesorios",
+    groups: [
+      {
+        title: "Para tu instrumento",
+        items: [
+          { label: "Cuerdas" },
+          { label: "Pedales de efectos", sub: "Pedales" },
+          { label: "Pedal de sustain" },
+          { label: "Amplificadores de guitarra", sub: "Amplificadores" },
+          { label: "Amplificadores de bajo" },
+          { label: "Cables", sub: "Cables" },
+          { label: "Audífonos" },
+          { label: "Interfaces" },
+          { label: "Pastillas" },
+          { label: "Afinadores" },
+          { label: "Capotrastes" },
+        ],
+      },
+      {
+        title: "Soportes y protección",
+        items: [
+          { label: "Pedestales de micrófono" },
+          { label: "Bases de teclado" },
+          { label: "Atriles" },
+          { label: "Fundas y estuches" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Equipos de Audio",
+    cat: "Equipos de Audio",
+    groups: [
+      {
+        title: "Audio profesional",
+        items: [
+          { label: "Bafles", sub: "Bafles" },
+          { label: "Subwoofers" },
+          { label: "Bocinas" },
+          { label: "Mezcladoras", sub: "Mezcladoras" },
+          { label: "Amplificadores de potencia" },
+          { label: "Micrófonos" },
+          { label: "Interfaces de audio" },
+          { label: "Crossover" },
+          { label: "Switcheras" },
+        ],
+      },
+      {
+        title: "Iluminación",
+        items: [{ label: "DMX" }, { label: "Luces" }],
+      },
+    ],
+  },
+];
+
+export function SiteHeader({
+  products,
+  account,
+  taxonomy,
+  brands,
+}: {
+  products: HeaderProduct[];
+  account: HeaderAccount | null;
+  /** Taxonomía real del catálogo (categoría → subcategorías). Fallback estático. */
+  taxonomy?: Record<string, string[]>;
+  /** Marcas activas reales (nombres) para el menú de Marcas. Fallback estático. */
+  brands?: string[];
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"productos" | "marcas" | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [megaPanel, setMegaPanel] = useState<"productos" | "marcas" | null>(null);
   const [recent, setRecent] = useState<string[]>([]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { ids: favIds, remove: removeFav, count: favCount } = useFavorites();
-  const { ids: quoteIds, remove: removeQuote, count: quoteCount } = useQuote();
+  const {
+    ids: quoteIds,
+    remove: removeQuote,
+    count: quoteCount,
+    getQuantity: getQuoteQty,
+    setQuantity: setQuoteQty,
+  } = useQuote();
   const favProducts = useMemo(
     () => products.filter((p) => favIds.includes(p.id)),
     [products, favIds],
@@ -81,6 +232,58 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
     () => products.filter((p) => quoteIds.includes(p.id)),
     [products, quoteIds],
   );
+  const quoteRows = useMemo(
+    () =>
+      quoteIds
+        .map((id) => quoteProducts.find((p) => p.id === id))
+        .filter((p): p is HeaderProduct => Boolean(p))
+        .map((p) => ({ p, qty: getQuoteQty(p.id) || 1 })),
+    [quoteIds, quoteProducts, getQuoteQty],
+  );
+  const quoteTotal = quoteRows.reduce((acc, r) => acc + r.p.price * r.qty, 0);
+  const quoteWhatsappHref = useMemo(
+    () =>
+      buildQuoteWhatsAppHref(
+        quoteRows.map((r) => ({
+          name: r.p.name,
+          quantity: r.qty,
+          unitPrice: r.p.price,
+        })),
+      ),
+    [quoteRows],
+  );
+  const shareLines = useMemo(
+    () =>
+      quoteRows.map((r) => ({
+        productId: r.p.id,
+        quantity: r.qty,
+        unitPrice: r.p.price,
+      })),
+    [quoteRows],
+  );
+
+  // Mega menú de productos basado en categorías reales del catálogo (con
+  // fallback estático). Solo aparecen categorías/subcategorías existentes.
+  const categoryTree: Record<string, string[]> =
+    taxonomy && Object.keys(taxonomy).length > 0 ? taxonomy : CATEGORY_TREE;
+
+  // Subcategorías que realmente existen en el catálogo: definen qué hojas del
+  // mega menú navegan a un filtro real y cuáles son "próximamente".
+  const realSubs = useMemo(
+    () => new Set(Object.values(categoryTree).flat()),
+    [categoryTree],
+  );
+  const isRealLeaf = (leaf: MegaLeaf) => Boolean(leaf.sub && realSubs.has(leaf.sub));
+  const goLeaf = (leaf: MegaLeaf) => {
+    if (leaf.sub && realSubs.has(leaf.sub)) {
+      goSubcategory(leaf.sub);
+      return;
+    }
+    setMegaPanel(null);
+    setMobilePanel(null);
+    setOpen(false);
+    router.push("/productos");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -146,8 +349,10 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
     router.push(`/marcas?b=${encodeURIComponent(brand)}`);
   };
 
-  // Group brands by letter ranges similar to Veerkamp
-  const sortedBrands = [...BRANDS].sort((a, b) => a.localeCompare(b));
+  // Group brands by letter ranges similar to Veerkamp. Usa marcas activas reales
+  // si se proveen; si no, cae al listado estático para no romper el menú.
+  const brandList = brands && brands.length > 0 ? brands : BRANDS;
+  const sortedBrands = [...brandList].sort((a, b) => a.localeCompare(b));
   const brandColumns: Array<{ label: string; items: string[] }> = (() => {
     const ranges: Array<[string, string]> = [
       ["A", "D"],
@@ -174,6 +379,18 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
     };
   }, [open]);
 
+  // Cerrar el menú de cuenta al hacer clic fuera.
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [accountOpen]);
+
   const closeMobileMenu = () => {
     setOpen(false);
     setMobilePanel(null);
@@ -190,27 +407,23 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+      className={`fixed inset-x-0 top-0 z-50 border-b bg-background transition-[border-color,box-shadow] duration-200 ease-out ${
         headerSolid
-          ? "border-b border-border/60 bg-background/95 backdrop-blur-xl"
-          : "bg-transparent"
+          ? "border-border/70 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]"
+          : "border-border/40"
       }`}
       onMouseLeave={scheduleClose}
     >
-      <div className="relative mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-2 pl-0 pr-5 md:h-20 md:gap-4 md:pl-0 md:pr-8">
+      <div className="relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
-          className="group ml-2 flex items-center md:-ml-8 lg:-ml-16"
-          aria-label="Radio Shalko · Make noise, make history"
+          className="group relative z-10 flex shrink-0 items-center"
+          aria-label={BRAND_ARIA_LABEL}
         >
-          <img
-            src={LOGO_SRC}
-            alt="Radio Shalko"
-            className="h-16 w-auto shrink-0 translate-y-1 object-contain transition-transform duration-500 group-hover:scale-[1.03] md:h-24 md:translate-y-1.5"
-          />
+          <SiteLogo variant="horizontal" context="header" interactive />
         </Link>
 
-        <nav className="hidden min-w-0 justify-center md:flex">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
           <div className="flex items-center gap-7 lg:gap-9">
             {NAV.map((item) => (
               <div
@@ -235,7 +448,7 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
           </div>
         </nav>
 
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-1.5">
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
@@ -256,7 +469,7 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
             )}
           </button>
           <button
-            aria-label="Cotización"
+            aria-label="Carrito"
             onClick={() => setQuoteOpen(true)}
             className="relative grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
           >
@@ -267,6 +480,138 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
               </span>
             )}
           </button>
+
+          <span className="mx-1 hidden h-5 w-px bg-border/70 md:block" aria-hidden />
+
+          {/* Cuenta */}
+          <div className="relative" ref={accountRef}>
+            {account ? (
+              <>
+                <button
+                  aria-label="Mi cuenta"
+                  aria-expanded={accountOpen}
+                  onClick={() => setAccountOpen((v) => !v)}
+                  className="relative grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <User className="h-[18px] w-[18px]" />
+                  {(account.hasOrderAttention || (account.unreadNotifications ?? 0) > 0) && (
+                    <span
+                      className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-foreground ring-2 ring-background"
+                      aria-hidden
+                    />
+                  )}
+                </button>
+                {accountOpen && (
+                  <div className="absolute right-0 top-12 z-[60] w-72 origin-top-right rounded-2xl border border-border/70 bg-background p-1.5 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="flex items-center gap-3 px-2.5 py-2.5">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-sm font-semibold text-background">
+                        {(account.email?.[0] ?? "U").toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium capitalize text-foreground">
+                          {account.email?.split("@")[0] ?? "Mi cuenta"}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {account.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="my-1 h-px bg-border/60" />
+                    <Link href="/cuenta" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      Mi cuenta
+                    </Link>
+                    {account.isAdmin ? (
+                      <>
+                        <Link href="/admin" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Shield className="h-4 w-4 text-muted-foreground" />
+                          Panel admin
+                        </Link>
+                        <Link href="/admin/pedidos" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          Pedidos de clientes
+                          {account.hasOrderAttention && (
+                            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+                          )}
+                        </Link>
+                        <Link href="/carrito" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                          Carrito tienda
+                          {(account.cartItemCount ?? 0) > 0 && (
+                            <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                              {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+                            </span>
+                          )}
+                        </Link>
+                        <Link href="/cuenta/notificaciones" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Bell className="h-4 w-4 text-muted-foreground" />
+                          Notificaciones
+                          {(account.unreadNotifications ?? 0) > 0 && (
+                            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                              {account.unreadNotifications}
+                            </span>
+                          )}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/cuenta/notificaciones" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Bell className="h-4 w-4 text-muted-foreground" />
+                          Notificaciones
+                          {(account.unreadNotifications ?? 0) > 0 && (
+                            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                              {account.unreadNotifications}
+                            </span>
+                          )}
+                        </Link>
+                        <Link href="/cuenta/pedidos" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          Mis pedidos
+                          {account.hasOrderAttention && (
+                            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+                          )}
+                        </Link>
+                        <Link href="/favoritos" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <Heart className="h-4 w-4 text-muted-foreground" />
+                          Favoritos
+                        </Link>
+                        <Link href="/carrito" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                          Mi carrito
+                          {(account.cartItemCount ?? 0) > 0 && (
+                            <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                              {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+                            </span>
+                          )}
+                        </Link>
+                      </>
+                    )}
+                    <div className="my-1 h-px bg-border/60" />
+                    <Link href="/cuenta#seguridad" onClick={() => setAccountOpen(false)} className={ACCOUNT_ITEM}>
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      Seguridad
+                    </Link>
+                    <div className="my-1 h-px bg-border/60" />
+                    <form action={signOut}>
+                      <button type="submit" className={ACCOUNT_ITEM}>
+                        <LogOut className="h-4 w-4 text-muted-foreground" />
+                        Cerrar sesión
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href="/login"
+                aria-label="Iniciar sesión"
+                className="grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <User className="h-[18px] w-[18px]" />
+              </Link>
+            )}
+          </div>
+
           <button
             aria-label="Menú"
             onClick={toggleMobileMenu}
@@ -281,96 +626,109 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
       <div
         onMouseEnter={() => megaPanel && openPanel(megaPanel)}
         onMouseLeave={scheduleClose}
-        className={`hidden overflow-hidden border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:block ${
+        className={`hidden overflow-hidden border-t border-border/60 bg-background shadow-[0_16px_32px_-22px_rgba(0,0,0,0.18)] transition-[max-height,opacity] duration-200 ease-out md:block ${
           megaPanel
-            ? "max-h-[640px] translate-y-0 opacity-100"
-            : "pointer-events-none max-h-0 -translate-y-1 opacity-0"
+            ? "max-h-[460px] opacity-100"
+            : "pointer-events-none max-h-0 opacity-0"
         }`}
       >
         {megaPanel === "productos" && (
-          <div className="mx-auto grid max-w-7xl grid-cols-12 gap-10 px-8 py-10 animate-in fade-in slide-in-from-top-1 duration-500">
-            {(Object.keys(CATEGORY_TREE) as Array<keyof typeof CATEGORY_TREE>).map((cat) => (
-              <div key={cat} className="col-span-3">
-                <button
-                  onClick={() => goCategoryGroup(cat)}
-                  className={MEGA_HEADING}
-                >
-                  {cat} →
-                </button>
-                <ul className="space-y-2.5">
-                  {CATEGORY_TREE[cat].map((sub) => (
-                    <li key={sub}>
-                      <button
-                        onClick={() => goSubcategory(sub)}
-                        className={`block w-full text-sm text-foreground/80 ${MEGA_ITEM}`}
-                      >
-                        {sub}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-            <div className="col-span-3 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/50 via-background to-transparent p-6 transition-[border-color,box-shadow,transform] duration-500 hover:border-copper/25 hover:shadow-[0_16px_32px_-18px_rgba(0,0,0,0.18)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                Destacado
-              </p>
-              <p className="mt-3 font-display text-2xl font-light leading-tight">
-                Novedades de temporada
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Lo más nuevo en cuerdas, percusiones y audio profesional.
-              </p>
+          <div className="mx-auto max-w-7xl px-8 py-7">
+            <div className="grid max-h-[336px] grid-cols-4 gap-x-10 overflow-y-auto overscroll-contain pr-1">
+              {PRODUCT_MENU.map((col) => {
+                const displayTitle =
+                  col.title === "Equipos de Audio" ? "Audio profesional" : col.title;
+                const items = col.groups.flatMap((g) => g.items);
+                const wide = col.title === "Instrumentos";
+                return (
+                  <div key={col.title} className={wide ? "col-span-2" : "col-span-1"}>
+                    <button
+                      onClick={() => goCategoryGroup(col.cat)}
+                      className="group/col mb-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/90 transition-colors hover:text-copper"
+                    >
+                      {displayTitle}
+                      <ArrowUpRight className="h-3 w-3 text-copper opacity-0 transition-opacity duration-200 group-hover/col:opacity-100" />
+                    </button>
+                    <ul className={wide ? "columns-2 gap-x-10 [&>li]:break-inside-avoid" : ""}>
+                      {items.map((leaf) => (
+                        <li key={leaf.label} className="mb-1">
+                          <button
+                            onClick={() => goLeaf(leaf)}
+                            className={`block w-full text-left text-[12.5px] leading-snug ${MEGA_ITEM} ${
+                              isRealLeaf(leaf)
+                                ? "text-foreground/90"
+                                : "text-muted-foreground/45"
+                            }`}
+                          >
+                            {leaf.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
               <button
                 onClick={() => {
                   setMegaPanel(null);
                   router.push("/productos");
                 }}
-                className={`mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 ${MEGA_ITEM}`}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
               >
-                Ver catálogo completo →
+                Ver todo el catálogo
+                <ArrowUpRight className="h-3.5 w-3.5" />
               </button>
+              <a
+                href={whatsappHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-[12.5px] font-medium text-foreground/80 transition-colors hover:border-copper/50 hover:text-copper"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Asesoría por WhatsApp
+              </a>
             </div>
           </div>
         )}
 
         {megaPanel === "marcas" && (
-          <div className="mx-auto grid max-w-7xl grid-cols-12 gap-8 px-8 py-10 animate-in fade-in slide-in-from-top-1 duration-500">
-            {brandColumns.map((col) => (
-              <div key={col.label} className="col-span-2">
-                <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-copper">
-                  {col.label}
-                </p>
-                <ul className="space-y-2">
-                  {col.items.map((b) => (
-                    <li key={b}>
-                      <button
-                        onClick={() => goBrand(b)}
-                        className={`block w-full text-sm uppercase tracking-wide text-foreground/80 ${MEGA_ITEM}`}
-                      >
-                        {b}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-            <div className="col-span-2 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/50 via-background to-transparent p-5 transition-[border-color,box-shadow] duration-500 hover:border-copper/25 hover:shadow-[0_16px_32px_-18px_rgba(0,0,0,0.18)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                Favoritas
-              </p>
-              <ul className="mt-3 space-y-1.5">
-                {FEATURED_BRANDS_HOME.map((b) => (
-                  <li key={b}>
-                    <button
-                      onClick={() => goBrand(b)}
-                      className={`font-display text-base font-medium ${MEGA_ITEM}`}
-                    >
-                      {b}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          <div className="mx-auto max-w-7xl px-8 py-7">
+            <div className="grid max-h-[336px] grid-cols-5 gap-x-10 overflow-y-auto overscroll-contain pr-1">
+              {brandColumns.map((col) => (
+                <div key={col.label}>
+                  <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/90">
+                    {col.label}
+                  </p>
+                  <ul className="space-y-1">
+                    {col.items.map((b) => (
+                      <li key={b}>
+                        <button
+                          onClick={() => goBrand(b)}
+                          className={`block w-full text-left text-[12.5px] uppercase tracking-wide text-foreground/80 ${MEGA_ITEM}`}
+                        >
+                          {b}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+              <button
+                onClick={() => {
+                  setMegaPanel(null);
+                  router.push("/marcas");
+                }}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
+              >
+                Ver todas las marcas
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
         )}
@@ -400,30 +758,43 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
               isOpen={mobilePanel === "productos"}
               onToggle={() => setMobilePanel((p) => (p === "productos" ? null : "productos"))}
             >
-              <div className="space-y-5 pb-4 pt-2">
-                {(Object.keys(CATEGORY_TREE) as Array<keyof typeof CATEGORY_TREE>).map((cat) => (
-                  <div key={cat} className="rounded-xl border border-border/50 bg-card/60 p-3.5">
+              <div className="space-y-4 pb-4 pt-2">
+                {PRODUCT_MENU.map((col) => (
+                  <div key={col.title} className="rounded-xl border border-border/50 bg-card/60 p-3.5">
                     <button
-                      onClick={() => goCategoryGroup(cat)}
+                      onClick={() => goCategoryGroup(col.cat)}
                       className="group flex w-full items-center justify-between text-left"
                     >
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-copper">
-                        {cat}
+                      <span className="font-display text-sm font-semibold tracking-tight text-foreground">
+                        {col.title}
                       </span>
                       <ArrowUpRight className="h-3.5 w-3.5 text-copper/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </button>
-                    <ul className="mt-3 flex flex-wrap gap-1.5">
-                      {CATEGORY_TREE[cat].map((sub) => (
-                        <li key={sub}>
-                          <button
-                            onClick={() => goSubcategory(sub)}
-                            className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[12px] text-foreground/80 transition-colors hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
-                          >
-                            {sub}
-                          </button>
-                        </li>
+                    <div className="mt-3 space-y-3">
+                      {col.groups.map((group) => (
+                        <div key={group.title}>
+                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
+                            {group.title}
+                          </p>
+                          <ul className="flex flex-wrap gap-1.5">
+                            {group.items.map((leaf) => (
+                              <li key={leaf.label}>
+                                <button
+                                  onClick={() => goLeaf(leaf)}
+                                  className={`rounded-full border px-2.5 py-1 text-[12px] transition-colors ${
+                                    isRealLeaf(leaf)
+                                      ? "border-border/70 bg-background text-foreground/80 hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
+                                      : "border-dashed border-border/50 bg-transparent text-muted-foreground/60"
+                                  }`}
+                                >
+                                  {leaf.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -485,6 +856,115 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
               </Link>
             ))}
 
+            {/* Cuenta (móvil) */}
+            <div className="mt-4 border-t border-border/60 pt-4">
+              {account ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 px-1 pb-2">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-sm font-semibold text-background">
+                      {(account.email?.[0] ?? "U").toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium capitalize text-foreground">
+                        {account.email?.split("@")[0] ?? "Mi cuenta"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {account.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/cuenta" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    Mi cuenta
+                  </Link>
+                  {account.isAdmin ? (
+                    <>
+                      <Link href="/admin" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        Panel admin
+                      </Link>
+                      <Link href="/admin/pedidos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        Pedidos de clientes
+                        {account.hasOrderAttention && (
+                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+                        )}
+                      </Link>
+                      <Link href="/carrito" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        Carrito tienda
+                        {(account.cartItemCount ?? 0) > 0 && (
+                          <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                            {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </Link>
+                      <Link href="/cuenta/notificaciones" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        Notificaciones
+                        {(account.unreadNotifications ?? 0) > 0 && (
+                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                            {account.unreadNotifications}
+                          </span>
+                        )}
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/cuenta/notificaciones" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        Notificaciones
+                        {(account.unreadNotifications ?? 0) > 0 && (
+                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                            {account.unreadNotifications}
+                          </span>
+                        )}
+                      </Link>
+                      <Link href="/cuenta/pedidos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        Mis pedidos
+                        {account.hasOrderAttention && (
+                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+                        )}
+                      </Link>
+                      <Link href="/favoritos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <Heart className="h-4 w-4 text-muted-foreground" />
+                        Favoritos
+                      </Link>
+                      <Link href="/carrito" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        Mi carrito
+                        {(account.cartItemCount ?? 0) > 0 && (
+                          <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                            {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </Link>
+                    </>
+                  )}
+                  <Link href="/cuenta#seguridad" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    Seguridad
+                  </Link>
+                  <form action={signOut}>
+                    <button type="submit" className={ACCOUNT_ITEM}>
+                      <LogOut className="h-4 w-4 text-muted-foreground" />
+                      Cerrar sesión
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={closeMobileMenu}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-copper/60 hover:text-copper"
+                >
+                  <User className="h-4 w-4" />
+                  Iniciar sesión
+                </Link>
+              )}
+            </div>
+
             <div className="mt-6 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/40 via-background to-transparent p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 ¿Necesitas ayuda?
@@ -545,91 +1025,142 @@ export function SiteHeader({ products }: { products: HeaderProduct[] }) {
         </SheetContent>
       </Sheet>
 
-      {/* Quote / Cotización panel */}
+      {/* Carrito — panel lateral */}
       <Sheet open={quoteOpen} onOpenChange={setQuoteOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto bg-background sm:max-w-md">
-          <SheetHeader className="text-left">
-            <SheetTitle className="font-display text-2xl font-medium tracking-tight">
-              Tu cotización
-            </SheetTitle>
-            <SheetDescription>
-              {quoteProducts.length === 0
-                ? "Aún no agregas productos. Toca Cotizar en cualquier producto."
-                : `${quoteProducts.length} producto${quoteProducts.length === 1 ? "" : "s"} en tu lista.`}
-            </SheetDescription>
-          </SheetHeader>
-
-          {quoteProducts.length === 0 ? (
-            <div className="mt-8 grid place-items-center rounded-xl border border-dashed border-border py-14 text-center">
-              <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                Tu lista está vacía
-              </p>
-            </div>
-          ) : (
-            <ul className="mt-6 divide-y divide-border">
-              {quoteProducts.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-3">
-                  <Link
-                    href={`/productos/${p.slug}`}
-                    onClick={() => setQuoteOpen(false)}
-                    className="flex flex-1 items-center gap-3"
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
-                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {p.brand}
-                      </p>
-                      <p className="truncate text-sm font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatPrice(p.price)}</p>
-                    </div>
-                  </Link>
-                  <button
-                    aria-label="Quitar"
-                    onClick={() => removeQuote(p.id)}
-                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-6 flex flex-col gap-2">
-            <Button
-              onClick={() => {
-                setQuoteOpen(false);
-                router.push("/cotizacion");
-              }}
-              disabled={quoteProducts.length === 0}
-              className="h-11 bg-copper text-copper-foreground hover:bg-copper/90"
-            >
-              Ver cotización
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setQuoteOpen(false);
-                router.push("/productos");
-              }}
-              className="h-11"
-            >
-              Seguir explorando
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setQuoteOpen(false);
-                router.push("/contacto");
-              }}
-              className="h-11"
-            >
-              Solicitar asesoría
-            </Button>
+        <SheetContent
+          side="right"
+          className="flex h-full w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[400px]"
+        >
+          <div className="shrink-0 border-b border-border px-5 pb-4 pt-6 pr-12">
+            <SheetHeader className="space-y-1 text-left">
+              <SheetTitle className="font-display text-xl font-semibold tracking-tight">
+                Tu carrito
+              </SheetTitle>
+              <SheetDescription className="text-xs">
+                {quoteRows.length === 0
+                  ? "Aún no agregas productos."
+                  : `${quoteRows.length} producto${quoteRows.length === 1 ? "" : "s"}`}
+              </SheetDescription>
+            </SheetHeader>
           </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5">
+            {quoteRows.length === 0 ? (
+              <div className="grid place-items-center rounded-xl border border-dashed border-border py-16 text-center">
+                <ShoppingBag className="h-7 w-7 text-muted-foreground" />
+                <p className="mt-3 text-sm text-muted-foreground">Tu carrito está vacío</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuoteOpen(false);
+                    router.push("/productos");
+                  }}
+                  className="mt-4 text-sm font-medium text-copper hover:underline"
+                >
+                  Explorar catálogo
+                </button>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border/80">
+                {quoteRows.map(({ p, qty }) => (
+                  <li key={p.id} className="flex gap-3 py-3">
+                    <Link
+                      href={`/productos/${p.slug}`}
+                      onClick={() => setQuoteOpen(false)}
+                      className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border/50 bg-muted"
+                    >
+                      {p.image && (
+                        <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                      )}
+                    </Link>
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          href={`/productos/${p.slug}`}
+                          onClick={() => setQuoteOpen(false)}
+                          className="min-w-0"
+                        >
+                          {p.brand && (
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-copper">
+                              {p.brand}
+                            </p>
+                          )}
+                          <p className="line-clamp-2 text-[13px] font-medium leading-snug">{p.name}</p>
+                        </Link>
+                        <button
+                          aria-label="Quitar"
+                          onClick={() => removeQuote(p.id)}
+                          className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <QuantityStepper
+                          value={qty}
+                          size="sm"
+                          onChange={(next) => setQuoteQty(p.id, next)}
+                        />
+                        <span className="text-sm font-semibold tabular-nums">
+                          {formatPrice(p.price * qty)}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {quoteRows.length > 0 && (
+            <div className="shrink-0 border-t border-border bg-background px-5 py-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                Total estimado
+              </p>
+              <p className="mt-0.5 font-display text-3xl font-semibold tracking-tight tabular-nums">
+                {formatPrice(quoteTotal)}
+              </p>
+
+              <div className="mt-4 space-y-2">
+                {account?.isAdmin ? (
+                  <CartShareActions lines={shareLines} variant="primary" compact />
+                ) : (
+                  <a
+                    href={quoteWhatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setQuoteOpen(false)}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-copper text-sm font-semibold text-copper-foreground transition-colors hover:bg-copper/90"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Solicitar asesoría
+                  </a>
+                )}
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuoteOpen(false);
+                    router.push("/carrito");
+                  }}
+                  className="h-10 w-full rounded-full text-sm"
+                >
+                  Ver carrito
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuoteOpen(false);
+                    router.push("/productos");
+                  }}
+                  className="w-full py-1.5 text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Seguir explorando
+                </button>
+              </div>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
 

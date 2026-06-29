@@ -1,0 +1,123 @@
+import Link from "next/link";
+import { ChevronRight, Package, Tag } from "lucide-react";
+import { formatPrice } from "@/lib/catalog/format";
+import {
+  customerOrderStatusBadgeClass,
+  customerOrderStatusUi,
+} from "@/lib/orders/customer-status-labels";
+import type { CustomerOrderListItem } from "@/lib/orders/customer-queries";
+
+function formatDateTime(iso: string) {
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(iso));
+}
+
+export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[] }) {
+  if (orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">
+        <Package className="h-9 w-9 text-muted-foreground/40" />
+        <div>
+          <p className="text-sm font-medium text-foreground">Aún no tienes pedidos</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Cuando envíes una solicitud de compra, aparecerá aquí.
+          </p>
+        </div>
+        <Link
+          href="/productos"
+          className="mt-2 inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+        >
+          Explorar productos
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="grid gap-3">
+      {orders.map((order) => {
+        const status = customerOrderStatusUi(order.status, order.paymentStatus, {
+          hasPaymentUrl: order.hasPaymentUrl,
+          fulfillmentStatus: order.fulfillmentStatus,
+          pickupReadyMessage: null,
+          pickupReadyEstimate: null,
+        });
+        return (
+          <li key={order.id}>
+            <article className="rounded-2xl border border-border bg-card/60 p-4 transition-colors hover:border-foreground/15 md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-sm font-semibold tracking-tight text-foreground">
+                    {order.orderNumber}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {formatDateTime(order.createdAt)}
+                  </p>
+                  <p className="mt-2 text-sm text-foreground/85">
+                    <span className="font-medium">{order.branchLabel}</span>
+                    <span className="text-muted-foreground/50"> · </span>
+                    {order.itemCount} producto{order.itemCount === 1 ? "" : "s"}
+                    <span className="text-muted-foreground/50"> · </span>
+                    <span className="font-semibold text-foreground">
+                      {formatPrice(order.total)}
+                    </span>
+                  </p>
+                </div>
+                <span className={customerOrderStatusBadgeClass(status.tone)}>
+                  {status.label}
+                </span>
+              </div>
+              <div className="mt-4 flex justify-end border-t border-border/60 pt-3">
+                <Link
+                  href={`/cuenta/pedidos/${order.id}`}
+                  className="inline-flex h-9 items-center gap-1 rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                >
+                  Ver detalle
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </article>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export function CustomerOrderLineRow({
+  item,
+}: {
+  item: {
+    productTitle: string;
+    brandName: string | null;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+    imageUrl: string | null;
+  };
+}) {
+  return (
+    <li className="flex gap-3 py-3">
+      <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-muted/40">
+        {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.imageUrl} alt={item.productTitle} className="h-full w-full object-cover" />
+        ) : (
+          <Tag className="h-4 w-4 text-muted-foreground/40" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{item.productTitle}</p>
+        {item.brandName && (
+          <p className="text-xs text-muted-foreground">{item.brandName}</p>
+        )}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {item.quantity} × {formatPrice(item.unitPrice)} ={" "}
+          <span className="font-medium text-foreground">{formatPrice(item.subtotal)}</span>
+        </p>
+      </div>
+    </li>
+  );
+}

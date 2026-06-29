@@ -30,14 +30,16 @@ export type ProductMessageOptions = {
 };
 
 const INTRO: Record<WhatsAppIntent, string> = {
-  consulta: "Hola, me gustaría más información sobre este producto:",
-  cotizacion: "Hola, quisiera solicitar una cotización de este producto:",
+  consulta:
+    "Hola, estoy interesado en este producto y me gustaría recibir asesoría sobre disponibilidad y recomendaciones.",
+  cotizacion:
+    "Hola, estoy interesado en este producto y me gustaría recibir asesoría sobre disponibilidad y recomendaciones.",
   apartado: "Hola, me gustaría apartar este producto:",
 };
 
 const CLOSING: Record<WhatsAppIntent, string> = {
-  consulta: "¿Me confirman precio y disponibilidad? Gracias.",
-  cotizacion: "Quedo atento(a) a la cotización y disponibilidad. Gracias.",
+  consulta: "¿Me pueden orientar con disponibilidad y recomendaciones? Gracias.",
+  cotizacion: "¿Me pueden orientar con disponibilidad y recomendaciones? Gracias.",
   apartado: "¿Me indican cómo proceder con el apartado? Gracias.",
 };
 
@@ -81,4 +83,52 @@ export function buildProductWhatsAppHref(
 ): string {
   const message = buildProductWhatsAppMessage(product, options);
   return whatsappHref(options.phoneE164 ?? SITE_CONTACT.whatsapp.e164, message);
+}
+
+/* --------------------------------------------------- cotización multi-producto */
+
+/** Línea de cotización: producto + cantidad + precio unitario. */
+export type QuoteLine = {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+/** Texto de WhatsApp para el carrito (varios productos). */
+export function buildQuoteWhatsAppMessage(lines: QuoteLine[]): string {
+  const out: string[] = [
+    "Hola, estoy interesado en estos productos y me gustaría recibir asesoría sobre disponibilidad y recomendaciones.",
+    "",
+    "Productos en mi carrito:",
+    "",
+  ];
+
+  let total = 0;
+  lines.forEach((line, i) => {
+    const qty = Math.max(1, Math.floor(line.quantity || 1));
+    const subtotal = line.unitPrice * qty;
+    total += subtotal;
+    out.push(`${i + 1}. ${line.name}`);
+    out.push(`   Cantidad: ${qty}`);
+    out.push(`   Precio unitario: ${formatPrice(line.unitPrice)}`);
+    out.push(`   Subtotal: ${formatPrice(subtotal)}`);
+    out.push("");
+  });
+
+  out.push(`Total estimado: ${formatPrice(total)}`);
+  out.push("");
+  out.push("¿Me pueden orientar con disponibilidad y recomendaciones? Gracias.");
+
+  return out.join("\n");
+}
+
+/** Enlace wa.me con la cotización completa prellenada. */
+export function buildQuoteWhatsAppHref(
+  lines: QuoteLine[],
+  phoneE164?: string,
+): string {
+  return whatsappHref(
+    phoneE164 ?? SITE_CONTACT.whatsapp.e164,
+    buildQuoteWhatsAppMessage(lines),
+  );
 }

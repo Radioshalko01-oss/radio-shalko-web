@@ -11,8 +11,8 @@ import { isAdminUser } from "@/lib/auth/is-admin";
  * sesión exista y tenga `role='admin'` en el momento del request/acción.
  *
  * Comportamiento (redirect, apto para RSC/layouts y también Server Actions):
- *   - sin sesión        → redirect "/?login=required"
- *   - sesión sin admin  → redirect "/?admin=denied"
+ *   - sin sesión        → redirect "/login?login=required"
+ *   - sesión sin admin  → redirect "/login?admin=denied"
  *   - admin             → devuelve el usuario
  */
 export async function requireAdmin(): Promise<User> {
@@ -23,12 +23,12 @@ export async function requireAdmin(): Promise<User> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?login=required");
+    redirect("/login?login=required");
   }
 
   const admin = await isAdminUser(supabase, user.id);
   if (!admin) {
-    redirect("/?admin=denied");
+    redirect("/login?admin=denied");
   }
 
   return user;

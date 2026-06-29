@@ -36,10 +36,10 @@ export async function updateSession(request: NextRequest) {
 
   // Protección de /admin por rol real (defensa de primer nivel).
   if (request.nextUrl.pathname.startsWith("/admin")) {
-    // 1) Sin sesión → enviar a inicio para autenticarse.
+    // 1) Sin sesión → enviar a /login para autenticarse.
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = "/login";
       url.search = "";
       url.searchParams.set("login", "required");
       return NextResponse.redirect(url);
@@ -49,7 +49,7 @@ export async function updateSession(request: NextRequest) {
     const admin = await isAdminUser(supabase, user.id);
     if (!admin) {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = "/login";
       url.search = "";
       url.searchParams.set("admin", "denied");
       return NextResponse.redirect(url);

@@ -137,7 +137,7 @@ export function ContactoPage() {
               Cuéntanos qué necesitas
             </h2>
             <p className="mt-3 max-w-md text-sm text-muted-foreground md:text-base">
-              Cotizaciones, asesoría sobre instrumentos o agenda de servicio técnico. Te
+              Asesoría sobre productos, instrumentos o agenda de servicio técnico. Te
               respondemos en horario de tienda por WhatsApp o correo.
             </p>
           </div>

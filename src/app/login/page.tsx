@@ -1,0 +1,108 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { SiteLogo } from "@/components/brand/site-logo";
+
+export const metadata: Metadata = {
+  title: "Iniciar sesión",
+  robots: { index: false, follow: false },
+};
+
+const MESSAGES: Record<string, { tone: "info" | "error"; text: string }> = {
+  required: {
+    tone: "info",
+    text: "Inicia sesión para acceder al panel de administración.",
+  },
+  denied: {
+    tone: "error",
+    text: "Tu cuenta no tiene permisos de administrador.",
+  },
+  auth: {
+    tone: "error",
+    text: "No se pudo completar el inicio de sesión. Intenta de nuevo.",
+  },
+};
+
+type SearchParams = Promise<{
+  login?: string;
+  admin?: string;
+  error?: string;
+  detail?: string;
+  next?: string;
+}>;
+
+function safeNextPath(next: string | undefined): string {
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    return next;
+  }
+  return "/cuenta";
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const sp = await searchParams;
+  const key =
+    sp.admin === "denied"
+      ? "denied"
+      : sp.login === "required"
+        ? "required"
+        : sp.error === "auth"
+          ? "auth"
+          : null;
+  const message = key ? MESSAGES[key] : null;
+  const detail = key === "auth" && sp.detail ? sp.detail : null;
+  const next = safeNextPath(sp.next);
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-[400px]">
+        <div className="rounded-2xl border border-border bg-card px-7 py-8 shadow-sm sm:px-8 sm:py-9">
+          <div className="text-center">
+            <SiteLogo variant="horizontal" context="login" size="md" className="mx-auto" />
+            <h1 className="mt-6 font-display text-[1.35rem] font-semibold tracking-tight text-foreground">
+              Inicia sesión
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Accede con Google para guardar favoritos, sincronizar tu carrito y dar seguimiento
+              a tus solicitudes.
+            </p>
+          </div>
+
+          {message && (
+            <div
+              className={`mt-5 rounded-xl border px-4 py-3 text-sm ${
+                message.tone === "error"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-border bg-muted/40 text-muted-foreground"
+              }`}
+            >
+              {message.text}
+              {detail && (
+                <p className="mt-1.5 break-words font-mono text-xs text-red-500/80">{detail}</p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-6">
+            <GoogleSignInButton
+              next={next}
+              buttonClassName="h-12 rounded-full border-border shadow-sm"
+            />
+          </div>
+        </div>
+
+        <p className="mt-5 text-center">
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline motion-reduce:transition-none"
+          >
+            Volver a la tienda
+          </Link>
+        </p>
+      </div>
+    </main>
+  );
+}

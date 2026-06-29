@@ -147,7 +147,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
               e.stopPropagation();
               toggleQuote(product.id);
             }}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
+            aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
               "mt-2.5 flex w-full items-center justify-center rounded-full border py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] shadow-sm transition-colors",
               isQuoted
@@ -155,7 +155,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
                 : "border-foreground/15 bg-secondary/80 text-foreground/85 hover:border-foreground/30 hover:bg-secondary hover:text-foreground",
             )}
           >
-            {isQuoted ? "En cotización" : "Cotizar"}
+            {isQuoted ? "En carrito" : "Agregar"}
           </button>
         </div>
       </div>

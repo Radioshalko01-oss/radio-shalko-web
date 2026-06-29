@@ -31,7 +31,16 @@ const CATEGORY_ORDER = ["Instrumentos", "Accesorios", "Equipos de Audio"];
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000;
 
-export function ProductosPage({ products }: { products: CatalogProduct[] }) {
+export function ProductosPage({
+  products,
+  activeCategoryNames,
+  activeSubcategoryNames,
+}: {
+  products: CatalogProduct[];
+  /** Nombres de categorías/subcategorías activas para filtrar opciones. */
+  activeCategoryNames?: string[];
+  activeSubcategoryNames?: string[];
+}) {
   const searchParams = useSearchParams();
   const search = {
     cat: searchParams.get("cat") ?? undefined,
@@ -49,14 +58,20 @@ export function ProductosPage({ products }: { products: CatalogProduct[] }) {
   const [query, setQuery] = useState("");
 
   // Taxonomía derivada de los productos reales (categoría → subcategorías).
+  // Si se proveen nombres activos, solo se ofrecen como filtro los activos
+  // (las categorías/subcategorías ocultas no aparecen como opción).
   const { categoryTree, allCategories, allSubs } = useMemo(() => {
+    const catActive = activeCategoryNames ? new Set(activeCategoryNames) : null;
+    const subActive = activeSubcategoryNames ? new Set(activeSubcategoryNames) : null;
     const tree: Record<string, string[]> = {};
     for (const p of products) {
       const cat = p.category?.name;
       const sub = p.subcategory?.name;
-      if (!cat) continue;
+      if (!cat || (catActive && !catActive.has(cat))) continue;
       if (!tree[cat]) tree[cat] = [];
-      if (sub && !tree[cat].includes(sub)) tree[cat].push(sub);
+      if (sub && (!subActive || subActive.has(sub)) && !tree[cat].includes(sub)) {
+        tree[cat].push(sub);
+      }
     }
     const cats = Object.keys(tree).sort((a, b) => {
       const ia = CATEGORY_ORDER.indexOf(a);
@@ -64,7 +79,7 @@ export function ProductosPage({ products }: { products: CatalogProduct[] }) {
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     });
     return { categoryTree: tree, allCategories: cats, allSubs: Object.values(tree).flat() };
-  }, [products]);
+  }, [products, activeCategoryNames, activeSubcategoryNames]);
 
   const allBrands = useMemo(
     () =>

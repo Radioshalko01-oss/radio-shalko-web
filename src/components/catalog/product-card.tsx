@@ -192,7 +192,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
               e.stopPropagation();
               toggleQuote();
             }}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
+            aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
               "mt-2.5 flex w-full items-center justify-center rounded-full border py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] shadow-sm transition-colors",
               isQuoted
@@ -200,7 +200,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
                 : "border-foreground/15 bg-secondary/80 text-foreground/85 hover:border-foreground/30 hover:bg-secondary hover:text-foreground",
             )}
           >
-            {isQuoted ? "En cotización" : "Cotizar"}
+            {isQuoted ? "En carrito" : "Agregar"}
           </button>
         </div>
       </div>
@@ -291,7 +291,7 @@ function BoxVariant({
           <button
             type="button"
             onClick={toggleQuote}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
+            aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
               "mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
               isQuoted
@@ -299,7 +299,7 @@ function BoxVariant({
                 : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",
             )}
           >
-            <Plus className="h-3 w-3" /> {isQuoted ? "En cotización" : "Cotizar"}
+            <Plus className="h-3 w-3" /> {isQuoted ? "En carrito" : "Agregar"}
           </button>
         </div>
       </div>
@@ -364,7 +364,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
           <button
             type="button"
             onClick={toggleQuote}
-            aria-label={isQuoted ? "Quitar de cotización" : "Agregar a cotización"}
+            aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
               isQuoted
@@ -372,7 +372,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
                 : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",
             )}
           >
-            <Plus className="h-3 w-3" /> {isQuoted ? "Añadido" : "Cotizar"}
+            <Plus className="h-3 w-3" /> {isQuoted ? "En carrito" : "Agregar"}
             <ArrowUpRight className="h-3 w-3" />
           </button>
         </div>
