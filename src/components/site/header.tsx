@@ -25,6 +25,15 @@ import { useQuote } from "@/hooks/use-quote";
 import { signOut } from "@/lib/auth/actions";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { BRAND_ARIA_LABEL } from "@/lib/brand/assets";
+import {
+  BrandsMegaMenu,
+  MobileCatalogFamily,
+  ProductsMegaMenu,
+} from "@/components/site/mega-menus";
+import {
+  CATALOG_FAMILIES,
+  type CatalogMenuItem,
+} from "@/lib/navigation/catalog-taxonomy";
 
 /** Índice ligero de productos (Supabase) para búsqueda y drawers del header. */
 export type HeaderProduct = {
@@ -49,9 +58,6 @@ export type HeaderAccount = {
 const ACCOUNT_ITEM =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground/85 transition-colors hover:bg-muted/60 hover:text-foreground";
 
-const MEGA_ITEM =
-  "text-left transition-[color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
-
 const RECENT_KEY = "shalko:recent-searches";
 
 const NAV: {
@@ -74,120 +80,7 @@ const QUICK_SEARCHES = [
   "Mezcladoras",
 ];
 
-/**
- * Taxonomía comercial del mega menú de Productos.
- *
- * `sub` apunta al nombre EXACTO de una subcategoría que existe en el catálogo.
- * Si una hoja tiene `sub` y esa subcategoría existe en Supabase, navega al filtro
- * real (`/productos?sub=...`). Si no tiene `sub` (o aún no existe en BD), se trata
- * como categoría futura: estilo sutil y enlace a `/productos` sin filtrar.
- *
- * No modifica filtros ni base de datos: es solo la capa de presentación del menú.
- */
-type MegaLeaf = { label: string; sub?: string };
-type MegaGroup = { title: string; items: MegaLeaf[] };
-type MegaColumn = { title: string; cat: string; groups: MegaGroup[] };
-
-const PRODUCT_MENU: MegaColumn[] = [
-  {
-    title: "Instrumentos",
-    cat: "Instrumentos",
-    groups: [
-      {
-        title: "Cuerda",
-        items: [
-          { label: "Guitarras acústicas", sub: "Guitarras acústicas" },
-          { label: "Guitarras eléctricas", sub: "Guitarras eléctricas" },
-          { label: "Bajos eléctricos", sub: "Bajos" },
-          { label: "Bajos acústicos" },
-          { label: "Docerolas", sub: "Docerolas" },
-          { label: "Violines", sub: "Violines" },
-          { label: "Ukuleles", sub: "Ukuleles" },
-          { label: "Mandolinas" },
-        ],
-      },
-      {
-        title: "Teclados",
-        items: [{ label: "Teclados", sub: "Teclados" }],
-      },
-      {
-        title: "Percusión",
-        items: [
-          { label: "Baterías", sub: "Baterías" },
-          { label: "Bongos" },
-          { label: "Tarolas" },
-          { label: "Xilófonos" },
-        ],
-      },
-      {
-        title: "Viento",
-        items: [
-          { label: "Trompetas" },
-          { label: "Cornetas" },
-          { label: "Flautas" },
-          { label: "Melódicas" },
-          { label: "Armónicas" },
-          { label: "Acordeones" },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Accesorios",
-    cat: "Accesorios",
-    groups: [
-      {
-        title: "Para tu instrumento",
-        items: [
-          { label: "Cuerdas" },
-          { label: "Pedales de efectos", sub: "Pedales" },
-          { label: "Pedal de sustain" },
-          { label: "Amplificadores de guitarra", sub: "Amplificadores" },
-          { label: "Amplificadores de bajo" },
-          { label: "Cables", sub: "Cables" },
-          { label: "Audífonos" },
-          { label: "Interfaces" },
-          { label: "Pastillas" },
-          { label: "Afinadores" },
-          { label: "Capotrastes" },
-        ],
-      },
-      {
-        title: "Soportes y protección",
-        items: [
-          { label: "Pedestales de micrófono" },
-          { label: "Bases de teclado" },
-          { label: "Atriles" },
-          { label: "Fundas y estuches" },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Equipos de Audio",
-    cat: "Equipos de Audio",
-    groups: [
-      {
-        title: "Audio profesional",
-        items: [
-          { label: "Bafles", sub: "Bafles" },
-          { label: "Subwoofers" },
-          { label: "Bocinas" },
-          { label: "Mezcladoras", sub: "Mezcladoras" },
-          { label: "Amplificadores de potencia" },
-          { label: "Micrófonos" },
-          { label: "Interfaces de audio" },
-          { label: "Crossover" },
-          { label: "Switcheras" },
-        ],
-      },
-      {
-        title: "Iluminación",
-        items: [{ label: "DMX" }, { label: "Luces" }],
-      },
-    ],
-  },
-];
+/** Taxonomía del mega menú: `src/lib/navigation/catalog-taxonomy.ts` */
 
 export function SiteHeader({
   products,
@@ -278,15 +171,21 @@ export function SiteHeader({
     () => new Set(Object.values(categoryTree).flat()),
     [categoryTree],
   );
-  const isRealLeaf = (leaf: MegaLeaf) => Boolean(leaf.sub && realSubs.has(leaf.sub));
-  const goLeaf = (leaf: MegaLeaf) => {
-    if (leaf.sub && realSubs.has(leaf.sub)) {
-      goSubcategory(leaf.sub);
-      return;
-    }
+  const isActiveCatalogItem = (item: CatalogMenuItem) =>
+    Boolean(item.sub && realSubs.has(item.sub));
+
+  const goCatalogItem = (item: CatalogMenuItem) => {
     setMegaPanel(null);
     setMobilePanel(null);
     setOpen(false);
+    if (item.sub && realSubs.has(item.sub)) {
+      goSubcategory(item.sub);
+      return;
+    }
+    if (item.href) {
+      router.push(item.href);
+      return;
+    }
     router.push("/productos");
   };
 
@@ -695,153 +594,31 @@ export function SiteHeader({
       <div
         onMouseEnter={() => megaPanel && openPanel(megaPanel)}
         onMouseLeave={scheduleClose}
-        className={`hidden overflow-hidden border-t border-border/60 bg-background shadow-[0_28px_50px_-26px_rgba(0,0,0,0.28)] transition-[max-height,opacity] duration-300 ease-out md:block ${
+        className={cn(
+          "hidden overflow-hidden border-t border-border/25 bg-background shadow-[0_20px_44px_-28px_rgba(0,0,0,0.14)] transition-[max-height,opacity] duration-300 ease-out md:block",
           megaPanel
-            ? "max-h-[560px] opacity-100"
-            : "pointer-events-none max-h-0 opacity-0"
-        }`}
+            ? "max-h-[560px] overflow-visible opacity-100"
+            : "pointer-events-none max-h-0 overflow-hidden opacity-0",
+        )}
       >
         {megaPanel === "productos" && (
-          <div className="mx-auto grid max-w-7xl grid-cols-12 gap-x-10 px-8 py-8">
-            {/* Familias con grupos editoriales */}
-            <div className="col-span-9 grid grid-cols-3 gap-x-10">
-              {PRODUCT_MENU.map((col) => {
-                const displayTitle =
-                  col.title === "Equipos de Audio" ? "Audio profesional" : col.title;
-                return (
-                  <div key={col.title} className="min-w-0">
-                    <button
-                      onClick={() => goCategoryGroup(col.cat)}
-                      className="group/col mb-4 flex w-full items-center gap-1.5 border-b border-border/60 pb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground transition-colors hover:text-copper"
-                    >
-                      {displayTitle}
-                      <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-copper opacity-0 transition-all duration-200 group-hover/col:translate-x-0.5 group-hover/col:-translate-y-0.5 group-hover/col:opacity-100" />
-                    </button>
-                    <div className="max-h-[360px] space-y-4 overflow-y-auto overscroll-contain pr-1">
-                      {col.groups.map((group) => (
-                        <div key={group.title}>
-                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                            {group.title}
-                          </p>
-                          <ul className="space-y-0.5">
-                            {group.items.map((leaf) => (
-                              <li key={leaf.label}>
-                                <button
-                                  onClick={() => goLeaf(leaf)}
-                                  className={`block w-full text-left text-[13px] leading-snug ${MEGA_ITEM} ${
-                                    isRealLeaf(leaf)
-                                      ? "text-foreground/80"
-                                      : "text-muted-foreground/40"
-                                  }`}
-                                >
-                                  {leaf.label}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Rail de acciones */}
-            <aside className="col-span-3">
-              <div className="flex h-full flex-col justify-between rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 via-background to-background p-5">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-copper">
-                    Radio Shalko
-                  </p>
-                  <p className="mt-2 font-display text-lg font-light leading-snug text-foreground">
-                    Explora instrumentos, accesorios y audio profesional.
-                  </p>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
-                    Recolección en tienda y asesoría personalizada.
-                  </p>
-                </div>
-                <div className="mt-5 space-y-2">
-                  <button
-                    onClick={() => {
-                      setMegaPanel(null);
-                      router.push("/productos");
-                    }}
-                    className="inline-flex w-full items-center justify-between gap-2 rounded-full bg-foreground px-4 py-2.5 text-[12.5px] font-medium text-background transition-[gap,opacity] duration-300 hover:opacity-90"
-                  >
-                    Ver todo el catálogo
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => goCategoryGroup("Equipos de Audio")}
-                    className="inline-flex w-full items-center justify-between gap-2 rounded-full border border-border px-4 py-2.5 text-[12.5px] font-medium text-foreground/80 transition-colors hover:border-copper/50 hover:text-copper"
-                  >
-                    Audio profesional
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </button>
-                  <a
-                    href={whatsappHref()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-copper"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    Asesoría por WhatsApp
-                  </a>
-                </div>
-              </div>
-            </aside>
-          </div>
+          <ProductsMegaMenu
+            isActiveItem={isActiveCatalogItem}
+            onCategory={goCategoryGroup}
+            onItem={goCatalogItem}
+          />
         )}
 
         {megaPanel === "marcas" && (
-          <div className="mx-auto max-w-7xl px-8 py-8">
-            <div className="mb-6 flex items-end justify-between border-b border-border/60 pb-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-copper">
-                  Catálogo por fabricante
-                </p>
-                <p className="mt-1.5 font-display text-lg font-light leading-tight text-foreground">
-                  Explorar marcas
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setMegaPanel(null);
-                  router.push("/marcas");
-                }}
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
-              >
-                Ver todas las marcas
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <div className="grid max-h-[360px] grid-cols-5 gap-x-10 overflow-y-auto overscroll-contain pr-1">
-              {brandColumns.map((col) => (
-                <div key={col.label}>
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                    {col.label}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {col.items.length > 0 ? (
-                      col.items.map((b) => (
-                        <li key={b}>
-                          <button
-                            onClick={() => goBrand(b)}
-                            className={`block w-full text-left text-[13px] text-foreground/80 ${MEGA_ITEM}`}
-                          >
-                            {b}
-                          </button>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-[12.5px] text-muted-foreground/40">—</li>
-                    )}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
+          <BrandsMegaMenu
+            brandColumns={brandColumns}
+            sortedBrands={sortedBrands}
+            onBrand={goBrand}
+            onViewAll={() => {
+              setMegaPanel(null);
+              router.push("/marcas");
+            }}
+          />
         )}
       </div>
 
@@ -870,43 +647,14 @@ export function SiteHeader({
               onToggle={() => setMobilePanel((p) => (p === "productos" ? null : "productos"))}
             >
               <div className="space-y-4 pb-4 pt-2">
-                {PRODUCT_MENU.map((col) => (
-                  <div key={col.title} className="rounded-xl border border-border/50 bg-card/60 p-3.5">
-                    <button
-                      onClick={() => goCategoryGroup(col.cat)}
-                      className="group flex w-full items-center justify-between text-left"
-                    >
-                      <span className="font-display text-sm font-semibold tracking-tight text-foreground">
-                        {col.title}
-                      </span>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-copper/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </button>
-                    <div className="mt-3 space-y-3">
-                      {col.groups.map((group) => (
-                        <div key={group.title}>
-                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
-                            {group.title}
-                          </p>
-                          <ul className="flex flex-wrap gap-1.5">
-                            {group.items.map((leaf) => (
-                              <li key={leaf.label}>
-                                <button
-                                  onClick={() => goLeaf(leaf)}
-                                  className={`rounded-full border px-2.5 py-1 text-[12px] transition-colors ${
-                                    isRealLeaf(leaf)
-                                      ? "border-border/70 bg-background text-foreground/80 hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
-                                      : "border-dashed border-border/50 bg-transparent text-muted-foreground/60"
-                                  }`}
-                                >
-                                  {leaf.label}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                {CATALOG_FAMILIES.map((family) => (
+                  <MobileCatalogFamily
+                    key={family.key}
+                    family={family}
+                    isActiveItem={isActiveCatalogItem}
+                    onCategory={goCategoryGroup}
+                    onItem={goCatalogItem}
+                  />
                 ))}
                 <button
                   onClick={() => { closeMobileMenu(); router.push("/productos"); }}

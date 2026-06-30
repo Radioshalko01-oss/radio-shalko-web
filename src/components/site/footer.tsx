@@ -39,6 +39,14 @@ function IconWhatsApp({ className }: { className?: string }) {
   );
 }
 
+function IconFacebook({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
+
 const SOCIALS = [
   {
     label: "Correo electrónico",
@@ -57,6 +65,12 @@ const SOCIALS = [
     href: telHref(SITE_CONTACT.phone.e164),
     external: false,
     Icon: Phone,
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/p/Electrónica-radio-shalko-100064227845681/",
+    external: true,
+    Icon: IconFacebook,
   },
 ] as const;
 
@@ -185,22 +199,22 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 border-t border-white/20 pt-10 lg:mt-16">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start lg:gap-8">
+        <div className="mt-10 border-t border-white/20 pt-8 lg:mt-12">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:gap-y-12">
             <div className="lg:col-span-2">
               <FooterHeading>Nuestras tiendas</FooterHeading>
             </div>
 
             {SITE_CONTACT.stores.map((store) => (
-              <div key={store.id} className="flex gap-4 lg:col-span-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5">
+              <div key={store.id} className="flex gap-5 lg:col-span-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5">
                   <MapPin className="h-4 w-4 text-white/90" aria-hidden />
                 </div>
-                <div>
+                <div className="space-y-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                     {store.displayName}
                   </p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/70">
+                  <p className="text-sm leading-relaxed text-white/70">
                     {store.address}
                     <br />
                     {store.region}
@@ -209,7 +223,7 @@ export function Footer() {
                     href={store.mapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-white"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-white"
                   >
                     Ver en mapa
                     <ArrowRight className="h-3 w-3" />
@@ -218,10 +232,11 @@ export function Footer() {
               </div>
             ))}
 
-            <p className="text-sm leading-relaxed text-white/70 lg:col-span-4 lg:pt-1">
-              Visítanos en nuestras tiendas físicas. Nuestro equipo estará encantado de
-              ayudarte.
-            </p>
+            <div className="max-w-[11rem] space-y-1 text-sm leading-relaxed text-white/70 lg:col-span-4 lg:pt-1">
+              <p>Visítanos en nuestras tiendas físicas.</p>
+              <p>Nuestro equipo estará encantado</p>
+              <p>de ayudarte.</p>
+            </div>
           </div>
         </div>
 
