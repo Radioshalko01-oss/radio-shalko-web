@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, ShoppingBag, Menu, X, ChevronDown, ArrowUpRight, Clock, Heart, Trash2, User, LogOut, Shield, Lock, MessageCircle, Package, Bell } from "lucide-react";
 import { whatsappHref } from "@/lib/site-contact";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
@@ -49,13 +49,8 @@ export type HeaderAccount = {
 const ACCOUNT_ITEM =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground/85 transition-colors hover:bg-muted/60 hover:text-foreground";
 
-const HEADER_ICON = cn(siteShell.iconButton, "relative");
-
 const MEGA_ITEM =
   "text-left transition-[color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
-
-const MEGA_HEADING =
-  "mb-4 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-copper transition-[color,transform,gap] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
 
 const RECENT_KEY = "shalko:recent-searches";
 
@@ -220,6 +215,12 @@ export function SiteHeader({
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  // Solo la home tiene un hero visual a sangre completa: ahí el header arranca
+  // integrado (transparente) y se vuelve sólido al hacer scroll. El resto de
+  // rutas no tienen hero, por lo que el header inicia sólido para conservar
+  // legibilidad sobre fondos claros.
+  const hasHero = pathname === "/";
   const { ids: favIds, remove: removeFav, count: favCount } = useFavorites();
   const {
     ids: quoteIds,
@@ -395,6 +396,21 @@ export function SiteHeader({
     return () => document.removeEventListener("mousedown", onDown);
   }, [accountOpen]);
 
+  // Cerrar overlays de navegación con Escape (mega panel, cuenta, menú móvil).
+  // Los Sheet de búsqueda/favoritos/carrito manejan Escape por su cuenta.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      setMegaPanel(null);
+      setAccountOpen(false);
+      setOpen(false);
+      setMobilePanel(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   const closeMobileMenu = () => {
     setOpen(false);
     setMobilePanel(null);
@@ -408,21 +424,50 @@ export function SiteHeader({
   };
 
   const headerSolid = scrolled || megaPanel !== null || open;
+  // Estado "integrado al hero": solo en home, en el tope, sin paneles abiertos.
+  const transparent = hasHero && !headerSolid;
+
+  // Botón de icono que adapta su color al estado del header (claro sobre hero,
+  // neutro sobre panel sólido).
+  const iconBtn = cn(
+    "relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-200",
+    transparent
+      ? "text-white hover:bg-white/15"
+      : "text-foreground/80 hover:bg-muted hover:text-foreground",
+  );
+  const badgeClass = cn(
+    "absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums ring-2 transition-colors",
+    transparent
+      ? "bg-copper text-copper-foreground ring-transparent"
+      : "bg-copper text-copper-foreground ring-background",
+  );
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b bg-background/95 backdrop-blur-md transition-[border-color,box-shadow] duration-200 ease-out",
-        headerSolid
-          ? "border-border/70 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]"
-          : "border-border/40",
+        "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
+        transparent
+          ? "border-b border-transparent bg-gradient-to-b from-black/55 via-black/25 to-transparent"
+          : "border-b border-border/70 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]",
       )}
+      data-state={transparent ? "hero" : "solid"}
       onMouseLeave={scheduleClose}
     >
-      <div className="relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
+      <div
+        className={cn(
+          "relative flex w-full items-center justify-between px-5 transition-[height] duration-300 ease-out md:px-7 lg:px-10",
+          // Altura ligeramente más compacta al activarse (scroll/solid).
+          transparent ? "h-16 md:h-24" : "h-16 md:h-20",
+        )}
+      >
         <Link
           href="/"
-          className="group relative z-10 flex shrink-0 items-center"
+          className={cn(
+            "group relative z-10 flex shrink-0 items-center transition-[filter] duration-300",
+            // En estado hero el wordmark/isotipo se vuelven blancos para leerse
+            // sobre la imagen; en sólido conservan su color de marca.
+            transparent && "[&_img]:brightness-0 [&_img]:invert",
+          )}
           aria-label={BRAND_ARIA_LABEL}
         >
           <SiteLogo variant="horizontal" context="header" interactive />
@@ -430,26 +475,36 @@ export function SiteHeader({
 
         <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
           <div className="flex items-center gap-7 lg:gap-9">
-            {NAV.map((item) => (
-              <div
-                key={item.label}
-                onMouseEnter={() => (item.panel ? openPanel(item.panel) : scheduleClose())}
-                className="py-5"
-              >
-                <Link
-                  href={item.to}
-                  onClick={() => setMegaPanel(null)}
-                  className="group relative text-[12px] font-normal uppercase tracking-[0.2em] text-foreground transition-colors hover:text-foreground/80"
+            {NAV.map((item) => {
+              const isActive = megaPanel === item.panel && Boolean(item.panel);
+              return (
+                <div
+                  key={item.label}
+                  onMouseEnter={() => (item.panel ? openPanel(item.panel) : scheduleClose())}
+                  className="py-5"
                 >
-                  {item.label}
-                  <span
-                    className={`absolute -bottom-1.5 left-0 h-px bg-copper transition-all duration-300 ${
-                      megaPanel === item.panel && item.panel ? "w-full" : "w-0 group-hover:w-full"
-                    }`}
-                  />
-                </Link>
-              </div>
-            ))}
+                  <Link
+                    href={item.to}
+                    onClick={() => setMegaPanel(null)}
+                    className={cn(
+                      "group relative text-[12px] font-medium uppercase tracking-[0.2em] transition-colors",
+                      transparent
+                        ? "text-white/90 hover:text-white"
+                        : "text-foreground/80 hover:text-foreground",
+                    )}
+                  >
+                    {item.label}
+                    <span
+                      className={cn(
+                        "absolute -bottom-1.5 left-0 h-px transition-all duration-300",
+                        transparent ? "bg-white" : "bg-copper",
+                        isActive ? "w-full" : "w-0 group-hover:w-full",
+                      )}
+                    />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </nav>
 
@@ -457,36 +512,38 @@ export function SiteHeader({
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
-            className={HEADER_ICON}
+            className={iconBtn}
           >
             <Search className="h-[18px] w-[18px]" />
           </button>
           <button
-            aria-label="Favoritos"
+            aria-label={favCount > 0 ? `Favoritos (${favCount})` : "Favoritos"}
             onClick={() => setFavOpen(true)}
-            className={HEADER_ICON}
+            className={iconBtn}
           >
             <Heart className="h-[18px] w-[18px]" />
             {favCount > 0 && (
-              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
-                {favCount}
-              </span>
+              <span className={badgeClass}>{favCount > 9 ? "9+" : favCount}</span>
             )}
           </button>
           <button
-            aria-label="Carrito"
+            aria-label={quoteCount > 0 ? `Carrito (${quoteCount})` : "Carrito"}
             onClick={() => setQuoteOpen(true)}
-            className={HEADER_ICON}
+            className={iconBtn}
           >
             <ShoppingBag className="h-[18px] w-[18px]" />
             {quoteCount > 0 && (
-              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
-                {quoteCount}
-              </span>
+              <span className={badgeClass}>{quoteCount > 9 ? "9+" : quoteCount}</span>
             )}
           </button>
 
-          <span className="mx-1 hidden h-5 w-px bg-border/70 md:block" aria-hidden />
+          <span
+            className={cn(
+              "mx-1 hidden h-5 w-px md:block",
+              transparent ? "bg-white/25" : "bg-border/70",
+            )}
+            aria-hidden
+          />
 
           {/* Cuenta */}
           <div className="relative" ref={accountRef}>
@@ -496,12 +553,17 @@ export function SiteHeader({
                   aria-label="Mi cuenta"
                   aria-expanded={accountOpen}
                   onClick={() => setAccountOpen((v) => !v)}
-                  className={cn(HEADER_ICON, "relative")}
+                  className={iconBtn}
                 >
                   <User className="h-[18px] w-[18px]" />
                   {(account.hasOrderAttention || (account.unreadNotifications ?? 0) > 0) && (
                     <span
-                      className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-foreground ring-2 ring-background"
+                      className={cn(
+                        "absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2",
+                        transparent
+                          ? "bg-copper ring-transparent"
+                          : "bg-foreground ring-background",
+                      )}
                       aria-hidden
                     />
                   )}
@@ -610,7 +672,7 @@ export function SiteHeader({
               <Link
                 href="/login"
                 aria-label="Iniciar sesión"
-                className={HEADER_ICON}
+                className={iconBtn}
               >
                 <User className="h-[18px] w-[18px]" />
               </Link>
@@ -618,9 +680,10 @@ export function SiteHeader({
           </div>
 
           <button
-            aria-label="Menú"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={open}
             onClick={toggleMobileMenu}
-            className={cn(HEADER_ICON, "md:hidden")}
+            className={cn(iconBtn, "md:hidden")}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -631,109 +694,151 @@ export function SiteHeader({
       <div
         onMouseEnter={() => megaPanel && openPanel(megaPanel)}
         onMouseLeave={scheduleClose}
-        className={`hidden overflow-hidden border-t border-border/60 bg-background shadow-[0_16px_32px_-22px_rgba(0,0,0,0.18)] transition-[max-height,opacity] duration-200 ease-out md:block ${
+        className={`hidden overflow-hidden border-t border-border/60 bg-background shadow-[0_28px_50px_-26px_rgba(0,0,0,0.28)] transition-[max-height,opacity] duration-300 ease-out md:block ${
           megaPanel
-            ? "max-h-[460px] opacity-100"
+            ? "max-h-[560px] opacity-100"
             : "pointer-events-none max-h-0 opacity-0"
         }`}
       >
         {megaPanel === "productos" && (
-          <div className="mx-auto max-w-7xl px-8 py-7">
-            <div className="grid max-h-[336px] grid-cols-4 gap-x-10 overflow-y-auto overscroll-contain pr-1">
+          <div className="mx-auto grid max-w-7xl grid-cols-12 gap-x-10 px-8 py-8">
+            {/* Familias con grupos editoriales */}
+            <div className="col-span-9 grid grid-cols-3 gap-x-10">
               {PRODUCT_MENU.map((col) => {
                 const displayTitle =
                   col.title === "Equipos de Audio" ? "Audio profesional" : col.title;
-                const items = col.groups.flatMap((g) => g.items);
-                const wide = col.title === "Instrumentos";
                 return (
-                  <div key={col.title} className={wide ? "col-span-2" : "col-span-1"}>
+                  <div key={col.title} className="min-w-0">
                     <button
                       onClick={() => goCategoryGroup(col.cat)}
-                      className="group/col mb-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/90 transition-colors hover:text-copper"
+                      className="group/col mb-4 flex w-full items-center gap-1.5 border-b border-border/60 pb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground transition-colors hover:text-copper"
                     >
                       {displayTitle}
-                      <ArrowUpRight className="h-3 w-3 text-copper opacity-0 transition-opacity duration-200 group-hover/col:opacity-100" />
+                      <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-copper opacity-0 transition-all duration-200 group-hover/col:translate-x-0.5 group-hover/col:-translate-y-0.5 group-hover/col:opacity-100" />
                     </button>
-                    <ul className={wide ? "columns-2 gap-x-10 [&>li]:break-inside-avoid" : ""}>
-                      {items.map((leaf) => (
-                        <li key={leaf.label} className="mb-1">
-                          <button
-                            onClick={() => goLeaf(leaf)}
-                            className={`block w-full text-left text-[12.5px] leading-snug ${MEGA_ITEM} ${
-                              isRealLeaf(leaf)
-                                ? "text-foreground/90"
-                                : "text-muted-foreground/45"
-                            }`}
-                          >
-                            {leaf.label}
-                          </button>
-                        </li>
+                    <div className="max-h-[360px] space-y-4 overflow-y-auto overscroll-contain pr-1">
+                      {col.groups.map((group) => (
+                        <div key={group.title}>
+                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                            {group.title}
+                          </p>
+                          <ul className="space-y-0.5">
+                            {group.items.map((leaf) => (
+                              <li key={leaf.label}>
+                                <button
+                                  onClick={() => goLeaf(leaf)}
+                                  className={`block w-full text-left text-[13px] leading-snug ${MEGA_ITEM} ${
+                                    isRealLeaf(leaf)
+                                      ? "text-foreground/80"
+                                      : "text-muted-foreground/40"
+                                  }`}
+                                >
+                                  {leaf.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
-              <button
-                onClick={() => {
-                  setMegaPanel(null);
-                  router.push("/productos");
-                }}
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
-              >
-                Ver todo el catálogo
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </button>
-              <a
-                href={whatsappHref()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-[12.5px] font-medium text-foreground/80 transition-colors hover:border-copper/50 hover:text-copper"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Asesoría por WhatsApp
-              </a>
-            </div>
+            {/* Rail de acciones */}
+            <aside className="col-span-3">
+              <div className="flex h-full flex-col justify-between rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 via-background to-background p-5">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-copper">
+                    Radio Shalko
+                  </p>
+                  <p className="mt-2 font-display text-lg font-light leading-snug text-foreground">
+                    Explora instrumentos, accesorios y audio profesional.
+                  </p>
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+                    Recolección en tienda y asesoría personalizada.
+                  </p>
+                </div>
+                <div className="mt-5 space-y-2">
+                  <button
+                    onClick={() => {
+                      setMegaPanel(null);
+                      router.push("/productos");
+                    }}
+                    className="inline-flex w-full items-center justify-between gap-2 rounded-full bg-foreground px-4 py-2.5 text-[12.5px] font-medium text-background transition-[gap,opacity] duration-300 hover:opacity-90"
+                  >
+                    Ver todo el catálogo
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => goCategoryGroup("Equipos de Audio")}
+                    className="inline-flex w-full items-center justify-between gap-2 rounded-full border border-border px-4 py-2.5 text-[12.5px] font-medium text-foreground/80 transition-colors hover:border-copper/50 hover:text-copper"
+                  >
+                    Audio profesional
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </button>
+                  <a
+                    href={whatsappHref()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-copper"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Asesoría por WhatsApp
+                  </a>
+                </div>
+              </div>
+            </aside>
           </div>
         )}
 
         {megaPanel === "marcas" && (
-          <div className="mx-auto max-w-7xl px-8 py-7">
-            <div className="grid max-h-[336px] grid-cols-5 gap-x-10 overflow-y-auto overscroll-contain pr-1">
-              {brandColumns.map((col) => (
-                <div key={col.label}>
-                  <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/90">
-                    {col.label}
-                  </p>
-                  <ul className="space-y-1">
-                    {col.items.map((b) => (
-                      <li key={b}>
-                        <button
-                          onClick={() => goBrand(b)}
-                          className={`block w-full text-left text-[12.5px] uppercase tracking-wide text-foreground/80 ${MEGA_ITEM}`}
-                        >
-                          {b}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+          <div className="mx-auto max-w-7xl px-8 py-8">
+            <div className="mb-6 flex items-end justify-between border-b border-border/60 pb-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-copper">
+                  Catálogo por fabricante
+                </p>
+                <p className="mt-1.5 font-display text-lg font-light leading-tight text-foreground">
+                  Explorar marcas
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setMegaPanel(null);
                   router.push("/marcas");
                 }}
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
+                className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-foreground/80 transition-[gap,color] duration-300 hover:gap-2.5 hover:text-copper"
               >
                 Ver todas las marcas
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </button>
+            </div>
+            <div className="grid max-h-[360px] grid-cols-5 gap-x-10 overflow-y-auto overscroll-contain pr-1">
+              {brandColumns.map((col) => (
+                <div key={col.label}>
+                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                    {col.label}
+                  </p>
+                  <ul className="space-y-0.5">
+                    {col.items.length > 0 ? (
+                      col.items.map((b) => (
+                        <li key={b}>
+                          <button
+                            onClick={() => goBrand(b)}
+                            className={`block w-full text-left text-[13px] text-foreground/80 ${MEGA_ITEM}`}
+                          >
+                            {b}
+                          </button>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-[12.5px] text-muted-foreground/40">—</li>
+                    )}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         )}
