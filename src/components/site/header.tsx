@@ -430,9 +430,9 @@ export function SiteHeader({
   // Botón de icono que adapta su color al estado del header (claro sobre hero,
   // neutro sobre panel sólido).
   const iconBtn = cn(
-    "relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-200",
+    "relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-[250ms] ease-out",
     transparent
-      ? "text-white hover:bg-white/15"
+      ? "text-white hover:bg-white/12"
       : "text-foreground/80 hover:bg-muted hover:text-foreground",
   );
   const badgeClass = cn(
@@ -445,32 +445,33 @@ export function SiteHeader({
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
+        "relative fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-[250ms] ease-out",
         transparent
-          ? "border-b border-transparent bg-gradient-to-b from-black/55 via-black/25 to-transparent"
-          : "border-b border-border/70 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]",
+          ? "bg-transparent"
+          : "bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.06)]",
       )}
       data-state={transparent ? "hero" : "solid"}
       onMouseLeave={scheduleClose}
     >
-      <div
-        className={cn(
-          "relative flex w-full items-center justify-between px-5 transition-[height] duration-300 ease-out md:px-7 lg:px-10",
-          // Altura ligeramente más compacta al activarse (scroll/solid).
-          transparent ? "h-16 md:h-24" : "h-16 md:h-20",
-        )}
-      >
+      {/* Scrim sobre el hero: degradado extendido sin borde duro al pie del header */}
+      {transparent && (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-black/50 via-black/15 to-transparent md:h-32"
+          aria-hidden
+        />
+      )}
+      <div className="relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
-          className={cn(
-            "group relative z-10 flex shrink-0 items-center transition-[filter] duration-300",
-            // En estado hero el wordmark/isotipo se vuelven blancos para leerse
-            // sobre la imagen; en sólido conservan su color de marca.
-            transparent && "[&_img]:brightness-0 [&_img]:invert",
-          )}
+          className="group relative z-10 flex shrink-0 items-center"
           aria-label={BRAND_ARIA_LABEL}
         >
-          <SiteLogo variant="horizontal" context="header" interactive />
+          <SiteLogo
+            variant="horizontal"
+            context="header"
+            tone={transparent ? "on-dark" : "default"}
+            interactive
+          />
         </Link>
 
         <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
@@ -496,8 +497,8 @@ export function SiteHeader({
                     {item.label}
                     <span
                       className={cn(
-                        "absolute -bottom-1.5 left-0 h-px transition-all duration-300",
-                        transparent ? "bg-white" : "bg-copper",
+                        "absolute -bottom-1.5 left-0 h-px transition-[width,background-color] duration-[250ms] ease-out",
+                        transparent ? "bg-white/90" : "bg-copper",
                         isActive ? "w-full" : "w-0 group-hover:w-full",
                       )}
                     />
