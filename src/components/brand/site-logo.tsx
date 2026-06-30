@@ -8,11 +8,14 @@ import {
 export type SiteLogoVariant = "horizontal" | "icon";
 export type SiteLogoSize = "sm" | "md" | "lg";
 export type SiteLogoContext = "default" | "header" | "admin" | "login";
+/** `on-dark` — wordmark claro sobre hero; el isotipo conserva su arte original (fondo negro + símbolo). */
+export type SiteLogoTone = "default" | "on-dark";
 
 type SiteLogoProps = {
   variant?: SiteLogoVariant;
   size?: SiteLogoSize;
   context?: SiteLogoContext;
+  tone?: SiteLogoTone;
   className?: string;
   /** Aplica fade en hover cuando el padre tiene `group`. */
   interactive?: boolean;
@@ -56,14 +59,18 @@ export function SiteLogo({
   variant = "horizontal",
   size,
   context = "default",
+  tone = "default",
   className,
   interactive = false,
 }: SiteLogoProps) {
   const resolved = resolveSize(size, context);
   const tokens = SIZE[resolved];
   const imgFade = interactive
-    ? "transition-opacity duration-300 ease-out group-hover:opacity-80"
+    ? "transition-opacity duration-[250ms] ease-out group-hover:opacity-80"
     : "";
+  // El isotipo ya trae fondo negro + símbolo blanco: no invertir (rompe el arte).
+  // Solo el wordmark (texto negro) se invierte para leerse sobre el hero.
+  const wordmarkOnDark = tone === "on-dark" ? "brightness-0 invert" : "";
 
   if (variant === "icon") {
     return (
@@ -110,6 +117,7 @@ export function SiteLogo({
         className={cn(
           tokens.wordmark,
           "object-contain object-left",
+          wordmarkOnDark,
           imgFade,
         )}
       />
