@@ -54,7 +54,6 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
   const [customerMessage, setCustomerMessage] = useState(() =>
     defaultCustomerMessage("available_today"),
   );
-  const [adminInternalNote, setAdminInternalNote] = useState("");
   const messageEdited = useRef(false);
 
   useEffect(() => {
@@ -76,7 +75,6 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
         pickupAvailableDate:
           submitDecision === "available_custom" ? customDate : undefined,
         customerMessage: customerMessage.trim(),
-        adminInternalNote: adminInternalNote.trim() || undefined,
       });
       if (!result.ok) {
         setError(result.error);
@@ -189,23 +187,6 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
                 setCustomerMessage(e.target.value);
               }}
               className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="admin-note"
-              className="block text-xs font-medium text-zinc-600"
-            >
-              Nota interna <span className="font-normal text-zinc-400">(opcional)</span>
-            </label>
-            <textarea
-              id="admin-note"
-              rows={2}
-              value={adminInternalNote}
-              onChange={(e) => setAdminInternalNote(e.target.value)}
-              placeholder="Solo visible para el equipo admin."
-              className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
             />
           </div>
 
