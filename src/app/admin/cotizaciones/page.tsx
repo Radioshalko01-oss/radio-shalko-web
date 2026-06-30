@@ -5,6 +5,7 @@ import {
 } from "@/lib/admin/quote-queries";
 import { isQuoteStatus } from "@/lib/admin/quote-constants";
 import { QuotesManager } from "@/components/admin/quotes-manager";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{
   q?: string;
@@ -52,12 +53,12 @@ export default async function AdminCotizacionesPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Solicitudes / Carritos</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {result.total} solicitud{result.total === 1 ? "" : "es"} · carritos de usuarios
-        </p>
-      </div>
+      <PageHeader
+        variant="admin"
+        className="mb-6"
+        title="Solicitudes / Carritos"
+        description={`${result.total} solicitud${result.total === 1 ? "" : "es"} · carritos de usuarios`}
+      />
 
       <QuotesManager
         result={result}

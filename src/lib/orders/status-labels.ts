@@ -3,24 +3,14 @@
 import type { AvailabilityDecision } from "@/lib/orders/types";
 import { AVAILABILITY_DECISION_LABELS } from "@/lib/orders/types";
 import { formatPickupDateLong, formatPickupDateYmd } from "@/lib/orders/dates";
+import { orderStatusBadgeClass } from "@/lib/design/admin-badges";
 
 export type OrderStatusUi = {
   label: string;
   tone: "pending" | "paid" | "cancelled" | "neutral" | "approved" | "ready";
 };
 
-const STATUS_BADGE_STYLES: Record<OrderStatusUi["tone"], string> = {
-  pending: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  paid: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  cancelled: "bg-zinc-100 text-zinc-500 ring-zinc-200",
-  neutral: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  approved: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  ready: "bg-emerald-50 text-emerald-800 ring-emerald-100",
-};
-
-export function orderStatusBadgeClass(tone: OrderStatusUi["tone"]): string {
-  return `inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_BADGE_STYLES[tone]}`;
-}
+export { orderStatusBadgeClass };
 
 export function orderStatusUi(
   status: string,

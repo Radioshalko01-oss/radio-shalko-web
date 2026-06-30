@@ -73,21 +73,30 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
 
   return (
     <aside className={adminShell.sidebar}>
-      <div className="border-b border-border/60 px-5 py-5">
+      <div className="border-b border-border/60 px-4 py-4 lg:px-5 lg:py-5">
         <Link href="/admin" className="flex min-w-0 items-center">
           <SiteLogo variant="horizontal" context="admin" size="sm" />
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-4" aria-label="Administración">
+      <nav
+        className="flex-1 overflow-y-auto px-3 py-3 lg:space-y-7 lg:py-4"
+        aria-label="Administración"
+      >
         {GROUPS.map((group, i) => (
-          <div key={group.title ?? `g-${i}`}>
+          <div key={group.title ?? `g-${i}`} className="mb-4 last:mb-0 lg:mb-0">
             {group.title && (
-              <p className={cn("px-3 pb-2", typography.eyebrow, "text-[10px] tracking-[0.16em]")}>
+              <p
+                className={cn(
+                  "px-3 pb-2",
+                  typography.eyebrow,
+                  "hidden text-[10px] tracking-[0.16em] lg:block",
+                )}
+              >
                 {group.title}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div className="flex snap-x snap-mandatory gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:snap-none lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item);
@@ -114,7 +123,7 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                      "flex shrink-0 snap-start items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors lg:shrink lg:snap-align-none lg:gap-2.5",
                       active
                         ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/80"
                         : "text-muted-foreground hover:bg-card/70 hover:text-foreground",

@@ -2,6 +2,7 @@ import { listInventory, type InventoryStockFilter } from "@/lib/admin/inventory-
 import { getBranches } from "@/lib/admin/product-queries";
 import { getBrands, getCategoriesTree } from "@/lib/catalog/queries";
 import { InventoryManager } from "@/components/admin/inventory-manager";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{
   q?: string;
@@ -50,12 +51,12 @@ export default async function AdminInventarioPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Inventario</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {result.total} producto{result.total === 1 ? "" : "s"} · stock por sucursal
-        </p>
-      </div>
+      <PageHeader
+        variant="admin"
+        className="mb-6"
+        title="Inventario"
+        description={`${result.total} producto${result.total === 1 ? "" : "s"} · stock por sucursal`}
+      />
 
       <InventoryManager
         result={result}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowLeft, ChevronLeft } from "lucide-react";
-import { typography } from "@/lib/design/tokens";
+import { color, typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
 
 export type PageHeaderBackLink = {
@@ -41,10 +41,10 @@ const variantStyles = {
     titleAfterEyebrow: "mt-2",
   },
   admin: {
-    title: cn(typography.pageTitle, "text-zinc-900"),
-    description: "mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500",
-    eyebrow: cn(typography.eyebrow, "text-zinc-500"),
-    backLink: "text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900",
+    title: cn(typography.pageTitle, color.adminText),
+    description: cn("mt-1 max-w-2xl text-sm leading-relaxed", color.adminMuted),
+    eyebrow: typography.eyebrow,
+    backLink: cn("text-sm font-medium transition-colors", color.adminMuted, "hover:text-foreground"),
     headerGap: "",
     titleAfterEyebrow: "mt-1",
   },

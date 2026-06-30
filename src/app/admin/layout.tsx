@@ -21,7 +21,7 @@ export default async function AdminLayout({
   const orderSummary = await getAdminOrderNotificationSummary();
 
   return (
-    <div className={cn("flex min-h-screen", adminShell.layoutBg)}>
+    <div className={cn("flex min-h-screen flex-col lg:flex-row", adminShell.layoutBg)}>
       <AdminSidebar pendingOrderCount={orderSummary.pendingCount} />
       <div className={cn(adminShell.main, adminShell.mainPadding)}>
         <AdminPendingOrdersAlert summary={orderSummary} />
