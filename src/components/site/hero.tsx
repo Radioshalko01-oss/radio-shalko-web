@@ -93,7 +93,7 @@ export function Hero() {
             <div className="mt-8 flex items-center justify-center">
               <Link
                 href="/productos"
-                className="inline-flex items-center justify-center border border-white/80 px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.22em] text-white transition-colors hover:bg-white hover:text-foreground"
+                className="inline-flex items-center justify-center rounded-full border border-white/80 px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.22em] text-white transition-all hover:border-white hover:bg-white hover:text-foreground"
               >
                 Ver catálogo
               </Link>
@@ -108,7 +108,7 @@ export function Hero() {
               type="button"
               onClick={() => setIndex(i)}
               aria-label={`Ir a slide ${i + 1}`}
-              className={`h-1 transition-all duration-300 ${
+              className={`h-1 rounded-full transition-all duration-300 ${
                 i === index ? "w-8 bg-white" : "w-4 bg-white/40 hover:bg-white/70"
               }`}
             />

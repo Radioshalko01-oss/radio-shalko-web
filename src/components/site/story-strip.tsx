@@ -31,7 +31,7 @@ export function StoryStrip() {
               <div className="flex h-full flex-col items-center gap-2.5 text-center md:gap-2">
                 <div className="flex items-center justify-center gap-2.5">
                   <item.icon
-                    className="h-[18px] w-[18px] shrink-0 text-foreground"
+                    className="h-[18px] w-[18px] shrink-0 text-copper"
                     strokeWidth={1.6}
                     aria-hidden
                   />

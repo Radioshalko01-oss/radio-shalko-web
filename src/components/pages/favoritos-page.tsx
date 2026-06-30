@@ -8,6 +8,7 @@ import { fetchProductsByIds } from "@/lib/catalog/actions";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { siteShell } from "@/lib/design/site-shell";
 
 export function FavoritosPage() {
   const { ids } = useFavorites();
@@ -55,7 +56,7 @@ export function FavoritosPage() {
             {loading && ids.length > 0 ? (
               <p className="text-sm text-muted-foreground">Cargando favoritos…</p>
             ) : items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
+              <div className={siteShell.emptyState}>
                 <Heart className="h-8 w-8 text-muted-foreground" />
                 <p className="mt-4 font-display text-lg">Tu lista de favoritos está vacía</p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">

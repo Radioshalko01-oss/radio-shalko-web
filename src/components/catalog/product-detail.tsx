@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { formatPrice } from "@/lib/catalog/format";
+import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
+import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductGallery } from "@/components/catalog/product-gallery";
 import { ProductActions } from "@/components/catalog/product-actions";
@@ -22,8 +25,7 @@ export function ProductDetail({
   const { brand, category, subcategory } = product;
 
   return (
-    <div className="pt-28 md:pt-32">
-      <div className="mx-auto max-w-7xl px-5 pb-24 md:px-8">
+    <div className={siteShell.page}>
         {/* Breadcrumb */}
         <nav className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <Link href="/" className="hover:text-foreground">
@@ -65,24 +67,20 @@ export function ProductDetail({
             {brand && (
               <Link
                 href={`/marcas?b=${encodeURIComponent(brand.name)}`}
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-copper hover:underline"
+                className={cn(siteShell.brandEyebrow, "hover:underline")}
               >
                 {brand.name}
               </Link>
             )}
 
-            <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
-              {product.name}
-            </h1>
+            <h1 className={cn("mt-2", typography.pageTitle)}>{product.name}</h1>
 
             {product.subtitle && (
               <p className="mt-2 text-sm text-muted-foreground md:text-base">{product.subtitle}</p>
             )}
 
             <div className="mt-4 flex items-center gap-3">
-              <p className="font-display text-2xl font-semibold tracking-tight">
-                {formatPrice(product.price)}
-              </p>
+              <p className={typography.priceHero}>{formatPrice(product.price)}</p>
               {product.isNew && (
                 <span className="rounded-full bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
                   Nuevo
@@ -116,10 +114,8 @@ export function ProductDetail({
             </div>
 
             {/* Disponibilidad por sucursal */}
-            <div className="mt-8 rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Disponibilidad por sucursal
-              </p>
+            <div className={cn(siteShell.summaryPanel, "mt-8")}>
+              <p className={siteShell.labelCaps}>Disponibilidad por sucursal</p>
               <ul className="mt-3 space-y-2">
                 {product.inventory.length > 0 ? (
                   product.inventory.map((inv) => (
@@ -154,8 +150,8 @@ export function ProductDetail({
         {/* Especificaciones */}
         {product.specs.length > 0 && (
           <section className="mt-16">
-            <h2 className="font-display text-xl font-semibold tracking-tight">Especificaciones</h2>
-            <dl className="mt-5 max-w-2xl divide-y divide-border overflow-hidden rounded-2xl border border-border">
+            <h2 className={typography.sectionTitle}>Especificaciones</h2>
+            <dl className={cn(siteShell.card, "mt-5 max-w-2xl divide-y divide-border overflow-hidden p-0")}>
               {product.specs.map((spec) => (
                 <div key={spec.id} className="flex justify-between gap-6 px-5 py-3 text-sm">
                   <dt className="text-muted-foreground">{spec.label}</dt>
@@ -169,9 +165,7 @@ export function ProductDetail({
         {/* Relacionados */}
         {related.length > 0 && (
           <section className="mt-20">
-            <h2 className="font-display text-xl font-semibold tracking-tight">
-              También te puede interesar
-            </h2>
+            <h2 className={typography.sectionTitle}>También te puede interesar</h2>
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {related.map((item) => (
                 <ProductCard key={item.id} product={item} variant="compact" />
@@ -179,7 +173,6 @@ export function ProductDetail({
             </div>
           </section>
         )}
-      </div>
     </div>
   );
 }

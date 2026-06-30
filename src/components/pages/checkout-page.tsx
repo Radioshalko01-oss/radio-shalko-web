@@ -23,6 +23,7 @@ import { validatePurchaseRequestForm } from "@/lib/checkout/validate";
 import { formatPrice } from "@/lib/catalog/format";
 import { createOrderFromCart } from "@/lib/orders/actions";
 import type { CreateOrderSuccess } from "@/lib/orders/types";
+import { siteShell } from "@/lib/design/site-shell";
 import { whatsappHref } from "@/lib/site-contact";
 import { cn } from "@/lib/utils";
 
@@ -423,8 +424,8 @@ function CheckoutSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 md:p-5">
-      <h2 className="border-b border-border pb-3 font-display text-base font-semibold tracking-tight">
+    <section className={cn(siteShell.card, "p-4 md:p-5")}>
+      <h2 className={cn(siteShell.sectionTitle, "border-b border-border pb-3 text-base")}>
         {title}
       </h2>
       <div className="mt-4">{children}</div>

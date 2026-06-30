@@ -1,8 +1,10 @@
 "use client";
 
 import { ShieldCheck, Wrench, Clock, FileText } from "lucide-react";
-import { whatsappHref } from "@/lib/site-contact";
 import { PageHeader } from "@/components/ui/page-header";
+import { siteShell } from "@/lib/design/site-shell";
+import { whatsappHref } from "@/lib/site-contact";
+import { cn } from "@/lib/utils";
 
 const BLOCKS = [
   {
@@ -51,9 +53,9 @@ export function GarantiaPage() {
             <div
               key={title}
               id={id}
-              className="rounded-2xl border border-border bg-card p-6 md:p-8"
+              className={cn(siteShell.card, "p-6 md:p-8")}
             >
-              <Icon className="h-6 w-6 text-foreground" />
+              <Icon className="h-6 w-6 text-copper" />
               <h2 className="mt-4 font-display text-xl font-semibold tracking-tight md:text-2xl">
                 {title}
               </h2>
@@ -76,7 +78,7 @@ export function GarantiaPage() {
             href={whatsappHref()}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center justify-center bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-background transition-opacity hover:opacity-90"
+            className={cn(siteShell.ctaDark, "mt-6 px-6 py-3")}
           >
             Contactar por WhatsApp
           </a>

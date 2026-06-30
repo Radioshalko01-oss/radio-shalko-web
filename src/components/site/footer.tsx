@@ -159,7 +159,7 @@ export function Footer() {
               href={whatsappHref()}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1a1a] transition-colors hover:bg-white/90"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1a1a] transition-colors hover:bg-white/90 md:w-auto"
             >
               Escribir por WhatsApp
             </a>

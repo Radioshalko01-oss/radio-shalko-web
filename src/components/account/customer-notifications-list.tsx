@@ -9,6 +9,7 @@ import {
   markNotificationAsRead,
 } from "@/lib/notifications/notification-actions";
 import { resolveNotificationHref } from "@/lib/notifications/resolve-notification-href";
+import { siteShell } from "@/lib/design/site-shell";
 import type { CustomerNotificationItem } from "@/lib/notifications/customer-notification-queries";
 
 function formatDateTime(iso: string) {
@@ -50,7 +51,7 @@ export function CustomerNotificationsList({
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">
+      <div className={siteShell.emptyState}>
         <Bell className="h-9 w-9 text-muted-foreground/40" />
         <div>
           <p className="text-sm font-medium text-foreground">No tienes notificaciones</p>

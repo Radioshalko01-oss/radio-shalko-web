@@ -59,7 +59,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
       onMouseEnter={onCardEnter}
       onMouseLeave={onCardLeave}
     >
-      <div className="relative aspect-[5/6] overflow-hidden rounded-md bg-secondary/70">
+      <div className="relative aspect-[5/6] overflow-hidden rounded-2xl bg-muted/50">
         <Link href={productHref} className="absolute inset-0 z-0" aria-label={product.name}>
           {images.map((src, i) => (
             <img

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { siteShell } from "@/lib/design/site-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { LayoutGrid, Grid2x2, List, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -317,9 +318,12 @@ export function ProductosPage({
           <div>
 
             {filtered.length === 0 ? (
-              <div className="grid place-items-center rounded-2xl border border-dashed border-border py-24 text-center">
-                <p className="text-muted-foreground">Sin resultados con esos filtros.</p>
-                <button onClick={clearFilters} className="mt-4 text-sm text-copper hover:underline">
+              <div className={siteShell.emptyState}>
+                <p className="font-display text-lg font-medium text-foreground">Sin resultados</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Prueba ajustando filtros o términos de búsqueda.
+                </p>
+                <button onClick={clearFilters} className="mt-4 text-sm font-medium text-copper hover:underline">
                   Limpiar filtros
                 </button>
               </div>

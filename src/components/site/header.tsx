@@ -7,6 +7,8 @@ import { whatsappHref } from "@/lib/site-contact";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { buildQuoteWhatsAppHref } from "@/lib/whatsapp/product-message";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -45,7 +47,9 @@ export type HeaderAccount = {
 };
 
 const ACCOUNT_ITEM =
-  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground/85 transition-colors hover:bg-muted hover:text-foreground";
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground/85 transition-colors hover:bg-muted/60 hover:text-foreground";
+
+const HEADER_ICON = cn(siteShell.iconButton, "relative");
 
 const MEGA_ITEM =
   "text-left transition-[color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5 hover:text-foreground focus-visible:translate-x-0.5 focus-visible:text-foreground focus-visible:outline-none";
@@ -407,11 +411,12 @@ export function SiteHeader({
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 border-b bg-background transition-[border-color,box-shadow] duration-200 ease-out ${
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 border-b bg-background/95 backdrop-blur-md transition-[border-color,box-shadow] duration-200 ease-out",
         headerSolid
           ? "border-border/70 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]"
-          : "border-border/40"
-      }`}
+          : "border-border/40",
+      )}
       onMouseLeave={scheduleClose}
     >
       <div className="relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
@@ -452,18 +457,18 @@ export function SiteHeader({
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className={HEADER_ICON}
           >
             <Search className="h-[18px] w-[18px]" />
           </button>
           <button
             aria-label="Favoritos"
             onClick={() => setFavOpen(true)}
-            className="relative grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className={HEADER_ICON}
           >
             <Heart className="h-[18px] w-[18px]" />
             {favCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
+              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
                 {favCount}
               </span>
             )}
@@ -471,11 +476,11 @@ export function SiteHeader({
           <button
             aria-label="Carrito"
             onClick={() => setQuoteOpen(true)}
-            className="relative grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className={HEADER_ICON}
           >
             <ShoppingBag className="h-[18px] w-[18px]" />
             {quoteCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
+              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
                 {quoteCount}
               </span>
             )}
@@ -491,7 +496,7 @@ export function SiteHeader({
                   aria-label="Mi cuenta"
                   aria-expanded={accountOpen}
                   onClick={() => setAccountOpen((v) => !v)}
-                  className="relative grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                  className={cn(HEADER_ICON, "relative")}
                 >
                   <User className="h-[18px] w-[18px]" />
                   {(account.hasOrderAttention || (account.unreadNotifications ?? 0) > 0) && (
@@ -605,7 +610,7 @@ export function SiteHeader({
               <Link
                 href="/login"
                 aria-label="Iniciar sesión"
-                className="grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                className={HEADER_ICON}
               >
                 <User className="h-[18px] w-[18px]" />
               </Link>
@@ -615,7 +620,7 @@ export function SiteHeader({
           <button
             aria-label="Menú"
             onClick={toggleMobileMenu}
-            className="grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted md:hidden"
+            className={cn(HEADER_ICON, "md:hidden")}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -1114,12 +1119,8 @@ export function SiteHeader({
 
           {quoteRows.length > 0 && (
             <div className="shrink-0 border-t border-border bg-background px-5 py-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                Total estimado
-              </p>
-              <p className="mt-0.5 font-display text-3xl font-semibold tracking-tight tabular-nums">
-                {formatPrice(quoteTotal)}
-              </p>
+              <p className={cn(siteShell.labelCaps, "mt-0.5")}>Total estimado</p>
+              <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(quoteTotal)}</p>
 
               <div className="mt-4 space-y-2">
                 {account?.isAdmin ? (

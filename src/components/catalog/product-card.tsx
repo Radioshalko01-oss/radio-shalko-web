@@ -18,6 +18,8 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/catalog/format";
+import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
 import { isAvailable } from "@/lib/catalog/inventory";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -104,7 +106,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="relative aspect-[5/6] overflow-hidden rounded-md bg-secondary/70">
+      <div className="relative aspect-[5/6] overflow-hidden rounded-2xl bg-muted/50">
         <Link href={href} className="absolute inset-0 z-0" aria-label={product.name}>
           {images.map((img, i) => (
             <img
@@ -206,13 +208,11 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
       </div>
 
       <Link href={href} className="mt-3 block transition-colors hover:opacity-80">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {brand}
-        </p>
+        <p className={cn(siteShell.brandEyebrow, "text-muted-foreground")}>{brand}</p>
         <h3 className="mt-1 line-clamp-2 font-display text-[15px] font-medium leading-snug text-foreground md:text-base">
           {product.name}
         </h3>
-        <p className="mt-2 text-sm font-semibold tracking-tight text-foreground/90">
+        <p className={cn("mt-2", typography.priceInline, "text-foreground/90")}>
           {formatPrice(product.price)}
         </p>
         {!available && (
@@ -270,7 +270,7 @@ function BoxVariant({
         <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
       </button>
       <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-5")}>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper">{brand}</p>
+        <p className={siteShell.brandEyebrow}>{brand}</p>
         <Link href={href}>
           <h3
             className={cn(
@@ -282,7 +282,7 @@ function BoxVariant({
           </h3>
         </Link>
         <div className="mt-auto pt-3">
-          <p className={cn("font-display font-semibold", compact ? "text-base" : "text-lg")}>
+          <p className={cn(typography.priceInline, compact ? "text-base" : "text-lg")}>
             {formatPrice(product.price)}
           </p>
           {!available && (
@@ -336,7 +336,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
         )}
       </Link>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper">{brand}</p>
+        <p className={siteShell.brandEyebrow}>{brand}</p>
         <Link href={href}>
           <h3 className="truncate font-display text-base font-medium transition-colors hover:text-copper md:text-lg">
             {product.name}
@@ -350,7 +350,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <p className="font-display text-base font-semibold md:text-lg">
+        <p className={cn(typography.priceInline, "md:text-lg")}>
           {formatPrice(product.price)}
         </p>
         <div className="flex items-center gap-2">

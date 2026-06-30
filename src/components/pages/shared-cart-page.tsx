@@ -7,6 +7,7 @@ import { Check, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
 import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
 import { useQuote } from "@/hooks/use-quote";
 import { formatPrice } from "@/lib/catalog/format";
 import { POS_SUMMARY_DISCLAIMER, formatSaleDateTime } from "@/lib/admin/seller-summary";
@@ -62,7 +63,7 @@ export function SharedCartPage({ cart }: { cart: SharedCartView }) {
 
   if (rows.length === 0) {
     return (
-      <div className="mx-auto max-w-md px-5 py-28 text-center md:py-32">
+      <div className={cn(siteShell.emptyState, "mx-auto max-w-md py-28 md:py-32")}>
         <ShoppingBag className="mx-auto h-10 w-10 text-muted-foreground" />
         <h1 className="mt-4 font-display text-xl font-semibold">Selección no disponible</h1>
         <p className="mt-2 text-sm text-muted-foreground">

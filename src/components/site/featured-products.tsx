@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { siteShell } from "@/lib/design/site-shell";
 
 type TabId = "novedades" | "destacados";
 
@@ -27,10 +28,8 @@ export function FeaturedProducts({ novedades, destacados }: FeaturedProductsProp
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="relative flex -translate-y-3 items-end justify-center gap-6 md:-translate-y-4">
           <div className="text-center">
-            <p className="-translate-y-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground md:-translate-y-3">
-              Colecciones
-            </p>
-            <div role="tablist" className="mt-4 flex translate-y-1 items-baseline justify-center gap-6 md:mt-4.5 md:translate-y-1.5">
+            <p className={siteShell.eyebrow}>Colecciones</p>
+            <div role="tablist" className="relative mt-4 flex translate-y-1 items-baseline justify-center gap-6 md:mt-4.5 md:translate-y-1.5">
               {TABS.map((t) => {
                 const isActive = active === t.id;
                 return (
@@ -39,11 +38,14 @@ export function FeaturedProducts({ novedades, destacados }: FeaturedProductsProp
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setActive(t.id)}
-                    className={`font-display text-2xl font-semibold tracking-tight transition-colors md:text-3xl ${
+                    className={`relative font-display text-2xl font-semibold tracking-tight transition-colors md:text-3xl ${
                       isActive ? "text-foreground" : "text-foreground/35 hover:text-foreground/60"
                     }`}
                   >
                     {t.label}
+                    {isActive && (
+                      <span className="absolute -bottom-2 left-0 right-0 mx-auto h-0.5 w-8 bg-copper" aria-hidden />
+                    )}
                   </button>
                 );
               })}

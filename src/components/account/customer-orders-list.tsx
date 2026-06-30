@@ -5,6 +5,8 @@ import {
   customerOrderStatusBadgeClass,
   customerOrderStatusUi,
 } from "@/lib/orders/customer-status-labels";
+import { siteShell } from "@/lib/design/site-shell";
+import { cn } from "@/lib/utils";
 import type { CustomerOrderListItem } from "@/lib/orders/customer-queries";
 
 function formatDateTime(iso: string) {
@@ -17,7 +19,7 @@ function formatDateTime(iso: string) {
 export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[] }) {
   if (orders.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">
+      <div className={siteShell.emptyState}>
         <Package className="h-9 w-9 text-muted-foreground/40" />
         <div>
           <p className="text-sm font-medium text-foreground">Aún no tienes pedidos</p>
@@ -25,10 +27,7 @@ export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[]
             Cuando envíes una solicitud de compra, aparecerá aquí.
           </p>
         </div>
-        <Link
-          href="/productos"
-          className="mt-2 inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        >
+        <Link href="/productos" className={cn(siteShell.ctaDark, "mt-2 h-10 px-5")}>
           Explorar productos
         </Link>
       </div>
@@ -46,7 +45,7 @@ export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[]
         });
         return (
           <li key={order.id}>
-            <article className="rounded-2xl border border-border bg-card/60 p-4 transition-colors hover:border-foreground/15 md:p-5">
+            <article className={cn(siteShell.cardMuted, "p-4 transition-colors hover:border-foreground/15 md:p-5")}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-mono text-sm font-semibold tracking-tight text-foreground">

@@ -8,6 +8,7 @@ import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
 import { useQuote } from "@/hooks/use-quote";
 import { fetchProductsByIds } from "@/lib/catalog/actions";
 import { formatPrice } from "@/lib/catalog/format";
@@ -123,7 +124,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       {loading && ids.length > 0 ? (
         <p className="mt-12 text-sm text-muted-foreground">Cargando tu carrito…</p>
       ) : count === 0 ? (
-        <div className="mt-12 grid place-items-center rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-20 text-center">
+        <div className={cn(siteShell.emptyState, "mt-12")}>
           <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
             <ShoppingBag className="h-5 w-5 text-muted-foreground" />
           </div>
@@ -249,10 +250,8 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm md:hidden">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Total estimado
-              </p>
-              <p className="font-display text-xl font-semibold tabular-nums">{formatPrice(total)}</p>
+              <p className={siteShell.labelCaps}>Total estimado</p>
+              <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
             </div>
             {isAdmin ? (
               <div className="shrink-0 [&_button]:h-11 [&_button]:min-w-[148px] [&_button]:px-5">
@@ -305,7 +304,7 @@ function CartSummaryPanel({
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_12px_40px_-24px_rgba(0,0,0,0.15)]">
+    <div className={siteShell.summaryPanel}>
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {isAdmin ? "Resumen de selección" : "Resumen del pedido"}
       </h2>

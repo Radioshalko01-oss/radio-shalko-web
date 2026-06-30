@@ -10,6 +10,8 @@ import {
   customerPickupHint,
 } from "@/lib/orders/customer-status-labels";
 import { typography } from "@/lib/design/tokens";
+import { siteShell } from "@/lib/design/site-shell";
+import { cn } from "@/lib/utils";
 import type { CustomerOrderDetail } from "@/lib/orders/customer-queries";
 import { CustomerOrderLineRow } from "@/components/account/customer-orders-list";
 
@@ -80,12 +82,10 @@ export function CustomerOrderDetailView({
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-card/60 p-5 md:p-6">
+      <div className={cn(siteShell.cardMuted, "p-5 md:p-6")}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Solicitud de compra
-            </p>
+            <p className={siteShell.brandEyebrow}>Solicitud de compra</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h1 className="font-mono text-xl font-semibold tracking-tight text-foreground md:text-2xl">
                 {order.orderNumber}
