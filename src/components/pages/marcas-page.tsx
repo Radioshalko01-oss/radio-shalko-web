@@ -8,6 +8,9 @@ import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ArrowUpRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { siteShell } from "@/lib/design/site-shell";
+import { typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
 
 
 export function MarcasPage({
@@ -101,7 +104,7 @@ export function MarcasPage({
                   {/* Brand header */}
                   <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      <p className={siteShell.brandEyebrow}>
                         / {(idx + 1).toString().padStart(2, "0")} — Marca
                       </p>
                       <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
@@ -126,7 +129,7 @@ export function MarcasPage({
                       <Link
                         key={p.id}
                         href={`/productos/${p.slug}`}
-                        className="group overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-copper/50"
+                        className={cn(siteShell.card, "group overflow-hidden transition-colors hover:border-copper/50")}
                       >
                         <div className="relative aspect-square overflow-hidden bg-muted">
                           {p.images[0] && (
@@ -144,13 +147,11 @@ export function MarcasPage({
                           )}
                         </div>
                         <div className="p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                            {p.subcategory?.name}
-                          </p>
+                          <p className={siteShell.brandEyebrow}>{p.subcategory?.name}</p>
                           <h3 className="mt-1.5 line-clamp-2 font-display text-sm font-medium leading-snug">
                             {p.name}
                           </h3>
-                          <p className="mt-3 font-display text-base font-semibold">
+                          <p className={cn(typography.priceInline, "mt-3")}>
                             {formatPrice(p.price)}
                           </p>
                         </div>
@@ -164,10 +165,8 @@ export function MarcasPage({
 
           {/* Upcoming brands */}
           {upcomingBrands.length > 0 && (
-            <div className="mt-24 rounded-3xl border border-border bg-card p-7 md:mt-32 md:p-10">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Próximamente
-              </p>
+            <div className={cn(siteShell.card, "mt-24 p-7 md:mt-32 md:p-10")}>
+              <p className={siteShell.eyebrow}>Próximamente</p>
               <h3 className="mt-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
                 Más marcas en camino
               </h3>

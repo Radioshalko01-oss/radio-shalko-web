@@ -140,8 +140,8 @@ export function ProductDetail({
                 )}
               </ul>
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                Compra en tienda o a distancia con envío a domicilio. Te asesoramos antes de
-                comprar.
+                Solicita en línea y recoge en Chalco o Amecameca. Te asesoramos antes de confirmar
+                tu pedido.
               </p>
             </div>
           </div>

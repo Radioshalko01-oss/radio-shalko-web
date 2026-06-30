@@ -3,6 +3,8 @@
 import { Mail, MessageCircle, Phone, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { siteShell } from "@/lib/design/site-shell";
+import { cn } from "@/lib/utils";
 import {
   CONTACT_CHANNELS,
   SITE_CONTACT,
@@ -29,7 +31,7 @@ export function ContactoPage() {
           {SITE_CONTACT.stores.map((s) => (
             <article
               key={s.id}
-              className="overflow-hidden rounded-3xl border border-border bg-card transition-colors hover:border-copper/40"
+              className={cn(siteShell.card, "overflow-hidden transition-colors hover:border-copper/40")}
             >
               <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                 <iframe
@@ -42,9 +44,7 @@ export function ContactoPage() {
               </div>
 
               <div className="p-7 md:p-9">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Tienda
-                </p>
+                <p className={siteShell.eyebrow}>Tienda</p>
                 <h3 className="mt-1.5 font-display text-xl font-semibold tracking-tight md:text-2xl">
                   {s.name}
                 </h3>
@@ -76,7 +76,7 @@ export function ContactoPage() {
                 <div className="mt-7 flex flex-wrap gap-2">
                   <a
                     href={telHref(s.phoneE164)}
-                    className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-copper hover:text-copper-foreground"
+                    className={cn(siteShell.ctaDark, "px-5 py-2.5 hover:bg-copper hover:text-copper-foreground")}
                   >
                     <Phone className="h-4 w-4" /> Llamar ahora
                   </a>
@@ -84,7 +84,7 @@ export function ContactoPage() {
                     href={whatsappHref(s.whatsappE164)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+                    className={cn(siteShell.ctaSecondary, "px-5 py-2.5")}
                   >
                     <MessageCircle className="h-4 w-4 text-copper" /> Enviar WhatsApp
                   </a>
@@ -126,9 +126,7 @@ export function ContactoPage() {
       <section id="formulario" className="mx-auto max-w-7xl px-5 py-24 md:px-8 md:py-32">
         <div className="grid gap-12 md:grid-cols-[1fr_1.2fr]">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              Escríbenos
-            </p>
+            <p className={siteShell.eyebrow}>Escríbenos</p>
             <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
               Cuéntanos qué necesitas
             </h2>
@@ -138,10 +136,10 @@ export function ContactoPage() {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-7 md:p-10">
+          <div className={cn(siteShell.card, "p-7 md:p-10")}>
             <p className="text-sm text-muted-foreground">
-              Por ahora atendemos solicitudes por WhatsApp y correo electrónico. Así recibes
-              respuesta directa de nuestro equipo.
+              Atendemos por WhatsApp y correo electrónico. Recibes respuesta directa de nuestro
+              equipo en horario de tienda.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button

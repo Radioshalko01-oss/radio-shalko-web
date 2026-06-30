@@ -15,7 +15,7 @@ const HELP = [
   { label: "Contacto y atención", to: "/contacto#canales" },
   { label: "Garantía y servicios", to: "/garantia#servicio-tecnico" },
   { label: "Formas de pago", to: "/servicios#formas-pago" },
-  { label: "Política de envíos", to: "/servicios#politica-envios" },
+  { label: "Recolección en tienda", to: "/servicios#recoleccion-tienda" },
 ];
 
 const ABOUT = [

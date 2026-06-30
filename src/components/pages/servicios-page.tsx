@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
   Wrench,
   Headphones,
@@ -13,6 +12,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { siteShell } from "@/lib/design/site-shell";
+import { cn } from "@/lib/utils";
 
 const TECH_INSTRUMENTS = {
   equipo: ["Guitarras acústicas", "Guitarras eléctricas", "Electroacústicas", "Bajos acústicos y eléctricos"],
@@ -79,11 +80,11 @@ const PAYMENT = [
   "Sistema de apartado hasta 2 meses",
 ];
 
-const SHIPPING = [
-  "Entrega en zona metropolitana del Valle de México (consulta disponibilidad)",
+const PICKUP = [
   "Recolección gratuita en tienda Chalco o Amecameca",
-  "Empaque seguro para instrumentos y equipo de audio",
-  "Tiempos de entrega confirmados al cotizar tu pedido",
+  "Coordinamos fecha y horario contigo antes de recoger",
+  "Empaque y revisión de producto al entregarte",
+  "Para pedidos especiales, consúltanos por WhatsApp",
 ];
 
 export function ServiciosPage() {
@@ -204,7 +205,7 @@ export function ServiciosPage() {
             </div>
             <Link
               href="/contacto"
-              className="inline-flex items-center gap-2 bg-foreground px-5 py-3 text-xs font-semibold uppercase tracking-wider text-background transition-colors hover:bg-foreground/85"
+              className={cn(siteShell.ctaDark, "gap-2 px-5 py-3 text-xs uppercase tracking-wider")}
             >
               Contactar taller <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
@@ -222,7 +223,7 @@ export function ServiciosPage() {
             </h2>
             <dl className="mt-10 grid gap-6 md:grid-cols-2">
               {FAQ.map(({ q, a }) => (
-                <div key={q} className="rounded-2xl border border-border bg-card p-6">
+                <div key={q} className={cn(siteShell.card, "p-6")}>
                   <dt className="text-sm font-semibold text-foreground">{q}</dt>
                   <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{a}</dd>
                 </div>
@@ -231,13 +232,11 @@ export function ServiciosPage() {
           </div>
         </section>
 
-        {/* Formas de pago + envíos */}
+        {/* Formas de pago + recolección */}
         <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
           <div className="grid gap-10 md:grid-cols-2">
-            <article id="formas-pago" className="rounded-3xl border border-border bg-card p-7 md:p-10">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Formas de pago
-              </p>
+            <article id="formas-pago" className={cn(siteShell.card, "p-7 md:p-10")}>
+              <p className={siteShell.eyebrow}>Formas de pago</p>
               <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
                 Paga como te convenga
               </h2>
@@ -251,15 +250,13 @@ export function ServiciosPage() {
               </ul>
             </article>
 
-            <article id="politica-envios" className="rounded-3xl border border-border bg-card p-7 md:p-10">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Política de envíos
-              </p>
+            <article id="recoleccion-tienda" className={cn(siteShell.card, "p-7 md:p-10")}>
+              <p className={siteShell.eyebrow}>Recolección</p>
               <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
-                Entrega y recolección
+                Recolección en tienda
               </h2>
               <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
-                {SHIPPING.map((item) => (
+                {PICKUP.map((item) => (
                   <li key={item} className="flex items-start gap-2">
                     <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-copper" />
                     {item}
@@ -281,7 +278,7 @@ function SpecialtyCard({
   equipo: string[]; servicios: string[];
 }) {
   return (
-    <article className="relative overflow-hidden rounded-3xl border border-border bg-card p-7 md:p-10">
+    <article className={cn(siteShell.card, "relative overflow-hidden p-7 md:p-10")}>
       <div
         aria-hidden
         className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-copper/10 blur-3xl"
@@ -290,7 +287,7 @@ function SpecialtyCard({
         <div className="grid h-12 w-12 place-items-center rounded-xl border border-copper/30 bg-copper/10 text-copper">
           <Icon className="h-5 w-5" />
         </div>
-        <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.22em] text-copper">
+        <p className={cn(siteShell.brandEyebrow, "mt-5")}>
           {eyebrow}
         </p>
         <h3 className="mt-2 font-display text-3xl font-medium leading-tight md:text-4xl">
@@ -338,11 +335,11 @@ function FeatureBlock({
   eyebrow: string; title: string; desc: string; items: string[]; dense?: boolean;
 }) {
   return (
-    <article className="rounded-3xl border border-border bg-card p-7 md:p-10">
+    <article className={cn(siteShell.card, "p-7 md:p-10")}>
       <div className="grid h-12 w-12 place-items-center rounded-xl border border-copper/30 bg-copper/10 text-copper">
         <Icon className="h-5 w-5" />
       </div>
-      <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.22em] text-copper">
+      <p className={cn(siteShell.brandEyebrow, "mt-5")}>
         {eyebrow}
       </p>
       <h3 className="mt-2 font-display text-3xl font-medium leading-tight md:text-4xl">
