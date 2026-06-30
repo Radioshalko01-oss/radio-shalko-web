@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ArrowUpRight, ClipboardList, Eye, EyeOff, Package, Plus } from "lucide-react";
 import { listAdminProducts } from "@/lib/admin/product-queries";
 import { getAdminOrderNotificationSummary } from "@/lib/orders/notification-queries";
+import { AdminButton } from "@/components/admin/admin-button";
 import { PageHeader } from "@/components/ui/page-header";
-import { radius } from "@/lib/design/tokens";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 export default async function AdminDashboardPage() {
   const [products, orderSummary] = await Promise.all([
@@ -37,13 +39,12 @@ export default async function AdminDashboardPage() {
         title="Dashboard"
         description="Resumen del catálogo de Radio Shalko."
         actions={
-          <Link
-            href="/admin/productos/nuevo"
-            className={`inline-flex h-9 shrink-0 items-center gap-1.5 ${radius.buttonAdmin} bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800`}
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo producto
-          </Link>
+          <AdminButton asChild variant="primary">
+            <Link href="/admin/productos/nuevo">
+              <Plus className="h-4 w-4" />
+              Nuevo producto
+            </Link>
+          </AdminButton>
         }
       />
 
@@ -54,22 +55,20 @@ export default async function AdminDashboardPage() {
             <Link
               key={stat.label}
               href={stat.href}
-              className="group rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-300"
+              className={cn(adminShell.cardInteractive, "group p-5")}
             >
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-zinc-500">{stat.label}</dt>
-                <Icon className="h-4 w-4 text-zinc-300 transition-colors group-hover:text-zinc-500" />
+                <dt className={adminShell.statLabel}>{stat.label}</dt>
+                <Icon className="h-4 w-4 text-muted-foreground/40 transition-colors group-hover:text-copper" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold text-zinc-900">
-                {stat.value}
-              </dd>
+              <dd className={cn(adminShell.statValue, "mt-2")}>{stat.value}</dd>
             </Link>
           );
         })}
       </dl>
 
-      <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Accesos rápidos</h2>
+      <div className={cn(adminShell.cardSection, "mt-8")}>
+        <h2 className={adminShell.sectionTitleSm}>Accesos rápidos</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <QuickLink href="/admin/productos" title="Gestionar productos" desc="Crear, editar, publicar e imágenes." />
           <QuickLink href="/admin/productos/nuevo" title="Crear producto" desc="Da de alta un nuevo artículo." />
@@ -84,6 +83,7 @@ export default async function AdminDashboardPage() {
                 : "Revisa solicitudes de compra recibidas."
             }
             icon={ClipboardList}
+            highlight={orderSummary.pendingCount > 0}
           />
         </div>
       </div>
@@ -96,27 +96,33 @@ function QuickLink({
   title,
   desc,
   icon: Icon,
+  highlight,
 }: {
   href: string;
   title: string;
   desc: string;
   icon?: React.ComponentType<{ className?: string }>;
+  highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="group flex items-start justify-between gap-3 rounded-lg border border-zinc-200 p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50/60"
+      className={cn(
+        adminShell.cardInteractive,
+        "group flex items-start justify-between gap-3 p-4",
+        highlight && "border-copper/20 bg-copper/[0.02]",
+      )}
     >
       <div className="flex min-w-0 gap-3">
         {Icon && (
-          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500" />
+          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-copper" />
         )}
         <div>
-          <p className="text-sm font-medium text-zinc-900">{title}</p>
-          <p className="mt-0.5 text-xs text-zinc-500">{desc}</p>
+          <p className="text-sm font-medium text-foreground">{title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
         </div>
       </div>
-      <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-600" />
+      <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground" />
     </Link>
   );
 }

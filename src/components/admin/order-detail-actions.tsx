@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Copy, MessageCircle } from "lucide-react";
 import { whatsappHref } from "@/lib/site-contact";
 import { buildOrderWhatsAppMessage } from "@/lib/orders/status-labels";
+import { AdminButton } from "@/components/admin/admin-button";
 
 function normalizePhoneE164(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -41,10 +42,10 @@ export function OrderDetailActions({
   return (
     <div className="flex flex-wrap gap-2">
       {phone && (
-        <button
+        <AdminButton
           type="button"
+          variant="secondary"
           onClick={() => copy(phone, "phone")}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
         >
           {copiedField === "phone" ? (
             <Check className="h-4 w-4 text-emerald-600" />
@@ -52,30 +53,23 @@ export function OrderDetailActions({
             <Copy className="h-4 w-4" />
           )}
           {copiedField === "phone" ? "Copiado" : "Copiar teléfono"}
-        </button>
+        </AdminButton>
       )}
-      <button
-        type="button"
-        onClick={() => copy(orderNumber, "order")}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-      >
+      <AdminButton type="button" variant="secondary" onClick={() => copy(orderNumber, "order")}>
         {copiedField === "order" ? (
           <Check className="h-4 w-4 text-emerald-600" />
         ) : (
           <Copy className="h-4 w-4" />
         )}
         {copiedField === "order" ? "Copiado" : "Copiar número de pedido"}
-      </button>
+      </AdminButton>
       {showPendingWhatsApp && waLink && (
-        <a
-          href={waLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-sm font-medium text-white hover:bg-zinc-800"
-        >
-          <MessageCircle className="h-4 w-4" />
-          Abrir WhatsApp
-        </a>
+        <AdminButton asChild variant="primary">
+          <a href={waLink} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="h-4 w-4" />
+            Abrir WhatsApp
+          </a>
+        </AdminButton>
       )}
     </div>
   );

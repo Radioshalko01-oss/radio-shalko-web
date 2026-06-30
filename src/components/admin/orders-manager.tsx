@@ -16,6 +16,9 @@ import {
   orderStatusUi,
   pickupAvailabilityHint,
 } from "@/lib/orders/status-labels";
+import { AdminButton } from "@/components/admin/admin-button";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 import type {
   AdminOrderFilter,
   AdminOrderListResult,
@@ -127,19 +130,19 @@ export function OrdersManager({
         </p>
       )}
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-3">
+      <div className={adminShell.cardToolbar}>
         <div className="relative w-full lg:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por número de pedido, nombre, teléfono o correo…"
-            className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+            className={cn(adminShell.input, "pl-9")}
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+        <div className={cn("mt-3 flex flex-wrap items-center gap-2 border-t pt-3", adminShell.dividerSoft)}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filtros
           </span>
@@ -151,11 +154,10 @@ export function OrdersManager({
                 key={opt.value}
                 type="button"
                 onClick={() => navigate({ filter: opt.value === "all" ? undefined : opt.value })}
-                className={`h-8 rounded-full px-3 text-xs font-medium transition-colors ${
-                  active
-                    ? "bg-zinc-900 text-white"
-                    : "border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
-                }`}
+                className={cn(
+                  "h-8 transition-colors",
+                  active ? adminShell.filterActive : adminShell.filterInactive,
+                )}
               >
                 {opt.label}
               </button>
@@ -166,7 +168,7 @@ export function OrdersManager({
             <button
               type="button"
               onClick={() => router.replace(pathname)}
-              className="ml-auto text-xs font-medium text-zinc-500 hover:text-zinc-900"
+              className="ml-auto text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Limpiar
             </button>
@@ -176,9 +178,9 @@ export function OrdersManager({
 
       <div className="mt-5 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">{sectionTitle}</h2>
+          <h2 className={adminShell.sectionTitleSm}>{sectionTitle}</h2>
           {result.pendingCount > 0 && activeFilter !== "paid" && activeFilter !== "cancelled" && (
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {result.pendingCount} solicitud{result.pendingCount === 1 ? "" : "es"} por revisar
             </p>
           )}
@@ -187,10 +189,10 @@ export function OrdersManager({
 
       <div className="mt-3">
         {result.items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-white py-16 text-center">
-            <ClipboardList className="h-8 w-8 text-zinc-300" />
-            <p className="text-sm font-medium text-zinc-900">Sin solicitudes de compra</p>
-            <p className="max-w-sm text-sm text-zinc-500">
+          <div className={cn(adminShell.emptyState, "flex flex-col items-center justify-center gap-2 py-16 text-center")}>
+            <ClipboardList className="h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm font-medium text-foreground">Sin solicitudes de compra</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
               {hasFilters
                 ? "No hay pedidos que coincidan con tu búsqueda o filtros."
                 : "Cuando un cliente envíe una solicitud desde el checkout, aparecerá aquí."}
@@ -200,29 +202,29 @@ export function OrdersManager({
           <ul className="grid gap-2.5">
             {result.items.map((row) => (
               <li key={row.id}>
-                <article className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300">
+                <article className={cn(adminShell.cardInteractive, "p-4")}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-mono text-sm font-semibold tracking-tight text-zinc-900">
+                      <p className="font-mono text-sm font-semibold tracking-tight text-foreground">
                         {row.orderNumber}
                       </p>
-                      <p className="mt-1 text-sm font-medium text-zinc-800">{row.customerName}</p>
-                      <p className="mt-0.5 truncate text-xs text-zinc-500">
+                      <p className="mt-1 text-sm font-medium text-foreground/90">{row.customerName}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
                         {contactLine(row.customerEmail, row.customerPhone)}
                       </p>
-                      <p className="mt-2 text-sm text-zinc-600">
-                        <span className="font-medium text-zinc-800">{row.branchLabel}</span>
-                        <span className="text-zinc-300"> · </span>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground/85">{row.branchLabel}</span>
+                        <span className="text-border"> · </span>
                         {row.itemCount} producto{row.itemCount === 1 ? "" : "s"}
-                        <span className="text-zinc-300"> · </span>
-                        <span className="font-semibold text-zinc-900">{formatPrice(row.total)}</span>
+                        <span className="text-border"> · </span>
+                        <span className="font-semibold text-foreground">{formatPrice(row.total)}</span>
                       </p>
                       {pickupAvailabilityHint(row.availabilityDecision, row.pickupAvailableDate) && (
-                        <p className="mt-1 text-xs text-zinc-500">
+                        <p className="mt-1 text-xs text-muted-foreground">
                           {pickupAvailabilityHint(row.availabilityDecision, row.pickupAvailableDate)}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-zinc-400">{formatDateTime(row.createdAt)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">{formatDateTime(row.createdAt)}</p>
                     </div>
                     <OrderStatusBadge
                       status={row.status}
@@ -231,13 +233,10 @@ export function OrdersManager({
                       fulfillmentStatus={row.fulfillmentStatus}
                     />
                   </div>
-                  <div className="mt-4 flex justify-end border-t border-zinc-100 pt-3">
-                    <Link
-                      href={`/admin/pedidos/${row.id}`}
-                      className="inline-flex h-9 items-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-                    >
-                      Ver detalle
-                    </Link>
+                  <div className={cn("mt-4 flex justify-end border-t pt-3", adminShell.dividerSoft)}>
+                    <AdminButton asChild size="default">
+                      <Link href={`/admin/pedidos/${row.id}`}>Ver detalle</Link>
+                    </AdminButton>
                   </div>
                 </article>
               </li>
@@ -246,15 +245,15 @@ export function OrdersManager({
         )}
 
         {result.items.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3">
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <div className={cn(adminShell.cardToolbar, "mt-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3")}>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Por página</span>
               <select
                 value={filters.per}
                 onChange={(e) =>
                   navigate({ per: e.target.value === "25" ? undefined : e.target.value }, true)
                 }
-                className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs"
+                className={cn(adminShell.select, "h-8 px-2 text-xs")}
               >
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -272,18 +271,18 @@ export function OrdersManager({
                   navigate({ page: result.page > 2 ? String(result.page - 1) : undefined }, true)
                 }
                 disabled={result.page <= 1}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 disabled:opacity-30"
+                className={cn(adminShell.select, "grid h-8 w-8 place-items-center p-0 disabled:opacity-30")}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="px-2 text-xs text-zinc-500">
+              <span className="px-2 text-xs text-muted-foreground">
                 {result.page} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => navigate({ page: String(result.page + 1) }, true)}
                 disabled={result.page >= totalPages}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 disabled:opacity-30"
+                className={cn(adminShell.select, "grid h-8 w-8 place-items-center p-0 disabled:opacity-30")}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

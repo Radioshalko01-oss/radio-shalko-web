@@ -24,15 +24,18 @@ import {
   updateBrand,
   type BrandInput,
 } from "@/lib/admin/brand-actions";
+import { AdminButton } from "@/components/admin/admin-button";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type FieldErrors = Record<string, string[]>;
 type Filter = "todas" | "activas" | "ocultas";
 
-const inputBase =
-  "h-9 w-full rounded-lg border bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2";
-const inputOk = "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-100";
+const inputBase = cn(adminShell.input, "h-9 w-full");
+const inputOk = "";
 const inputErr = "border-red-300 focus:border-red-400 focus:ring-red-100";
-const inputCls = (err: boolean) => `${inputBase} ${err ? inputErr : inputOk}`;
+const inputCls = (err: boolean) => cn(inputBase, err ? inputErr : "");
 
 type FormState = {
   id: string | null;
@@ -187,35 +190,35 @@ export function BrandsManager({ initial }: { initial: AdminBrand[] }) {
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className={cn(adminShell.cardToolbar, "flex flex-wrap items-center justify-between gap-3")}>
         <div className="flex flex-wrap items-center gap-2">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar marca…"
-            className="h-9 w-56 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+            className={cn(adminShell.input, "w-56")}
           />
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-0.5">
+          <div className={cn("flex items-center gap-1 rounded-lg border p-0.5", adminShell.dividerSoft, "bg-card")}>
             {(["todas", "activas", "ocultas"] as Filter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                  filter === f ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
-                }`}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+                  filter === f
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted/50",
+                )}
               >
                 {f}
               </button>
             ))}
           </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-        >
+        <AdminButton type="button" onClick={openCreate} variant="primary">
           <Plus className="h-4 w-4" />
           Nueva marca
-        </button>
+        </AdminButton>
       </div>
 
       {/* Feedback global */}
@@ -233,9 +236,9 @@ export function BrandsManager({ initial }: { initial: AdminBrand[] }) {
 
       {/* Formulario crear/editar */}
       {form && (
-        <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-5">
+        <div className={cn(adminShell.cardSection, "mt-4")}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900">
+            <h2 className={adminShell.sectionTitleSm}>
               {form.id ? "Editar marca" : "Nueva marca"}
             </h2>
             <button onClick={closeForm} className="text-zinc-400 hover:text-zinc-700">
@@ -328,7 +331,7 @@ export function BrandsManager({ initial }: { initial: AdminBrand[] }) {
       )}
 
       {/* Tabla */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className={cn(adminShell.card, "mt-4 overflow-hidden")}>
         {visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
             <Tag className="h-8 w-8 text-zinc-300" />
@@ -396,17 +399,9 @@ export function BrandsManager({ initial }: { initial: AdminBrand[] }) {
                       <td className="px-4 py-3 text-zinc-500">{b.slug}</td>
                       <td className="px-4 py-3 text-right text-zinc-600">{b.productCount}</td>
                       <td className="px-4 py-3">
-                        {b.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            Activa
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                            <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                            Oculta
-                          </span>
-                        )}
+                        <AdminStatusBadge tone={b.isActive ? "active" : "inactive"} dot>
+                          {b.isActive ? "Activa" : "Oculta"}
+                        </AdminStatusBadge>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">

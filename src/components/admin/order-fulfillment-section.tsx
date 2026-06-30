@@ -15,6 +15,10 @@ import {
   fulfillmentStatusLabel,
 } from "@/lib/orders/status-labels";
 import type { AdminOrderDetail } from "@/lib/orders/admin-queries";
+import { AdminButton } from "@/components/admin/admin-button";
+import { adminShell } from "@/lib/design/admin-shell";
+import { typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
 
 function normalizePhoneE164(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -69,8 +73,8 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
       : null;
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5">
-      <h3 className="text-sm font-semibold text-zinc-900">Preparación y entrega</h3>
+    <section className={adminShell.cardSection}>
+      <h3 className={adminShell.sectionTitleSm}>Preparación y entrega</h3>
 
       {error && (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
@@ -83,41 +87,41 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
 
       <div className="mt-3 space-y-4 text-sm">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Estado</p>
-          <p className="mt-1 font-medium text-zinc-900">{fulfillmentStatusLabel(fs)}</p>
+          <p className={typography.labelCaps}>Estado</p>
+          <p className="mt-1 font-medium text-foreground">{fulfillmentStatusLabel(fs)}</p>
         </div>
 
         {fs === "unfulfilled" && (
           <>
-            <p className="leading-relaxed text-zinc-600">
+            <p className="leading-relaxed text-muted-foreground">
               Este pedido ya fue pagado. Marca el inicio de preparación cuando el equipo comience
               a prepararlo.
             </p>
-            <button
+            <AdminButton
               type="button"
               disabled={isPending}
               onClick={() => runAction(() => markOrderPreparing(order.id))}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+              size="lg"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Marcar como preparando
-            </button>
+            </AdminButton>
           </>
         )}
 
         {(fs === "preparing" || fs === "unfulfilled") && fs === "preparing" && (
           <>
-            <p className="leading-relaxed text-zinc-600">
+            <p className="leading-relaxed text-muted-foreground">
               El pedido está en preparación. Cuando esté listo, agrega un mensaje para el cliente.
             </p>
             {order.preparedAt && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Preparación iniciada: {formatDateTime(order.preparedAt)}
               </p>
             )}
             <div className="space-y-3">
               <div>
-                <label htmlFor="pickup-estimate" className="text-xs font-medium text-zinc-700">
+                <label htmlFor="pickup-estimate" className="text-xs font-medium text-foreground/80">
                   Hora o indicación estimada de recolección
                 </label>
                 <input
@@ -126,11 +130,11 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
                   value={estimate}
                   onChange={(e) => setEstimate(e.target.value)}
                   placeholder="Ej. Hoy a partir de las 5:00 p.m."
-                  className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className={cn(adminShell.input, "mt-1")}
                 />
               </div>
               <div>
-                <label htmlFor="pickup-message" className="text-xs font-medium text-zinc-700">
+                <label htmlFor="pickup-message" className="text-xs font-medium text-foreground/80">
                   Mensaje para el cliente
                 </label>
                 <textarea
@@ -138,11 +142,11 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
                   rows={4}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className={cn(adminShell.input, "mt-1 h-auto resize-y py-2")}
                 />
               </div>
             </div>
-            <button
+            <AdminButton
               type="button"
               disabled={isPending || !message.trim()}
               onClick={() =>
@@ -154,51 +158,48 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
                   }),
                 )
               }
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+              size="lg"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Marcar como listo para recoger
-            </button>
+            </AdminButton>
           </>
         )}
 
         {fs === "ready_for_pickup" && (
           <>
             {order.pickupReadyMessage && (
-              <div className="rounded-lg bg-zinc-50 px-3 py-2">
-                <p className="text-xs font-medium text-zinc-500">Mensaje para el cliente</p>
-                <p className="mt-1 whitespace-pre-wrap text-zinc-800">
+              <div className={adminShell.mutedBox}>
+                <p className={adminShell.fieldLabel}>Mensaje para el cliente</p>
+                <p className="mt-1 whitespace-pre-wrap text-foreground/90">
                   {order.pickupReadyMessage}
                 </p>
               </div>
             )}
             {order.pickupReadyEstimate && (
-              <p className="text-zinc-700">
+              <p className="text-foreground/85">
                 <span className="font-medium">Indicación:</span> {order.pickupReadyEstimate}
               </p>
             )}
             {order.readyForPickupAt && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Listo desde: {formatDateTime(order.readyForPickupAt)}
               </p>
             )}
             <div className="flex flex-wrap gap-2">
               {waLink && (
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-sm font-medium text-white hover:bg-zinc-800"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Enviar aviso por WhatsApp
-                </a>
+                <AdminButton asChild variant="primary">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-4 w-4" />
+                    Enviar aviso por WhatsApp
+                  </a>
+                </AdminButton>
               )}
-              <button
+              <AdminButton
                 type="button"
+                variant="secondary"
                 disabled={isPending}
                 onClick={() => runAction(() => markOrderDelivered(order.id))}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
               >
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -206,16 +207,16 @@ export function OrderFulfillmentSection({ order }: { order: AdminOrderDetail }) 
                   <Check className="h-4 w-4" />
                 )}
                 Marcar como entregado
-              </button>
+              </AdminButton>
             </div>
           </>
         )}
 
         {fs === "delivered" && (
           <>
-            <p className="text-zinc-600">Este pedido fue entregado al cliente.</p>
+            <p className="text-muted-foreground">Este pedido fue entregado al cliente.</p>
             {order.deliveredAt && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Entregado el {formatDateTime(order.deliveredAt)}
               </p>
             )}

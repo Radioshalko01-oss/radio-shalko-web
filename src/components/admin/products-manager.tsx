@@ -31,6 +31,10 @@ import {
   setProductPublished,
   updateProductInventory,
 } from "@/lib/admin/product-actions";
+import { AdminButton } from "@/components/admin/admin-button";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Filters = {
   q: string;
@@ -53,8 +57,7 @@ const SORT_OPTIONS: { value: AdminProductSort; label: string }[] = [
   { value: "recent", label: "Más recientes" },
 ];
 
-const selectCls =
-  "h-9 rounded-lg border border-zinc-200 bg-white px-2.5 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100";
+const selectCls = adminShell.select;
 
 function stockOf(p: CatalogProduct): number {
   return p.inventory.reduce((s, i) => s + i.quantity, 0);
@@ -216,27 +219,26 @@ export function ProductsManager({
       )}
 
       {/* Barra de herramientas */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-3">
+      <div className={adminShell.cardToolbar}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full lg:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar por nombre, SKU o marca…"
-              className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+              className={cn(adminShell.input, "pl-9")}
             />
           </div>
-          <Link
-            href="/admin/productos/nuevo"
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo producto
-          </Link>
+          <AdminButton asChild variant="primary">
+            <Link href="/admin/productos/nuevo">
+              <Plus className="h-4 w-4" />
+              Nuevo producto
+            </Link>
+          </AdminButton>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
+        <div className={cn("mt-3 flex flex-wrap items-center gap-2 border-t pt-3", adminShell.dividerSoft)}>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400">
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filtros
@@ -599,16 +601,10 @@ export function ProductsManager({
 }
 
 function StatusBadge({ published }: { published: boolean }) {
-  return published ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-      Publicado
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-      Oculto
-    </span>
+  return (
+    <AdminStatusBadge tone={published ? "active" : "inactive"} dot>
+      {published ? "Publicado" : "Oculto"}
+    </AdminStatusBadge>
   );
 }
 

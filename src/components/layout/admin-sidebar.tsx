@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SiteLogo } from "@/components/brand/site-logo";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { adminShell } from "@/lib/design/admin-shell";
+import { typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   BarChart3,
@@ -68,18 +72,18 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/80">
-      <div className="px-5 py-5">
+    <aside className={adminShell.sidebar}>
+      <div className="border-b border-border/60 px-5 py-5">
         <Link href="/admin" className="flex min-w-0 items-center">
           <SiteLogo variant="horizontal" context="admin" size="sm" />
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4" aria-label="Administración">
+      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-4" aria-label="Administración">
         {GROUPS.map((group, i) => (
           <div key={group.title ?? `g-${i}`}>
             {group.title && (
-              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+              <p className={cn("px-3 pb-2", typography.eyebrow, "text-[10px] tracking-[0.16em]")}>
                 {group.title}
               </p>
             )}
@@ -92,16 +96,14 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
                   return (
                     <div
                       key={item.href}
-                      className="flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-400"
+                      className="flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground/70"
                       title="Disponible en una fase futura"
                     >
                       <span className="flex items-center gap-2.5">
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-4 w-4 opacity-60" />
                         {item.label}
                       </span>
-                      <span className="rounded-full border border-zinc-200 bg-white px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-400">
-                        Pronto
-                      </span>
+                      <AdminStatusBadge tone="soon">Pronto</AdminStatusBadge>
                     </div>
                   );
                 }
@@ -111,17 +113,23 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
                     key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
                       active
-                        ? "bg-white font-medium text-zinc-900 shadow-sm ring-1 ring-zinc-200"
-                        : "text-zinc-600 hover:bg-white hover:text-zinc-900"
-                    }`}
+                        ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/80"
+                        : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+                    )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        active ? "text-copper" : "text-muted-foreground/70",
+                      )}
+                    />
                     <span className="min-w-0 flex-1">{item.label}</span>
                     {item.href === "/admin/pedidos" && pendingOrderCount > 0 && (
                       <span
-                        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-[10px] font-semibold tabular-nums text-white"
+                        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-copper px-1.5 text-[10px] font-semibold tabular-nums text-copper-foreground"
                         aria-label={`${pendingOrderCount} pendientes de revisión`}
                       >
                         {pendingOrderCount}
@@ -135,11 +143,8 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
         ))}
       </nav>
 
-      <div className="border-t border-zinc-200 p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:bg-white hover:text-zinc-900"
-        >
+      <div className="border-t border-border/60 p-3">
+        <Link href="/" className={cn(adminShell.backLink, "w-full rounded-lg px-3 py-2 hover:bg-card/70")}>
           <ArrowLeft className="h-4 w-4" />
           Volver al sitio
         </Link>

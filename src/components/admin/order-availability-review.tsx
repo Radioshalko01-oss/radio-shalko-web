@@ -19,6 +19,10 @@ import {
 import { formatPickupDateLong, mexicoTodayYmd } from "@/lib/orders/dates";
 import { whatsappHref } from "@/lib/site-contact";
 import type { AdminOrderDetail } from "@/lib/orders/admin-queries";
+import { AdminButton } from "@/components/admin/admin-button";
+import { adminShell } from "@/lib/design/admin-shell";
+import { typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
 
 const APPROVAL_DECISIONS: AvailabilityDecision[] = [
   "available_today",
@@ -96,9 +100,9 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
   const waLink = phoneE164 && waMessage ? whatsappHref(phoneE164, waMessage) : null;
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5">
-      <h3 className="text-sm font-semibold text-zinc-900">Revisión de disponibilidad</h3>
-      <p className="mt-1 text-sm text-zinc-500">
+    <section className={adminShell.cardSection}>
+      <h3 className={adminShell.sectionTitleSm}>Revisión de disponibilidad</h3>
+      <p className={adminShell.sectionDesc}>
         Confirma cuándo podrá recogerse esta solicitud antes de enviar instrucciones de pago.
       </p>
 
@@ -126,11 +130,12 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
             ).map((opt) => (
               <label
                 key={opt}
-                className={`flex cursor-pointer gap-3 rounded-lg border px-4 py-3 transition-colors ${
+                className={cn(
+                  "flex cursor-pointer gap-3 rounded-lg border px-4 py-3 transition-colors",
                   decision === opt
-                    ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
-                    : "border-zinc-200 hover:border-zinc-300"
-                }`}
+                    ? "border-copper bg-copper/5 ring-1 ring-copper/40"
+                    : "border-border hover:border-copper/25",
+                )}
               >
                 <input
                   type="radio"
@@ -138,13 +143,13 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
                   value={opt}
                   checked={decision === opt}
                   onChange={() => setDecision(opt)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-900"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-copper"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-zinc-900">
+                  <span className="block text-sm font-medium text-foreground">
                     {AVAILABILITY_DECISION_LABELS[opt]}
                   </span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {AVAILABILITY_DECISION_HINTS[opt]}
                   </span>
                 </span>
@@ -156,7 +161,7 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
             <div>
               <label
                 htmlFor="pickup-date"
-                className="block text-xs font-medium text-zinc-600"
+                className="block text-xs font-medium text-muted-foreground"
               >
                 Fecha para continuar con el pedido
               </label>
@@ -166,7 +171,7 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
                 value={customDate}
                 min={mexicoTodayYmd()}
                 onChange={(e) => setCustomDate(e.target.value)}
-                className="mt-1.5 h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+                className={cn(adminShell.input, "mt-1.5")}
               />
             </div>
           )}
@@ -174,7 +179,7 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
           <div>
             <label
               htmlFor="customer-message"
-              className="block text-xs font-medium text-zinc-600"
+              className="block text-xs font-medium text-muted-foreground"
             >
               Mensaje para el cliente
             </label>
@@ -186,56 +191,57 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
                 messageEdited.current = true;
                 setCustomerMessage(e.target.value);
               }}
-              className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+              className={cn(adminShell.input, "mt-1.5 h-auto resize-y py-2")}
             />
           </div>
 
-          <div className="flex flex-wrap gap-2 border-t border-zinc-100 pt-4">
+          <div className={cn("flex flex-wrap gap-2 border-t pt-4", adminShell.dividerSoft)}>
             {decision !== "unavailable" && (
-              <button
+              <AdminButton
                 type="button"
                 disabled={pending || !customerMessage.trim()}
                 onClick={() => submit(decision)}
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-40"
+                size="lg"
               >
                 {pending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Confirmar disponibilidad
-              </button>
+              </AdminButton>
             )}
             {decision === "unavailable" && (
-              <button
+              <AdminButton
                 type="button"
+                variant="danger"
                 disabled={pending || !customerMessage.trim()}
                 onClick={() => submit("unavailable")}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-40"
+                size="lg"
               >
                 {pending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Marcar no disponible
-              </button>
+              </AdminButton>
             )}
           </div>
         </div>
       ) : (
         <div className="mt-4 space-y-4">
           <dl className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2">
-              <dt className="text-xs text-zinc-500">Decisión</dt>
-              <dd className="mt-0.5 text-sm font-medium text-zinc-900">
+            <div className={adminShell.mutedBox}>
+              <dt className={adminShell.fieldLabel}>Decisión</dt>
+              <dd className="mt-0.5 text-sm font-medium text-foreground">
                 {availabilityDecisionLabel(order.availabilityDecision)}
               </dd>
             </div>
             {order.pickupAvailableDate && (
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2">
-                <dt className="text-xs text-zinc-500">Fecha estimada</dt>
-                <dd className="mt-0.5 text-sm font-medium text-zinc-900">
+              <div className={adminShell.mutedBox}>
+                <dt className={adminShell.fieldLabel}>Fecha estimada</dt>
+                <dd className="mt-0.5 text-sm font-medium text-foreground">
                   {formatPickupDateLong(order.pickupAvailableDate)}
                 </dd>
               </div>
             )}
             {order.reviewedAt && (
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2 sm:col-span-2">
-                <dt className="text-xs text-zinc-500">Revisado</dt>
-                <dd className="mt-0.5 text-sm text-zinc-800">
+              <div className={cn(adminShell.mutedBox, "sm:col-span-2")}>
+                <dt className={adminShell.fieldLabel}>Revisado</dt>
+                <dd className="mt-0.5 text-sm text-foreground/90">
                   {formatReviewDateTime(order.reviewedAt)}
                 </dd>
               </div>
@@ -243,43 +249,36 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
           </dl>
 
           {order.customerMessage && (
-            <div className="rounded-lg border border-zinc-100 bg-white px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                Mensaje para el cliente
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
+            <div className={cn(adminShell.card, "px-4 py-3")}>
+              <p className={typography.labelCaps}>Mensaje para el cliente</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
                 {order.customerMessage}
               </p>
             </div>
           )}
 
           {order.adminInternalNote && (
-            <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                Nota interna
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">
+            <div className={adminShell.mutedBox}>
+              <p className={typography.labelCaps}>Nota interna</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">
                 {order.adminInternalNote}
               </p>
             </div>
           )}
 
           {pickupAvailabilityHint(order.availabilityDecision, order.pickupAvailableDate) && (
-            <p className="text-sm font-medium text-zinc-700">
+            <p className="text-sm font-medium text-foreground/85">
               {pickupAvailabilityHint(order.availabilityDecision, order.pickupAvailableDate)}
             </p>
           )}
 
           {waLink && (
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Enviar mensaje por WhatsApp
-            </a>
+            <AdminButton asChild size="lg">
+              <a href={waLink} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4" />
+                Enviar mensaje por WhatsApp
+              </a>
+            </AdminButton>
           )}
         </div>
       )}

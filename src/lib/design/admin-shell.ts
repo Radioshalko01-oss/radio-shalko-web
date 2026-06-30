@@ -1,0 +1,53 @@
+import { radius, typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
+
+/** Shared admin shell class bundles — DESIGN-2B */
+export const adminShell = {
+  layoutBg: "bg-background",
+  sidebar:
+    "sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border/80 bg-card/40 backdrop-blur-sm",
+  main: "min-w-0 flex-1 bg-background",
+  mainPadding: "px-6 py-7 md:px-8 md:py-8",
+
+  card: cn(radius.cardAdmin, "border border-border bg-card"),
+  cardInteractive: cn(
+    radius.cardAdmin,
+    "border border-border bg-card transition-all hover:border-copper/25 hover:shadow-[0_8px_30px_-20px_rgba(0,0,0,0.1)]",
+  ),
+  cardSection: cn(radius.cardAdmin, "border border-border bg-card p-5"),
+  cardToolbar: cn(radius.cardAdmin, "border border-border bg-card p-3"),
+
+  sectionTitle: cn(typography.sectionTitle, "text-base md:text-lg text-foreground"),
+  sectionTitleSm: "text-sm font-semibold text-foreground",
+  sectionDesc: "mt-1 text-sm leading-relaxed text-muted-foreground",
+  fieldLabel: "text-xs text-muted-foreground",
+  groupLabel: typography.eyebrow,
+
+  input: cn(
+    radius.input,
+    "h-9 w-full border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-copper/40 focus:outline-none focus:ring-2 focus:ring-copper/10",
+  ),
+  select: cn(
+    radius.input,
+    "h-9 border border-border bg-card px-2.5 text-sm text-foreground focus:border-copper/40 focus:outline-none focus:ring-2 focus:ring-copper/10",
+  ),
+
+  filterActive: cn(radius.badge, "bg-foreground px-3 text-xs font-medium text-background"),
+  filterInactive: cn(
+    radius.badge,
+    "border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-copper/30 hover:text-foreground",
+  ),
+
+  alertBanner: cn(radius.cardAdmin, "border border-copper/20 bg-copper/5"),
+  divider: "border-border/60",
+  dividerSoft: "border-border/40",
+  emptyState: cn(radius.cardAdmin, "border border-dashed border-border bg-card/60"),
+
+  statValue: "text-2xl font-semibold tabular-nums leading-none text-foreground",
+  statLabel: "text-sm text-muted-foreground",
+  statSub: "mt-1 text-[11px] text-muted-foreground/80",
+
+  backLink:
+    "inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+  mutedBox: cn(radius.input, "bg-muted/40 px-3 py-2"),
+} as const;

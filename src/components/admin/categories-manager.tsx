@@ -46,6 +46,7 @@ import {
   type CategoryInput,
   type SubcategoryInput,
 } from "@/lib/admin/category-actions";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 
 type FieldErrors = Record<string, string[]>;
 type Selected = { type: "category"; id: string } | { type: "subcategory"; id: string };
@@ -71,16 +72,10 @@ const PUBLISH_NOTE = "Los productos asignados aparecerán en el catálogo públi
 const HIDE_NOTE = "Ocultar una categoría la retira del menú y filtros públicos, pero no elimina sus productos.";
 
 function StatusPill({ active }: { active: boolean }) {
-  return active ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-      Activa
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-      Oculta
-    </span>
+  return (
+    <AdminStatusBadge tone={active ? "active" : "inactive"} dot>
+      {active ? "Activa" : "Oculta"}
+    </AdminStatusBadge>
   );
 }
 
