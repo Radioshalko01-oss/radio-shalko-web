@@ -285,15 +285,13 @@ export function ProductCreateForm({
               dragOver ? "border-copper/40 bg-copper/5" : "hover:border-copper/30",
             )}
           >
-            <Upload className="h-8 w-8 text-zinc-300" />
-            <span className="text-sm font-medium text-zinc-700">
-              Arrastra imágenes o haz clic para subir
-            </span>
-            <span className="text-xs text-zinc-400">Hasta {MAX_GALLERY_IMAGES} imágenes</span>
+            <Upload className="h-8 w-8 text-muted-foreground/40" />
+            <span className="text-sm font-medium">Arrastra imágenes o haz clic para subir</span>
+            <span className="text-xs text-muted-foreground">Hasta {MAX_GALLERY_IMAGES} imágenes</span>
           </button>
         ) : (
           <div
-            className={`mt-4 rounded-xl ${dragOver ? "ring-2 ring-zinc-300" : ""}`}
+            className={cn("mt-4 rounded-xl", dragOver && "ring-2 ring-copper/30")}
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -315,26 +313,26 @@ export function ProductCreateForm({
                     dragIndex.current = null;
                     setDragOver(false);
                   }}
-                  className="group relative cursor-grab overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 active:cursor-grabbing"
+                  className="group relative cursor-grab overflow-hidden rounded-xl border border-border bg-muted/30 active:cursor-grabbing"
                 >
                   <div className="relative aspect-square">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img.previewUrl} alt="" className="h-full w-full object-cover" />
                     {index === 0 && (
-                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-foreground/90 px-2 py-0.5 text-[10px] font-semibold text-background">
                         <Star className="h-3 w-3 fill-current" />
                         Principal
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-end gap-0.5 border-t border-zinc-200 bg-white px-2 py-1.5">
+                  <div className={cn("flex items-center justify-end gap-0.5 border-t bg-card px-2 py-1.5", adminShell.dividerSoft)}>
                     {index !== 0 && (
                       <button
                         type="button"
                         aria-label="Marcar como principal"
                         title="Marcar como principal"
                         onClick={() => makeMain(img.id)}
-                        className="grid h-7 w-7 place-items-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                        className={cn(adminShell.iconAction, "h-7 w-7 rounded-md border-0")}
                       >
                         <Star className="h-3.5 w-3.5" />
                       </button>
@@ -344,7 +342,7 @@ export function ProductCreateForm({
                       aria-label="Eliminar"
                       title="Eliminar"
                       onClick={() => removeImage(img.id)}
-                      className="grid h-7 w-7 place-items-center rounded-md text-zinc-500 hover:bg-red-50 hover:text-red-600"
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -356,7 +354,10 @@ export function ProductCreateForm({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-zinc-200 text-zinc-400 transition-colors hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-600"
+                  className={cn(
+                    adminShell.emptyState,
+                    "flex aspect-square flex-col items-center justify-center gap-1.5 border-2 border-dashed text-muted-foreground transition-colors hover:border-copper/30 hover:text-foreground",
+                  )}
                 >
                   <Plus className="h-6 w-6" />
                   <span className="text-xs font-medium">Agregar</span>
@@ -583,17 +584,6 @@ function Toggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-200"
-      />
-      <span>
-        <span className="block text-sm font-medium text-zinc-900">{label}</span>
-        <span className="block text-xs text-zinc-500">{description}</span>
-      </span>
-    </label>
+    <AdminToggle label={label} description={description} checked={checked} onChange={onChange} />
   );
 }

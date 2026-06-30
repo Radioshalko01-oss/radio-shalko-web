@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { AdminButton } from "@/components/admin/admin-button";
 import { SellerSaleSummary } from "@/components/admin/seller-sale-summary";
 import { useSellerSession } from "@/hooks/use-seller-session";
 import { formatPrice } from "@/lib/catalog/format";
@@ -359,20 +360,22 @@ export function SellerPos({
               La venta actual contiene productos.
             </p>
             <div className="mt-6 flex gap-3">
-              <button
+              <AdminButton
                 type="button"
+                variant="secondary"
+                className="h-11 flex-1 rounded-xl"
                 onClick={() => setConfirmNewSale(false)}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
               >
                 Cancelar
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 type="button"
+                variant="primary"
+                className="h-11 flex-1 rounded-xl"
                 onClick={confirmNewSaleAction}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white hover:bg-zinc-800"
               >
                 Iniciar nueva venta
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>
@@ -397,16 +400,14 @@ export function SellerPos({
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/admin"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+            className={cn(adminShell.iconAction, "h-11 w-11 rounded-xl")}
             aria-label="Volver al panel"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-              Radio Shalko POS
-            </p>
-            <h1 className="truncate text-lg font-semibold tracking-tight text-zinc-900 md:text-xl">
+            <p className={adminShell.groupLabel}>Radio Shalko POS</p>
+            <h1 className={cn(adminShell.sectionTitle, "truncate text-lg md:text-xl")}>
               Modo vendedor
             </h1>
           </div>
@@ -416,48 +417,42 @@ export function SellerPos({
             type="button"
             onClick={() => setShowHistory((v) => !v)}
             className={cn(
-              "grid h-11 w-11 place-items-center rounded-xl border transition-colors",
-              showHistory
-                ? "border-zinc-900 bg-zinc-900 text-white"
-                : "border-zinc-200 text-zinc-600 hover:bg-zinc-50",
+              adminShell.iconAction,
+              "h-11 w-11 rounded-xl",
+              showHistory && adminShell.iconActionActive,
             )}
             aria-label="Historial de ventas"
           >
             <History className="h-5 w-5" />
           </button>
-          <button
+          <AdminButton
             type="button"
+            variant="primary"
+            className="h-11 rounded-xl px-4"
             onClick={requestNewSale}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nueva venta</span>
             <span className="sm:hidden">Nueva</span>
-          </button>
+          </AdminButton>
         </div>
       </header>
 
       {showHistory && history.length > 0 && (
         <div className="shrink-0 border-b border-border bg-muted/30 px-4 py-3 md:px-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
-            Últimas ventas
-          </p>
+          <p className={adminShell.groupLabel}>Últimas ventas</p>
           <ul className="mt-2 flex gap-2 overflow-x-auto pb-1">
             {history.map((h) => (
               <li
                 key={`${h.id}-${h.date}`}
-                className="shrink-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs"
+                className={cn(adminShell.mutedBox, "shrink-0 rounded-xl border border-border/60 text-xs")}
               >
-                <span className="font-semibold text-zinc-900">
-                  {formatSaleLabel(h.id)}
-                </span>
-                <span className="mx-1.5 text-zinc-300">·</span>
-                <span className="text-zinc-500">{formatSaleTime(h.date)}</span>
-                <span className="mx-1.5 text-zinc-300">·</span>
-                <span className="font-medium tabular-nums text-zinc-800">
-                  {formatPrice(h.total)}
-                </span>
-                <span className="ml-1 text-zinc-400">
+                <span className="font-semibold">{formatSaleLabel(h.id)}</span>
+                <span className="mx-1.5 text-muted-foreground/40">·</span>
+                <span className="text-muted-foreground">{formatSaleTime(h.date)}</span>
+                <span className="mx-1.5 text-muted-foreground/40">·</span>
+                <span className="font-medium tabular-nums">{formatPrice(h.total)}</span>
+                <span className="ml-1 text-muted-foreground/80">
                   ({h.productCount} prod.)
                 </span>
               </li>
@@ -629,15 +624,16 @@ export function SellerPos({
                           <p className="text-base font-semibold tabular-nums text-zinc-900">
                             {formatPrice(p.price)}
                           </p>
-                          <button
+                          <AdminButton
                             type="button"
+                            variant="primary"
+                            className="h-11 min-w-[44px] rounded-xl px-4"
                             onClick={() => addProduct(p.id)}
                             disabled={isCompleted}
-                            className="inline-flex h-11 min-w-[44px] items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40"
                           >
                             <Plus className="h-4 w-4" />
                             Agregar
-                          </button>
+                          </AdminButton>
                         </div>
                       </div>
                     </li>
@@ -649,23 +645,23 @@ export function SellerPos({
         </section>
 
         {/* Carrito / sesión */}
-        <aside className="flex min-h-0 flex-col bg-white lg:max-h-full">
+        <aside className="flex min-h-0 flex-col bg-card lg:max-h-full">
           {/* Sesión activa */}
           <div className="shrink-0 border-b border-border/60 bg-muted/30 px-4 py-4 md:px-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
+                <p className={adminShell.groupLabel}>
                   {isCompleted ? "Venta finalizada" : "Venta actual"}
                 </p>
-                <p className="mt-0.5 text-xl font-semibold tracking-tight text-zinc-900">
+                <p className="mt-0.5 text-xl font-semibold tracking-tight">
                   {formatSaleLabel(displaySessionNumber)}
                 </p>
-                <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Clock className="h-3.5 w-3.5" />
                   Iniciada {formatSaleTime(session.startedAt)}
                 </p>
               </div>
-              <ShoppingBag className="h-6 w-6 shrink-0 text-zinc-300" />
+              <ShoppingBag className="h-6 w-6 shrink-0 text-muted-foreground/40" />
             </div>
             {branchId && !isCompleted && (
               <p className="mt-2 text-[10px] font-medium text-zinc-500">
@@ -773,123 +769,46 @@ export function SellerPos({
               )}
               {isCompleted || finalizeMode ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setShowSummary(true)}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
-                  >
+                  <AdminButton type="button" variant="secondary" size="lg" className="h-12 w-full rounded-xl" onClick={() => setShowSummary(true)}>
                     <Monitor className="h-4 w-4" />
                     Presentar al cliente
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleShareCart}
-                    disabled={shareLoading || cartRows.length === 0}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
-                  >
-                    {shareCopied ? (
-                      <>
-                        <Check className="h-4 w-4 text-emerald-600" />
-                        Enlace copiado
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="h-4 w-4" />
-                        {shareLoading ? "Generando…" : "Compartir carrito"}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleWhatsAppWithLink}
-                    disabled={shareLoading || cartRows.length === 0}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-40"
-                  >
+                  </AdminButton>
+                  <AdminButton type="button" variant="secondary" className="h-11 w-full rounded-xl" onClick={handleShareCart} disabled={shareLoading || cartRows.length === 0}>
+                    {shareCopied ? (<><Check className="h-4 w-4 text-emerald-600" />Enlace copiado</>) : (<><Link2 className="h-4 w-4" />{shareLoading ? "Generando…" : "Compartir carrito"}</>)}
+                  </AdminButton>
+                  <AdminButton type="button" className="h-12 w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleWhatsAppWithLink} disabled={shareLoading || cartRows.length === 0}>
                     <MessageCircle className="h-4 w-4" />
                     Enviar por WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={copySummary}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4 text-emerald-600" />
-                        Copiado
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" />
-                        Copiar resumen
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissCompleted}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 text-sm font-semibold text-white hover:bg-zinc-800"
-                  >
+                  </AdminButton>
+                  <AdminButton type="button" variant="secondary" className="h-11 w-full rounded-xl" onClick={copySummary}>
+                    {copied ? (<><Check className="h-4 w-4 text-emerald-600" />Copiado</>) : (<><Copy className="h-4 w-4" />Copiar resumen</>)}
+                  </AdminButton>
+                  <AdminButton type="button" variant="primary" size="lg" className="h-12 w-full rounded-xl" onClick={dismissCompleted}>
                     <Plus className="h-4 w-4" />
                     Iniciar nueva venta
-                  </button>
+                  </AdminButton>
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setShowSummary(true)}
-                    disabled={cartRows.length === 0}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-semibold text-zinc-800 transition-colors hover:bg-zinc-50 disabled:opacity-40"
-                  >
+                  <AdminButton type="button" variant="secondary" size="lg" className="h-12 w-full rounded-xl" onClick={() => setShowSummary(true)} disabled={cartRows.length === 0}>
                     <Monitor className="h-4 w-4" />
                     Presentar al cliente
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleShareCart}
-                    disabled={shareLoading || cartRows.length === 0}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
-                  >
-                    {shareCopied ? (
-                      <>
-                        <Check className="h-4 w-4 text-emerald-600" />
-                        Enlace copiado
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="h-4 w-4" />
-                        {shareLoading ? "Generando…" : "Compartir carrito"}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleWhatsAppWithLink}
-                    disabled={shareLoading || cartRows.length === 0}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-40"
-                  >
+                  </AdminButton>
+                  <AdminButton type="button" variant="secondary" className="h-11 w-full rounded-xl" onClick={handleShareCart} disabled={shareLoading || cartRows.length === 0}>
+                    {shareCopied ? (<><Check className="h-4 w-4 text-emerald-600" />Enlace copiado</>) : (<><Link2 className="h-4 w-4" />{shareLoading ? "Generando…" : "Compartir carrito"}</>)}
+                  </AdminButton>
+                  <AdminButton type="button" className="h-12 w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleWhatsAppWithLink} disabled={shareLoading || cartRows.length === 0}>
                     <MessageCircle className="h-4 w-4" />
                     Enviar por WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleFinalize}
-                    disabled={cartRows.length === 0}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:opacity-40"
-                  >
+                  </AdminButton>
+                  <AdminButton type="button" variant="primary" size="lg" className="h-12 w-full rounded-xl" onClick={handleFinalize} disabled={cartRows.length === 0}>
                     <Check className="h-4 w-4" />
                     Finalizar venta
-                  </button>
-                  <button
-                    type="button"
-                    onClick={copySummary}
-                    disabled={cartRows.length === 0}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
-                  >
+                  </AdminButton>
+                  <AdminButton type="button" variant="secondary" className="h-11 w-full rounded-xl" onClick={copySummary} disabled={cartRows.length === 0}>
                     <Copy className="h-4 w-4" />
                     Copiar resumen
-                  </button>
+                  </AdminButton>
                 </>
               )}
             </div>

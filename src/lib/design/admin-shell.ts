@@ -69,4 +69,9 @@ export const adminShell = {
   backLink:
     "inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
   mutedBox: cn(radius.input, "bg-muted/40 px-3 py-2"),
+
+  /** Icon-only action in tables/lists */
+  iconAction:
+    "grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground disabled:opacity-40",
+  iconActionActive: "border-copper/30 bg-copper/5 text-foreground",
 } as const;

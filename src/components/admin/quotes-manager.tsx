@@ -34,6 +34,7 @@ import {
 } from "@/lib/admin/quote-constants";
 import { updateQuoteStatus } from "@/lib/admin/quote-actions";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { AdminButton } from "@/components/admin/admin-button";
 import { AdminEmptyState, adminInputClass, adminSelectClass } from "@/components/admin/admin-patterns";
 import { adminShell } from "@/lib/design/admin-shell";
 import { cn } from "@/lib/utils";
@@ -429,57 +430,55 @@ export function QuotesManager({
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {whatsappHref && (
-                    <a
-                      href={whatsappHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-sm font-medium text-white hover:bg-zinc-800"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      Abrir WhatsApp
-                    </a>
+                    <AdminButton asChild variant="primary" size="sm">
+                      <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="h-4 w-4" />
+                        Abrir WhatsApp
+                      </a>
+                    </AdminButton>
                   )}
-                  <button
+                  <AdminButton
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={copySummary}
                     disabled={!summaryText}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
                   >
                     <Copy className="h-4 w-4" />
                     {copied ? "Copiado" : "Copiar resumen"}
-                  </button>
+                  </AdminButton>
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div className="border-b border-zinc-100 px-4 py-3">
-                  <h3 className="text-sm font-semibold text-zinc-900">
-                    Productos <span className="text-zinc-400">({detail.items.length})</span>
+              <div className={adminShell.tableShell}>
+                <div className={cn("border-b px-4 py-3", adminShell.dividerSoft)}>
+                  <h3 className={adminShell.sectionTitleSm}>
+                    Productos <span className="text-muted-foreground">({detail.items.length})</span>
                   </h3>
                 </div>
                 {detail.items.length === 0 ? (
-                  <p className="px-4 py-10 text-center text-sm text-zinc-500">Sin productos.</p>
+                  <AdminEmptyState title="Sin productos" description="Esta solicitud no tiene líneas." className="py-10" />
                 ) : (
-                  <ul className="divide-y divide-zinc-100">
+                  <ul className={cn("divide-y", adminShell.dividerSoft)}>
                     {detail.items.map((it) => (
                       <li key={it.id} className="flex gap-3 px-4 py-3">
-                        <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-md border border-zinc-200 bg-zinc-50">
+                        <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-muted/40">
                           {it.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={it.image} alt={it.name} className="h-full w-full object-cover" />
                           ) : (
-                            <Tag className="h-4 w-4 text-zinc-300" />
+                            <Tag className="h-4 w-4 text-muted-foreground/40" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-zinc-900">{it.name}</p>
-                          <p className="text-xs text-zinc-500">
+                          <p className="truncate text-sm font-medium">{it.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             {it.brandName ?? "Sin marca"}
                             {it.sku ? ` · SKU ${it.sku}` : ""}
                           </p>
-                          <p className="mt-1 text-xs text-zinc-600">
+                          <p className="mt-1 text-xs text-muted-foreground">
                             {it.quantity} × {formatPrice(it.unitPrice)} ={" "}
-                            <span className="font-semibold text-zinc-900">
+                            <span className="font-semibold text-foreground">
                               {formatPrice(it.subtotal)}
                             </span>
                           </p>
@@ -487,7 +486,7 @@ export function QuotesManager({
                         <Link
                           href={`/admin/productos/${it.productId}/editar`}
                           title="Editar producto"
-                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50"
+                          className={adminShell.iconAction}
                         >
                           <SquarePen className="h-4 w-4" />
                         </Link>
@@ -496,7 +495,7 @@ export function QuotesManager({
                   </ul>
                 )}
                 {detail.items.length > 0 && (
-                  <div className="flex justify-end border-t border-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-900">
+                  <div className={cn("flex justify-end border-t px-4 py-3 text-sm font-semibold", adminShell.dividerSoft)}>
                     Total estimado: {formatPrice(detail.total)}
                   </div>
                 )}

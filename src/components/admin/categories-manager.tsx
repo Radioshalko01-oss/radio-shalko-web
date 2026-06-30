@@ -47,7 +47,8 @@ import {
   type SubcategoryInput,
 } from "@/lib/admin/category-actions";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
-import { adminInputClass } from "@/components/admin/admin-patterns";
+import { AdminButton } from "@/components/admin/admin-button";
+import { AdminEmptyState, adminInputClass } from "@/components/admin/admin-patterns";
 import { adminShell } from "@/lib/design/admin-shell";
 import { cn } from "@/lib/utils";
 
@@ -127,20 +128,17 @@ function Modal({
   wide?: boolean;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-zinc-900/40 p-4 backdrop-blur-sm sm:p-6"
-      onClick={onClose}
-    >
+    <div className={adminShell.modalOverlay} onClick={onClose}>
       <div
-        className={`mt-6 w-full ${wide ? "max-w-2xl" : "max-w-lg"} rounded-2xl border border-zinc-200 bg-white shadow-2xl`}
+        className={cn(adminShell.modalPanel, wide ? "max-w-2xl" : "max-w-lg", "mt-6")}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-zinc-100 px-5 py-4">
+        <div className={cn("flex items-start justify-between border-b px-5 py-4", adminShell.dividerSoft)}>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-            {subtitle && <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p>}
+            <h2 className={adminShell.sectionTitleSm}>{title}</h2>
+            {subtitle && <p className={cn("mt-0.5", adminShell.fieldLabel)}>{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700">
+          <button type="button" onClick={onClose} className="text-muted-foreground transition-colors hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -395,31 +393,28 @@ export function CategoriesManager({
         </p>
       )}
 
-      <div className="grid items-start gap-5 md:grid-cols-[300px_1fr]">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(260px,300px)_1fr]">
         {/* ───────── Lista compacta de categorías ───────── */}
         <aside className={adminShell.card}>
-          <div className="border-b border-zinc-100 p-3">
+          <div className={cn("border-b p-3", adminShell.dividerSoft)}>
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar…"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-8 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+                className={cn(adminInputClass(), "pl-8")}
               />
             </div>
-            <button
-              onClick={openCreateCat}
-              className="mt-2 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-            >
+            <AdminButton type="button" variant="primary" className="mt-2 h-9 w-full" onClick={openCreateCat}>
               <Plus className="h-4 w-4" />
               Nueva categoría
-            </button>
+            </AdminButton>
           </div>
 
           <nav className="max-h-[70vh] overflow-y-auto p-2">
             {treeList.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-zinc-400">Sin resultados.</p>
+              <AdminEmptyState title="Sin resultados" description="Prueba otro término de búsqueda." className="py-8" />
             ) : (
               <ul className="space-y-0.5">
                 {treeList.map((c) => {
@@ -430,9 +425,10 @@ export function CategoriesManager({
                   return (
                     <li key={c.id}>
                       <div
-                        className={`group flex items-center gap-1 rounded-lg pr-1 ${
-                          isSel ? "bg-zinc-100 ring-1 ring-zinc-200" : "hover:bg-zinc-50"
-                        }`}
+                        className={cn(
+                          "group flex items-center gap-1 rounded-lg pr-1",
+                          isSel ? "bg-copper/5 ring-1 ring-copper/20" : "hover:bg-muted/30",
+                        )}
                       >
                         <button
                           onClick={() => toggleExpand(c.id)}
@@ -635,14 +631,10 @@ export function CategoriesManager({
             >
               Cancelar
             </button>
-            <button
-              onClick={submitCat}
-              disabled={pending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
-            >
+            <AdminButton type="button" onClick={submitCat} disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {catForm.id ? "Guardar cambios" : "Crear categoría"}
-            </button>
+            </AdminButton>
           </div>
         </Modal>
       )}
@@ -709,14 +701,10 @@ export function CategoriesManager({
             >
               Cancelar
             </button>
-            <button
-              onClick={submitSub}
-              disabled={pending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
-            >
+            <AdminButton type="button" onClick={submitSub} disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {subForm.id ? "Guardar cambios" : "Crear subcategoría"}
-            </button>
+            </AdminButton>
           </div>
         </Modal>
       )}
