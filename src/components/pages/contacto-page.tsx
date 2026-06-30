@@ -2,6 +2,7 @@
 
 import { Mail, MessageCircle, Phone, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   CONTACT_CHANNELS,
   SITE_CONTACT,
@@ -15,16 +16,11 @@ export function ContactoPage() {
     <div className="pt-28 md:pt-32">
       {/* Hero */}
       <section className="mx-auto max-w-7xl px-5 md:px-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Contacto
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight md:text-4xl">
-          Estamos a un mensaje
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-          Resolvemos dudas, cotizamos pedidos y agendamos visitas a taller. Elige el canal que
-          prefieras.
-        </p>
+        <PageHeader
+          eyebrow="Contacto"
+          title="Estamos a un mensaje"
+          description="Resolvemos dudas, cotizamos pedidos y agendamos visitas a taller. Elige el canal que prefieras."
+        />
       </section>
 
       {/* Two stores */}

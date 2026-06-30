@@ -7,6 +7,7 @@ import { BRANDS } from "@/lib/products";
 import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ArrowUpRight } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 
 export function MarcasPage({
@@ -62,15 +63,11 @@ export function MarcasPage({
       
         {/* Hero */}
         <section id="marcas" className="mx-auto max-w-7xl px-5 md:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Marcas
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            Las marcas que tocan los profesionales
-          </h1>
-          <p className="mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-            Recorre cada fabricante y descubre los productos disponibles. Distribuidor autorizado con garantía de origen.
-          </p>
+          <PageHeader
+            eyebrow="Marcas"
+            title="Las marcas que tocan los profesionales"
+            description="Recorre cada fabricante y descubre los productos disponibles. Distribuidor autorizado con garantía de origen."
+          />
         </section>
 
 

@@ -6,6 +6,8 @@ import { ArrowLeft, MessageCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { typography } from "@/lib/design/tokens";
 import { useQuote } from "@/hooks/use-quote";
 import { fetchProductsByIds } from "@/lib/catalog/actions";
 import { formatPrice } from "@/lib/catalog/format";
@@ -101,12 +103,12 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
         )}
       </nav>
 
-      <header className="mt-6 md:mt-8">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
-          {isAdmin ? "Carrito tienda" : "Tu carrito"}
-        </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground md:text-base">
-          {isAdmin ? (
+      <PageHeader
+        variant="account"
+        className="mt-6 md:mt-8"
+        title={isAdmin ? "Carrito tienda" : "Tu carrito"}
+        description={
+          isAdmin ? (
             count === 0
               ? "Agrega productos desde el catálogo."
               : "Usa este carrito para preparar una selección de productos y compartirla con un cliente."
@@ -114,9 +116,9 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
             "Agrega productos desde el catálogo."
           ) : (
             `${count} producto${count === 1 ? "" : "s"} · ${units} unidad${units === 1 ? "" : "es"}`
-          )}
-        </p>
-      </header>
+          )
+        }
+      />
 
       {loading && ids.length > 0 ? (
         <p className="mt-12 text-sm text-muted-foreground">Cargando tu carrito…</p>
@@ -323,7 +325,7 @@ function CartSummaryPanel({
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
           Total estimado
         </p>
-        <p className="mt-1 font-display text-2xl font-semibold tracking-tight tabular-nums md:text-3xl">
+        <p className={cn("mt-1", typography.priceTotal)}>
           {formatPrice(total)}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">

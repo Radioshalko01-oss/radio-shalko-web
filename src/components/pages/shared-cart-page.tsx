@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { Check, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
+import { typography } from "@/lib/design/tokens";
 import { useQuote } from "@/hooks/use-quote";
 import { formatPrice } from "@/lib/catalog/format";
 import { POS_SUMMARY_DISCLAIMER, formatSaleDateTime } from "@/lib/admin/seller-summary";
 import type { SharedCartView } from "@/lib/shared-cart/queries";
 import { buildPublicSharedCartWhatsAppHref } from "@/lib/shared-cart/messages";
+import { cn } from "@/lib/utils";
 
 export function SharedCartPage({ cart }: { cart: SharedCartView }) {
   const router = useRouter();
@@ -157,7 +159,7 @@ export function SharedCartPage({ cart }: { cart: SharedCartView }) {
               {units === 1 ? "" : "es"}
             </p>
           </div>
-          <p className="font-display text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+          <p className={cn("font-display tabular-nums", typography.priceTotal)}>
             {formatPrice(total)}
           </p>
         </div>

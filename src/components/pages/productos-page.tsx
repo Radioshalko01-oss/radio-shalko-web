@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { LayoutGrid, Grid2x2, List, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -174,15 +175,11 @@ export function ProductosPage({
     <div className="pt-28 md:pt-32">
         {/* Header */}
         <section id="catalogo" className="mx-auto max-w-7xl px-5 md:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Catálogo
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            Productos
-          </h1>
-          <p className="mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-            {products.length}+ instrumentos seleccionados y equipo de audio profesional para todos los niveles.
-          </p>
+          <PageHeader
+            eyebrow="Catálogo"
+            title="Productos"
+            description={`${products.length}+ instrumentos seleccionados y equipo de audio profesional para todos los niveles.`}
+          />
         </section>
 
 

@@ -3,6 +3,7 @@
 import { Check, ShoppingBag } from "lucide-react";
 import type { CartProductRow } from "@/hooks/use-cart-products";
 import { formatPrice } from "@/lib/catalog/format";
+import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
 
 const TRUST_ITEMS = [
@@ -89,7 +90,7 @@ export function CheckoutSummary({ rows, compact, className }: CheckoutSummaryPro
         </div>
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-xs font-medium text-foreground">Total estimado</span>
-          <span className="font-display text-xl font-semibold tabular-nums tracking-tight">
+          <span className={cn("tabular-nums", typography.priceTotal)}>
             {formatPrice(subtotal)}
           </span>
         </div>

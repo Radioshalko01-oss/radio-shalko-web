@@ -3,11 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Info, Store } from "lucide-react";
+import { CheckCircle2, Info, Store } from "lucide-react";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { CheckoutSubmitBlock } from "@/components/checkout/checkout-submit-block";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCartProducts } from "@/hooks/use-cart-products";
@@ -137,22 +138,12 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 pb-40 sm:px-6 md:py-20 md:pb-24 lg:px-8">
-      <Link
-        href="/carrito"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Volver al carrito
-      </Link>
-
-      <header className="mt-5 md:mt-6">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
-          Solicitar compra
-        </h1>
-        <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago.
-        </p>
-      </header>
+      <PageHeader
+        variant="account"
+        backLink={{ href: "/carrito", label: "Volver al carrito", icon: "arrow" }}
+        title="Solicitar compra"
+        description="Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago."
+      />
 
       <div className="mt-6 md:hidden">
         <CheckoutSummary rows={rows} compact />

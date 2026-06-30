@@ -7,6 +7,7 @@ import { useFavorites } from "@/hooks/use-favorites";
 import { fetchProductsByIds } from "@/lib/catalog/actions";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export function FavoritosPage() {
   const { ids } = useFavorites();
@@ -37,17 +38,15 @@ export function FavoritosPage() {
     <div className="pt-28 md:pt-32">
         <section className="border-b border-border py-12 md:py-16">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
-              Tu selección
-            </p>
-            <h1 className="mt-3 font-display text-3xl font-medium tracking-tight md:text-5xl">
-              Favoritos
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground md:text-base">
-              {count === 0
-                ? "Aún no tienes productos marcados como favoritos."
-                : `${count} producto${count === 1 ? "" : "s"} guardado${count === 1 ? "" : "s"}.`}
-            </p>
+            <PageHeader
+              eyebrow="Tu selección"
+              title="Favoritos"
+              description={
+                count === 0
+                  ? "Aún no tienes productos marcados como favoritos."
+                  : `${count} producto${count === 1 ? "" : "s"} guardado${count === 1 ? "" : "s"}.`
+              }
+            />
           </div>
         </section>
 

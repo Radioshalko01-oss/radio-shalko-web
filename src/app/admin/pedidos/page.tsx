@@ -6,6 +6,7 @@ import {
 import { getAdminOrderNotificationSummary } from "@/lib/orders/notification-queries";
 import { OrdersManager } from "@/components/admin/orders-manager";
 import { OrdersSummaryCards } from "@/components/admin/orders-summary-cards";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{
   q?: string;
@@ -70,12 +71,12 @@ export default async function AdminPedidosPage({
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Pedidos</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500">
-          Revisa las solicitudes de compra recibidas y prepara la confirmación de disponibilidad.
-        </p>
-      </div>
+      <PageHeader
+        variant="admin"
+        className="mb-5"
+        title="Pedidos"
+        description="Revisa las solicitudes de compra recibidas y prepara la confirmación de disponibilidad."
+      />
 
       <OrdersSummaryCards summary={summary} />
 

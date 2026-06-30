@@ -5,6 +5,7 @@ import {
 } from "@/lib/admin/product-queries";
 import { getBrands, getCategoriesTree } from "@/lib/catalog/queries";
 import { ProductsManager } from "@/components/admin/products-manager";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{
   q?: string;
@@ -61,14 +62,12 @@ export default async function AdminProductosPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Productos</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            {result.total} producto{result.total === 1 ? "" : "s"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        variant="admin"
+        className="mb-6"
+        title="Productos"
+        description={`${result.total} producto${result.total === 1 ? "" : "s"}`}
+      />
 
       <ProductsManager
         result={result}

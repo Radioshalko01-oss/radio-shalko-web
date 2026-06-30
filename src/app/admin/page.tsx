@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight, ClipboardList, Eye, EyeOff, Package, Plus } from "lucide-react";
 import { listAdminProducts } from "@/lib/admin/product-queries";
 import { getAdminOrderNotificationSummary } from "@/lib/orders/notification-queries";
+import { PageHeader } from "@/components/ui/page-header";
+import { radius } from "@/lib/design/tokens";
 
 export default async function AdminDashboardPage() {
   const [products, orderSummary] = await Promise.all([
@@ -30,23 +32,20 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Resumen del catálogo de Radio Shalko.
-          </p>
-        </div>
-        <Link
-          href="/admin/productos/nuevo"
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo producto
-        </Link>
-      </div>
+      <PageHeader
+        variant="admin"
+        title="Dashboard"
+        description="Resumen del catálogo de Radio Shalko."
+        actions={
+          <Link
+            href="/admin/productos/nuevo"
+            className={`inline-flex h-9 shrink-0 items-center gap-1.5 ${radius.buttonAdmin} bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800`}
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo producto
+          </Link>
+        }
+      />
 
       <dl className="mt-8 grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => {
@@ -61,7 +60,7 @@ export default async function AdminDashboardPage() {
                 <dt className="text-sm text-zinc-500">{stat.label}</dt>
                 <Icon className="h-4 w-4 text-zinc-300 transition-colors group-hover:text-zinc-500" />
               </div>
-              <dd className="mt-2 text-3xl font-semibold text-zinc-900">
+              <dd className="mt-2 text-2xl font-semibold text-zinc-900">
                 {stat.value}
               </dd>
             </Link>

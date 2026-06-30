@@ -21,6 +21,8 @@ import {
 } from "@/lib/notifications/customer-notification-queries";
 import { getQuoteItems } from "@/lib/quotes/actions";
 import { signOut } from "@/lib/auth/actions";
+import { typography } from "@/lib/design/tokens";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Mi cuenta | Radio Shalko",
@@ -51,7 +53,7 @@ export default async function CuentaPage() {
           {(account.email?.[0] ?? "U").toUpperCase()}
         </span>
         <div className="min-w-0">
-          <h1 className="truncate font-display text-2xl font-semibold capitalize tracking-tight md:text-3xl">
+          <h1 className={cn("truncate capitalize", typography.pageTitle)}>
             {username}
           </h1>
           <p className="truncate text-sm text-muted-foreground">{email}</p>

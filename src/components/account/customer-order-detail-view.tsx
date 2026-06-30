@@ -9,6 +9,7 @@ import {
   customerOrderStatusUi,
   customerPickupHint,
 } from "@/lib/orders/customer-status-labels";
+import { typography } from "@/lib/design/tokens";
 import type { CustomerOrderDetail } from "@/lib/orders/customer-queries";
 import { CustomerOrderLineRow } from "@/components/account/customer-orders-list";
 
@@ -95,7 +96,7 @@ export function CustomerOrderDetailView({
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Total estimado</p>
-            <p className="text-2xl font-semibold text-foreground">{formatPrice(order.total)}</p>
+            <p className={typography.priceTotal}>{formatPrice(order.total)}</p>
           </div>
         </div>
       </div>

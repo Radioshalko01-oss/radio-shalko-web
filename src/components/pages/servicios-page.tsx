@@ -12,6 +12,7 @@ import {
   Check,
   ArrowUpRight,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 const TECH_INSTRUMENTS = {
   equipo: ["Guitarras acústicas", "Guitarras eléctricas", "Electroacústicas", "Bajos acústicos y eléctricos"],
@@ -91,15 +92,12 @@ export function ServiciosPage() {
       
         {/* Hero */}
         <section className="mx-auto max-w-7xl px-5 md:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Servicios
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            Taller, asesoría y garantía
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-            Más de 40 años respaldando a músicos y técnicos. Cuidamos tu instrumento como si fuera nuestro.
-          </p>
+          <PageHeader
+            eyebrow="Servicios"
+            title="Taller, asesoría y garantía"
+            description="Más de 40 años respaldando a músicos y técnicos. Cuidamos tu instrumento como si fuera nuestro."
+            titleClassName="max-w-2xl"
+          />
         </section>
 
 

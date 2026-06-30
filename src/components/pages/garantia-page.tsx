@@ -2,6 +2,7 @@
 
 import { ShieldCheck, Wrench, Clock, FileText } from "lucide-react";
 import { whatsappHref } from "@/lib/site-contact";
+import { PageHeader } from "@/components/ui/page-header";
 
 const BLOCKS = [
   {
@@ -35,16 +36,12 @@ export function GarantiaPage() {
     <div className="pt-28 md:pt-32">
       <section id="garantia-oficial" className="border-b border-border py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
-            Soporte y respaldo
-          </p>
-          <h1 className="mt-4 max-w-3xl font-display text-4xl font-medium tracking-tight md:text-5xl">
-            Garantía Radio Shalko
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-muted-foreground md:text-lg">
-            Compras tranquilo. Toda nuestra línea está respaldada por garantía oficial,
-            servicio técnico autorizado y atención directa.
-          </p>
+          <PageHeader
+            eyebrow="Soporte y respaldo"
+            title="Garantía Radio Shalko"
+            description="Compras tranquilo. Toda nuestra línea está respaldada por garantía oficial, servicio técnico autorizado y atención directa."
+            titleClassName="max-w-3xl"
+          />
         </div>
       </section>
 
