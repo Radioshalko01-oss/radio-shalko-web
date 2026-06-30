@@ -4,15 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { deleteProduct } from "@/lib/admin/product-actions";
+import { AdminButton } from "@/components/admin/admin-button";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Variant = "icon" | "button";
 
-/**
- * Botón de eliminación con modal de confirmación obligatoria.
- * - variant="icon": para el listado (acción compacta).
- * - variant="button": para la pantalla de edición.
- * Borra DEFINITIVAMENTE el producto (acción irreversible).
- */
 export function ProductDeleteButton({
   id,
   name,
@@ -64,39 +61,34 @@ export function ProductDeleteButton({
           onClick={() => setOpen(true)}
           aria-label="Eliminar producto"
           title="Eliminar producto"
-          className="grid h-[30px] w-[30px] place-items-center rounded-md border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          className="grid h-[30px] w-[30px] place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-        >
+        <AdminButton type="button" onClick={() => setOpen(true)} variant="danger">
           <Trash2 className="h-4 w-4" />
           Eliminar producto
-        </button>
+        </AdminButton>
       )}
 
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className={cn(adminShell.modalOverlay, "z-[100] items-center")}>
           <div
-            className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm"
-            onClick={() => !pending && setOpen(false)}
-          />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
+            className={cn(adminShell.modalPanel, "max-w-md p-6")}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start gap-3.5">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-50 text-red-600">
                 <AlertTriangle className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <h2 className="text-base font-semibold text-zinc-900">
+                <h2 className="text-base font-semibold text-foreground">
                   ¿Deseas eliminar este producto?
                 </h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  <span className="font-medium text-zinc-700">{name}</span> se
-                  eliminará para siempre. Esta acción no se puede deshacer.
+                <p className="mt-1 text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground/90">{name}</span> se eliminará para
+                  siempre. Esta acción no se puede deshacer.
                 </p>
               </div>
             </div>
@@ -107,24 +99,24 @@ export function ProductDeleteButton({
               </p>
             )}
 
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+              <AdminButton
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="inline-flex h-9 items-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
+                variant="secondary"
               >
                 Cancelar
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 type="button"
                 onClick={confirm}
                 disabled={pending}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                variant="dangerSolid"
               >
                 {pending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Eliminar definitivamente
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>

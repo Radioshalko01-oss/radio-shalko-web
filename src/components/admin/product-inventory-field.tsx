@@ -5,10 +5,13 @@ import { useMemo, useState } from "react";
 import { Warehouse } from "lucide-react";
 import { updateProductInventory } from "@/lib/admin/product-actions";
 import type { CatalogBranch, CatalogInventory } from "@/lib/catalog/types";
+import { AdminButton } from "@/components/admin/admin-button";
+import { AdminFieldGroup, adminInputClass } from "@/components/admin/admin-patterns";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Status = "idle" | "saving" | "success" | "error";
 
-/** Convierte el valor del input a entero. "" → 0. null si es inválido. */
 function parseQuantity(raw: string): number | null {
   const v = raw.trim();
   if (v === "") return 0;
@@ -28,7 +31,6 @@ export function ProductInventoryField({
 }) {
   const router = useRouter();
 
-  // Cantidad actual por sucursal (desde product.inventory; default 0).
   const initial = useMemo(() => {
     const byBranch = new Map(inventory.map((i) => [i.branch.id, i.quantity]));
     const map: Record<string, string> = {};
@@ -93,38 +95,28 @@ export function ProductInventoryField({
 
   if (branches.length === 0) {
     return (
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">
-          Inventario por sucursal
-        </h2>
-        <p className="mt-2 text-sm text-zinc-500">
-          No hay sucursales activas configuradas.
-        </p>
+      <section className={cn(adminShell.cardSection, "p-6")}>
+        <h2 className={adminShell.sectionTitleSm}>Inventario por sucursal</h2>
+        <p className={adminShell.sectionDesc}>No hay sucursales activas configuradas.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6">
+    <section className={cn(adminShell.cardSection, "p-6")}>
       <div className="flex items-center gap-2">
-        <Warehouse className="h-4 w-4 text-zinc-400" />
-        <h2 className="text-sm font-semibold text-zinc-900">
-          Inventario por sucursal
-        </h2>
+        <Warehouse className="h-4 w-4 text-muted-foreground" />
+        <h2 className={adminShell.sectionTitleSm}>Inventario por sucursal</h2>
       </div>
-      <p className="mt-1 text-xs text-zinc-500">
-        Existencias disponibles en cada sucursal. Cantidad entera mayor o igual a
-        cero.
+      <p className={adminShell.sectionDesc}>
+        Existencias disponibles en cada sucursal. Cantidad entera mayor o igual a cero.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {branches.map((b) => {
           const err = fieldErrors[b.id];
           return (
-            <div key={b.id}>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                {b.displayName || b.name}
-              </label>
+            <AdminFieldGroup key={b.id} label={b.displayName || b.name} error={err ? [err] : undefined}>
               <input
                 type="number"
                 min={0}
@@ -133,32 +125,23 @@ export function ProductInventoryField({
                 value={quantities[b.id] ?? ""}
                 onChange={(e) => handleChange(b.id, e.target.value)}
                 disabled={busy}
-                className={`h-9 w-full rounded-lg border bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 disabled:opacity-50 ${
-                  err
-                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-                    : "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-100"
-                }`}
+                className={adminInputClass(Boolean(err))}
               />
-              {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
-            </div>
+            </AdminFieldGroup>
           );
         })}
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={busy}
-          className="inline-flex h-9 items-center rounded-lg bg-zinc-900 px-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
-        >
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <AdminButton type="button" onClick={handleSave} disabled={busy} variant="primary">
           {busy ? "Guardando…" : "Guardar inventario"}
-        </button>
+        </AdminButton>
         {message && (
           <span
-            className={`text-xs ${
-              status === "error" ? "text-red-600" : "text-emerald-600"
-            }`}
+            className={cn(
+              "text-xs",
+              status === "error" ? "text-red-600" : "text-emerald-600",
+            )}
           >
             {message}
           </span>

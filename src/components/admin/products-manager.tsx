@@ -32,6 +32,7 @@ import {
   updateProductInventory,
 } from "@/lib/admin/product-actions";
 import { AdminButton } from "@/components/admin/admin-button";
+import { AdminEmptyState, AdminModal } from "@/components/admin/admin-patterns";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { adminShell } from "@/lib/design/admin-shell";
 import { cn } from "@/lib/utils";
@@ -73,23 +74,9 @@ function Modal({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-zinc-900/40 p-4 backdrop-blur-sm sm:p-6"
-      onClick={onClose}
-    >
-      <div
-        className="mt-10 w-full max-w-md rounded-2xl border border-zinc-200 bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <AdminModal title={title} onClose={onClose}>
+      {children}
+    </AdminModal>
   );
 }
 
@@ -319,7 +306,7 @@ export function ProductsManager({
             {hasFilters && (
               <button
                 onClick={() => router.replace(pathname)}
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Limpiar
               </button>
@@ -329,19 +316,18 @@ export function ProductsManager({
       </div>
 
       {/* Tabla */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className={cn(adminShell.tableShell, "mt-4")}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
-            <Package className="h-8 w-8 text-zinc-300" />
-            <p className="text-sm font-medium text-zinc-900">Sin productos</p>
-            <p className="text-sm text-zinc-500">Ajusta los filtros o crea un producto nuevo.</p>
-          </div>
+          <AdminEmptyState
+            icon={<Package className="h-8 w-8 text-muted-foreground/40" />}
+            title="Sin productos"
+            description="Ajusta los filtros o crea un producto nuevo."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50/60 text-left text-xs uppercase tracking-wide text-zinc-500">
-                  <th className="w-10 px-4 py-3">
+          <table className="w-full min-w-[960px] text-sm">
+            <thead>
+              <tr className={cn("border-b bg-muted/30", adminShell.dividerSoft)}>
+                <th className={cn(adminShell.tableHeadCell, "w-10")}>
                     <input
                       type="checkbox"
                       checked={allChecked}
@@ -352,18 +338,18 @@ export function ProductsManager({
                       className="h-4 w-4 rounded border-zinc-300"
                     />
                   </th>
-                  <th className="px-2 py-3 font-medium">Imagen</th>
-                  <th className="px-4 py-3 font-medium">Producto</th>
-                  <th className="px-4 py-3 font-medium">SKU</th>
-                  <th className="px-4 py-3 font-medium">Marca</th>
-                  <th className="px-4 py-3 font-medium">Categoría</th>
-                  <th className="px-4 py-3 text-right font-medium">Precio</th>
-                  <th className="px-4 py-3 text-right font-medium">Stock</th>
-                  <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                  <th className={adminShell.tableHeadCell}>Imagen</th>
+                  <th className={adminShell.tableHeadCell}>Producto</th>
+                  <th className={adminShell.tableHeadCell}>SKU</th>
+                  <th className={adminShell.tableHeadCell}>Marca</th>
+                  <th className={adminShell.tableHeadCell}>Categoría</th>
+                  <th className={cn(adminShell.tableHeadCell, "text-right")}>Precio</th>
+                  <th className={cn(adminShell.tableHeadCell, "text-right")}>Stock</th>
+                  <th className={adminShell.tableHeadCell}>Estado</th>
+                  <th className={cn(adminShell.tableHeadCell, "text-right")}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody>
                 {items.map((p) => {
                   const checked = selected.has(p.id);
                   const stock = stockOf(p);
@@ -371,9 +357,12 @@ export function ProductsManager({
                   return (
                     <Fragment key={p.id}>
                       <tr
-                        className={`transition-colors ${checked ? "bg-zinc-50" : "hover:bg-zinc-50/60"}`}
+                        className={cn(
+                          adminShell.tableRow,
+                          checked ? "bg-muted/40" : "hover:bg-muted/20",
+                        )}
                       >
-                        <td className="px-4 py-3">
+                        <td className={adminShell.tableCell}>
                           <input
                             type="checkbox"
                             checked={checked}
@@ -381,46 +370,51 @@ export function ProductsManager({
                             className="h-4 w-4 rounded border-zinc-300"
                           />
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="h-10 w-10 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100">
+                        <td className={cn(adminShell.tableCell, "px-2")}>
+                          <div className="h-10 w-10 overflow-hidden rounded-lg border border-border bg-muted/40">
                             {p.images[0]?.url && (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={p.images[0].url} alt={p.name} className="h-full w-full object-cover" />
                             )}
                           </div>
                         </td>
-                        <td className="max-w-xs px-4 py-3">
-                          <p className="truncate font-medium text-zinc-900">{p.name}</p>
-                          {p.subtitle && <p className="truncate text-xs text-zinc-400">{p.subtitle}</p>}
+                        <td className={cn(adminShell.tableCell, "max-w-xs")}>
+                          <p className="truncate font-medium">{p.name}</p>
+                          {p.subtitle && <p className="truncate text-xs text-muted-foreground">{p.subtitle}</p>}
                         </td>
-                        <td className="px-4 py-3 text-zinc-500">{p.sku ?? "—"}</td>
-                        <td className="px-4 py-3 text-zinc-600">{p.brand?.name ?? "—"}</td>
-                        <td className="px-4 py-3 text-zinc-600">
+                        <td className={cn(adminShell.tableCell, "text-muted-foreground")}>{p.sku ?? "—"}</td>
+                        <td className={adminShell.tableCell}>{p.brand?.name ?? "—"}</td>
+                        <td className={adminShell.tableCell}>
                           {p.category?.name ?? "—"}
-                          {p.subcategory?.name && <span className="text-zinc-400"> / {p.subcategory.name}</span>}
+                          {p.subcategory?.name && (
+                            <span className="text-muted-foreground"> / {p.subcategory.name}</span>
+                          )}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatPrice(p.price)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className={stock > 0 ? "text-zinc-700" : "text-amber-600"}>{stock}</span>
+                        <td className={cn(adminShell.tableCell, "text-right font-medium tabular-nums")}>
+                          {formatPrice(p.price)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className={cn(adminShell.tableCell, "text-right")}>
+                          <span className={stock > 0 ? "text-foreground" : "text-amber-700"}>{stock}</span>
+                        </td>
+                        <td className={adminShell.tableCell}>
                           <StatusBadge published={p.isPublished} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className={adminShell.tableCell}>
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => setQuickId(isQuick ? null : p.id)}
                               title="Edición rápida"
-                              className={`grid h-8 w-8 place-items-center rounded-lg border text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900 ${
-                                isQuick ? "border-zinc-400 bg-zinc-50" : "border-zinc-200"
-                              }`}
+                              className={cn(
+                                "grid h-8 w-8 place-items-center rounded-lg border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground",
+                                isQuick && "border-copper/30 bg-copper/5 text-foreground",
+                              )}
                             >
                               <SlidersHorizontal className="h-4 w-4" />
                             </button>
                             <Link
                               href={`/admin/productos/${p.id}/editar`}
                               title="Editar producto"
-                              className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                              className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
                             >
                               <SquarePen className="h-4 w-4" />
                             </Link>
@@ -428,7 +422,7 @@ export function ProductsManager({
                               onClick={() => togglePublish(p)}
                               disabled={pending}
                               title={p.isPublished ? "Ocultar" : "Publicar"}
-                              className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900 disabled:opacity-50"
+                              className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground disabled:opacity-50"
                             >
                               {p.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
@@ -436,7 +430,7 @@ export function ProductsManager({
                         </td>
                       </tr>
                       {isQuick && (
-                        <tr className="bg-zinc-50/80">
+                        <tr className="bg-muted/30">
                           <td colSpan={10} className="px-4 py-4">
                             <QuickEdit
                               product={p}
@@ -469,18 +463,17 @@ export function ProductsManager({
                 })}
               </tbody>
             </table>
-          </div>
         )}
 
         {/* Paginación */}
         {items.length > 0 && (
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3 sm:flex-row">
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <div className={cn("flex flex-col items-center justify-between gap-3 border-t px-4 py-3 sm:flex-row", adminShell.dividerSoft)}>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Por página</span>
               <select
                 value={filters.per}
                 onChange={(e) => navigate({ per: e.target.value === "25" ? undefined : e.target.value })}
-                className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-700 focus:outline-none"
+                className={cn(adminShell.select, "h-8 px-2 text-xs")}
               >
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -497,17 +490,17 @@ export function ProductsManager({
               <button
                 onClick={() => navigate({ page: result.page > 2 ? String(result.page - 1) : undefined }, true)}
                 disabled={result.page <= 1}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:opacity-30"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="px-2 text-xs text-zinc-500">
+              <span className="px-2 text-xs text-muted-foreground">
                 {result.page} / {totalPages}
               </span>
               <button
                 onClick={() => navigate({ page: String(result.page + 1) }, true)}
                 disabled={result.page >= totalPages}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:opacity-30"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

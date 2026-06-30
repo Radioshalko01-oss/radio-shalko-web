@@ -71,10 +71,12 @@ export const color = {
   success: "text-emerald-600",
   warning: "text-amber-600",
   danger: "text-destructive",
-  /** Admin shell — migrate to semantic tokens in DESIGN-2B */
-  adminText: "text-zinc-900",
-  adminMuted: "text-zinc-500",
-  adminBorder: "border-zinc-200",
+  /** Admin shell — semantic tokens (DESIGN-2B) */
+  adminText: "text-foreground",
+  adminMuted: "text-muted-foreground",
+  adminBorder: "border-border",
+  adminSurface: "bg-card",
+  adminSurfaceMuted: "bg-muted/40",
 } as const;
 
 export const tokens = {

@@ -27,6 +27,9 @@ import {
   reorderProductImages,
   updateProductImageUrl,
 } from "@/lib/admin/product-gallery-actions";
+import { AdminButton } from "@/components/admin/admin-button";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Feedback = { type: "error" | "success"; text: string } | null;
 
@@ -195,15 +198,15 @@ export function ProductGalleryField({
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6">
+    <section className={cn(adminShell.cardSection, "p-6")}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">Galería del producto</h2>
-          <p className="mt-1 text-xs text-zinc-500">
+          <h2 className={adminShell.sectionTitleSm}>Galería del producto</h2>
+          <p className={adminShell.sectionDesc}>
             Hasta {MAX_GALLERY_IMAGES} imágenes. La primera es la principal. JPG, PNG o WEBP, máx. 5 MB.
           </p>
         </div>
-        <span className="shrink-0 text-xs font-medium text-zinc-400">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">
           {images.length}/{MAX_GALLERY_IMAGES}
         </span>
       </div>
@@ -229,11 +232,14 @@ export function ProductGalleryField({
           type="button"
           onClick={() => addInputRef.current?.click()}
           disabled={isBusy}
-          className="mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-200 py-12 text-center transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:opacity-50"
+          className={cn(
+            adminShell.emptyState,
+            "mt-4 flex w-full flex-col items-center justify-center gap-2 border-solid py-12 transition-colors hover:border-copper/30",
+          )}
         >
-          <ImageIcon className="h-8 w-8 text-zinc-300" />
-          <span className="text-sm font-medium text-zinc-700">Agregar imágenes</span>
-          <span className="text-xs text-zinc-400">Sube la primera imagen del producto.</span>
+          <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+          <span className="text-sm font-medium text-foreground/85">Agregar imágenes</span>
+          <span className="text-xs text-muted-foreground">Sube la primera imagen del producto.</span>
         </button>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -243,14 +249,14 @@ export function ProductGalleryField({
             return (
               <div
                 key={img.id}
-                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50"
+                className="group relative overflow-hidden rounded-xl border border-border bg-muted/30"
               >
                 <div className="relative aspect-square">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.url} alt={img.alt ?? productName} className="h-full w-full object-cover" />
 
                   {isMain && (
-                    <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-foreground/90 px-2 py-0.5 text-[10px] font-semibold text-background">
                       <Star className="h-3 w-3 fill-current" />
                       Principal
                     </span>
@@ -286,7 +292,7 @@ export function ProductGalleryField({
                 </div>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between gap-1 border-t border-zinc-200 bg-white px-2 py-1.5">
+                <div className={cn("flex items-center justify-between gap-1 border-t bg-card px-2 py-1.5", adminShell.dividerSoft)}>
                   <div className="flex items-center gap-0.5">
                     <IconBtn
                       label="Mover a la izquierda"
@@ -343,7 +349,7 @@ export function ProductGalleryField({
                   type="button"
                   onClick={confirmAdd}
                   disabled={busy === "add"}
-                  className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background hover:opacity-90 disabled:opacity-50"
                 >
                   <Check className="h-3.5 w-3.5" />
                   {busy === "add" ? "Subiendo…" : "Subir"}
@@ -415,9 +421,10 @@ function IconBtn({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className={`grid h-7 w-7 place-items-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 disabled:opacity-30 ${
-        danger ? "hover:bg-red-50 hover:text-red-600" : "hover:text-zinc-900"
-      }`}
+      className={cn(
+        "grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 disabled:opacity-30",
+        danger ? "hover:bg-red-50 hover:text-red-600" : "hover:text-foreground",
+      )}
     >
       {children}
     </button>

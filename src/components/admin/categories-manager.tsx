@@ -47,6 +47,9 @@ import {
   type SubcategoryInput,
 } from "@/lib/admin/category-actions";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { adminInputClass } from "@/components/admin/admin-patterns";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type FieldErrors = Record<string, string[]>;
 type Selected = { type: "category"; id: string } | { type: "subcategory"; id: string };
@@ -62,11 +65,7 @@ type AssignTarget =
   | { kind: "category"; categoryId: string; label: string }
   | { kind: "subcategory"; categoryId: string; subcategoryId: string; label: string };
 
-const inputBase =
-  "h-9 w-full rounded-lg border bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2";
-const inputOk = "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-100";
-const inputErr = "border-red-300 focus:border-red-400 focus:ring-red-100";
-const inputCls = (err: boolean) => `${inputBase} ${err ? inputErr : inputOk}`;
+const inputCls = (err: boolean) => adminInputClass(err);
 
 const PUBLISH_NOTE = "Los productos asignados aparecerán en el catálogo público según su estado de publicación.";
 const HIDE_NOTE = "Ocultar una categoría la retira del menú y filtros públicos, pero no elimina sus productos.";
@@ -101,9 +100,13 @@ function IconBtn({
       }}
       disabled={disabled}
       title={title}
-      className={`grid h-6 w-6 place-items-center rounded-md text-zinc-400 transition-colors disabled:opacity-20 ${
-        danger ? "hover:bg-red-50 hover:text-red-600" : "hover:bg-white hover:text-zinc-800"
-      } disabled:hover:bg-transparent disabled:hover:text-zinc-400`}
+      className={cn(
+        "grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors disabled:opacity-20",
+        danger
+          ? "hover:bg-red-50 hover:text-red-600"
+          : "hover:bg-card hover:text-foreground",
+        "disabled:hover:bg-transparent disabled:hover:text-muted-foreground",
+      )}
     >
       {children}
     </button>
@@ -394,7 +397,7 @@ export function CategoriesManager({
 
       <div className="grid items-start gap-5 md:grid-cols-[300px_1fr]">
         {/* ───────── Lista compacta de categorías ───────── */}
-        <aside className="rounded-xl border border-zinc-200 bg-white">
+        <aside className={adminShell.card}>
           <div className="border-b border-zinc-100 p-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -796,7 +799,7 @@ function CategoryDetail({
       />
 
       {category.description && (
-        <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
+        <p className={cn(adminShell.cardSection, "px-4 py-3 text-sm text-muted-foreground")}>
           {category.description}
         </p>
       )}
@@ -814,7 +817,7 @@ function CategoryDetail({
       </p>
 
       {/* Subcategorías */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className={cn(adminShell.cardSection, "p-4")}>
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-zinc-900">
             Subcategorías <span className="text-zinc-400">({subs.length})</span>
@@ -908,7 +911,7 @@ function SubcategoryDetail({
 
 function Stat({ label, value, small }: { label: string; value: string | number; small?: boolean }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+    <div className={cn(adminShell.cardSection, "px-4 py-3")}>
       <p className={`font-semibold tracking-tight text-zinc-900 ${small ? "truncate text-base" : "text-2xl"}`}>
         {value}
       </p>
@@ -941,7 +944,7 @@ function DetailHeader({
   onDelete: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5">
+    <div className={cn(adminShell.cardSection, "p-5")}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{breadcrumb}</p>
@@ -999,7 +1002,7 @@ function ProductPanel({
   onRemoveFromSub?: (productId: string) => void;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white">
+    <div className={adminShell.card}>
       <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3">
         <div>
           <h3 className="text-sm font-semibold text-zinc-900">

@@ -19,6 +19,11 @@ import type { CatalogBranch, CatalogBrand, CatalogCategoryTree } from "@/lib/cat
 import type { InventoryItem, InventoryResult } from "@/lib/admin/inventory-queries";
 import { LOW_STOCK_THRESHOLD } from "@/lib/admin/inventory-constants";
 import { updateProductInventory } from "@/lib/admin/product-actions";
+import { AdminButton } from "@/components/admin/admin-button";
+import { AdminEmptyState, adminInputClass, adminSelectClass } from "@/components/admin/admin-patterns";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Filters = {
   q: string;
@@ -32,8 +37,7 @@ type Filters = {
   per: string;
 };
 
-const selectCls =
-  "h-9 rounded-lg border border-zinc-200 bg-white px-2.5 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100";
+const selectCls = adminSelectClass();
 
 type StockStatus = "out" | "low" | "ok";
 function statusOf(total: number): StockStatus {
@@ -46,25 +50,22 @@ function StockBadge({ total }: { total: number }) {
   const s = statusOf(total);
   if (s === "out") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+      <AdminStatusBadge tone="danger" dot>
         Sin stock
-      </span>
+      </AdminStatusBadge>
     );
   }
   if (s === "low") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+      <AdminStatusBadge tone="pending" dot>
         Bajo stock
-      </span>
+      </AdminStatusBadge>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+    <AdminStatusBadge tone="active" dot>
       Disponible
-    </span>
+    </AdminStatusBadge>
   );
 }
 
@@ -192,19 +193,19 @@ export function InventoryManager({
       )}
 
       {/* Toolbar */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-3">
+      <div className={adminShell.cardToolbar}>
         <div className="relative w-full lg:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nombre, SKU o marca…"
-            className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+            className={cn(adminInputClass(), "pl-9")}
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+        <div className={cn("mt-3 flex flex-wrap items-center gap-2 border-t pt-3", adminShell.dividerSoft)}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filtros
           </span>
@@ -299,7 +300,7 @@ export function InventoryManager({
             {hasFilters && (
               <button
                 onClick={() => router.replace(pathname)}
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Limpiar
               </button>
@@ -309,98 +310,109 @@ export function InventoryManager({
       </div>
 
       {/* Tabla */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className={cn(adminShell.tableShell, "mt-4")}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
-            <Package className="h-8 w-8 text-zinc-300" />
-            <p className="text-sm font-medium text-zinc-900">Sin productos</p>
-            <p className="text-sm text-zinc-500">Ajusta los filtros para ver inventario.</p>
-          </div>
+          <AdminEmptyState
+            icon={<Package className="h-8 w-8 text-muted-foreground/40" />}
+            title="Sin productos"
+            description="Ajusta los filtros para ver inventario."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50/60 text-left text-xs uppercase tracking-wide text-zinc-500">
-                  <th className="px-2 py-3 font-medium">Imagen</th>
-                  <th className="px-4 py-3 font-medium">Producto</th>
-                  <th className="px-4 py-3 font-medium">SKU</th>
-                  <th className="px-4 py-3 font-medium">Marca</th>
-                  <th className="px-4 py-3 font-medium">Categoría</th>
-                  {branches.map((b) => (
-                    <th key={b.id} className="px-3 py-3 text-center font-medium">
-                      {b.displayName || b.name}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3 text-center font-medium">Total</th>
-                  <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3 text-right font-medium">Guardar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+          <table className="w-full min-w-[960px] text-sm">
+            <thead>
+              <tr className={cn("border-b bg-muted/30", adminShell.dividerSoft)}>
+                <th className={adminShell.tableHeadCell}>Imagen</th>
+                <th className={adminShell.tableHeadCell}>Producto</th>
+                <th className={adminShell.tableHeadCell}>SKU</th>
+                <th className={adminShell.tableHeadCell}>Marca</th>
+                <th className={adminShell.tableHeadCell}>Categoría</th>
+                {branches.map((b) => (
+                  <th key={b.id} className={cn(adminShell.tableHeadCell, "text-center")}>
+                    {b.displayName || b.name}
+                  </th>
+                ))}
+                <th className={cn(adminShell.tableHeadCell, "text-center")}>Total</th>
+                <th className={adminShell.tableHeadCell}>Estado</th>
+                <th className={cn(adminShell.tableHeadCell, "text-right")}>Guardar</th>
+              </tr>
+            </thead>
+            <tbody>
                 {items.map((p) => {
                   const total = liveTotal(p);
                   const dirty = isDirty(p);
                   const rowSaving = savingId === p.id && pending;
                   return (
-                    <tr key={p.id} className="hover:bg-zinc-50/60">
-                      <td className="px-2 py-3">
-                        <div className="h-10 w-10 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100">
+                    <tr key={p.id} className={adminShell.tableRow}>
+                      <td className={cn(adminShell.tableCell, "px-2")}>
+                        <div className="h-10 w-10 overflow-hidden rounded-lg border border-border bg-muted/40">
                           {p.image && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                           )}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3">
-                        <p className="truncate font-medium text-zinc-900">{p.name}</p>
-                        <p className="text-xs text-zinc-400">{formatPrice(p.price)}</p>
+                      <td className={cn(adminShell.tableCell, "max-w-xs")}>
+                        <p className="truncate font-medium">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatPrice(p.price)}</p>
                       </td>
-                      <td className="px-4 py-3 text-zinc-500">{p.sku ?? "—"}</td>
-                      <td className="px-4 py-3 text-zinc-600">{p.brandName ?? "—"}</td>
-                      <td className="px-4 py-3 text-zinc-600">
+                      <td className={cn(adminShell.tableCell, "text-muted-foreground")}>{p.sku ?? "—"}</td>
+                      <td className={adminShell.tableCell}>{p.brandName ?? "—"}</td>
+                      <td className={adminShell.tableCell}>
                         {p.categoryName ?? "—"}
-                        {p.subcategoryName && <span className="text-zinc-400"> / {p.subcategoryName}</span>}
+                        {p.subcategoryName && (
+                          <span className="text-muted-foreground"> / {p.subcategoryName}</span>
+                        )}
                       </td>
                       {branches.map((b) => {
                         const val = getVal(p, b.id);
                         const num = Math.max(0, Math.round(Number(val) || 0));
                         const tone =
                           num <= 0
-                            ? "border-red-200 text-red-700"
+                            ? "border-red-200/80 text-red-700 focus:border-red-300 focus:ring-red-100"
                             : num <= LOW_STOCK_THRESHOLD
-                              ? "border-amber-200 text-amber-700"
-                              : "border-zinc-200 text-zinc-900";
+                              ? "border-amber-200/80 text-amber-800 focus:border-amber-300 focus:ring-amber-100"
+                              : "border-border text-foreground focus:border-copper/40 focus:ring-copper/10";
                         return (
-                          <td key={b.id} className="px-3 py-3 text-center">
+                          <td key={b.id} className={cn(adminShell.tableCell, "text-center")}>
                             <input
                               type="number"
                               min={0}
                               value={val}
                               onChange={(e) => setVal(p.id, b.id, e.target.value)}
-                              className={`h-9 w-16 rounded-lg border bg-white text-center text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100 ${tone}`}
+                              className={cn(
+                                "h-9 w-16 rounded-lg border bg-card text-center text-sm focus:outline-none focus:ring-2",
+                                tone,
+                              )}
                             />
                           </td>
                         );
                       })}
-                      <td className="px-4 py-3 text-center font-semibold text-zinc-900">{total}</td>
-                      <td className="px-4 py-3">
+                      <td className={cn(adminShell.tableCell, "text-center font-semibold tabular-nums")}>
+                        {total}
+                      </td>
+                      <td className={adminShell.tableCell}>
                         <StockBadge total={total} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className={adminShell.tableCell}>
                         <div className="flex items-center justify-end gap-1">
-                          <button
+                          <AdminButton
+                            type="button"
+                            size="sm"
                             onClick={() => save(p)}
                             disabled={!dirty || pending}
                             title={dirty ? "Guardar stock" : "Sin cambios"}
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-zinc-900 px-2.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
                           >
-                            {rowSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                            {rowSaving ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Save className="h-3.5 w-3.5" />
+                            )}
                             Guardar
-                          </button>
+                          </AdminButton>
                           <Link
                             href={`/admin/productos/${p.id}/editar`}
                             title="Editar producto"
-                            className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                            className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
                           >
                             <SquarePen className="h-4 w-4" />
                           </Link>
@@ -411,17 +423,16 @@ export function InventoryManager({
                 })}
               </tbody>
             </table>
-          </div>
         )}
 
         {items.length > 0 && (
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3 sm:flex-row">
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <div className={cn("flex flex-col items-center justify-between gap-3 border-t px-4 py-3 sm:flex-row", adminShell.dividerSoft)}>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Por página</span>
               <select
                 value={filters.per}
                 onChange={(e) => navigate({ per: e.target.value === "25" ? undefined : e.target.value })}
-                className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-700 focus:outline-none"
+                className={cn(adminShell.select, "h-8 px-2 text-xs")}
               >
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -438,17 +449,17 @@ export function InventoryManager({
               <button
                 onClick={() => navigate({ page: result.page > 2 ? String(result.page - 1) : undefined }, true)}
                 disabled={result.page <= 1}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:opacity-30"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="px-2 text-xs text-zinc-500">
+              <span className="px-2 text-xs text-muted-foreground">
                 {result.page} / {totalPages}
               </span>
               <button
                 onClick={() => navigate({ page: String(result.page + 1) }, true)}
                 disabled={result.page >= totalPages}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:opacity-30"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -457,7 +468,7 @@ export function InventoryManager({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-zinc-400">
+      <p className="mt-3 text-xs text-muted-foreground">
         El umbral de bajo stock es {LOW_STOCK_THRESHOLD}. El stock editado se aplica por sucursal y se
         refleja en el catálogo público según el estado de publicación del producto.
       </p>

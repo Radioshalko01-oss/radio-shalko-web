@@ -33,6 +33,10 @@ import {
   type QuoteStatus,
 } from "@/lib/admin/quote-constants";
 import { updateQuoteStatus } from "@/lib/admin/quote-actions";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { AdminEmptyState, adminInputClass, adminSelectClass } from "@/components/admin/admin-patterns";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 type Filters = {
   q: string;
@@ -44,8 +48,7 @@ type Filters = {
   id: string;
 };
 
-const selectCls =
-  "h-9 rounded-lg border border-zinc-200 bg-white px-2.5 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100";
+const selectCls = adminSelectClass();
 
 function formatDateTime(iso: string) {
   return new Intl.DateTimeFormat("es-MX", {
@@ -56,19 +59,15 @@ function formatDateTime(iso: string) {
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
   const label = QUOTE_STATUS_LABELS[status];
-  const styles: Record<QuoteStatus, string> = {
-    draft: "bg-zinc-100 text-zinc-700",
-    sent: "bg-sky-50 text-sky-700",
-    closed: "bg-emerald-50 text-emerald-700",
-    cancelled: "bg-red-50 text-red-700",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles[status]}`}
-    >
-      {label}
-    </span>
-  );
+  const tone =
+    status === "draft"
+      ? "neutral"
+      : status === "sent"
+        ? "approved"
+        : status === "closed"
+          ? "active"
+          : "danger";
+  return <AdminStatusBadge tone={tone}>{label}</AdminStatusBadge>;
 }
 
 function displayEmail(row: AdminQuoteListItem) {
@@ -188,19 +187,19 @@ export function QuotesManager({
         </p>
       )}
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-3">
+      <div className={adminShell.cardToolbar}>
         <div className="relative w-full lg:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por email, nombre o ID…"
-            className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+            className={cn(adminInputClass(), "pl-9")}
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+        <div className={cn("mt-3 flex flex-wrap items-center gap-2 border-t pt-3", adminShell.dividerSoft)}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filtros
           </span>
@@ -250,7 +249,7 @@ export function QuotesManager({
             {hasFilters && (
               <button
                 onClick={() => router.replace(pathname)}
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Limpiar
               </button>
@@ -261,15 +260,15 @@ export function QuotesManager({
 
       <div className="mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         {/* Lista */}
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        <div className={adminShell.tableShell}>
           {result.items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-              <Package className="h-8 w-8 text-zinc-300" />
-              <p className="text-sm font-medium text-zinc-900">Sin solicitudes</p>
-              <p className="text-sm text-zinc-500">Ajusta los filtros o espera carritos de usuarios.</p>
-            </div>
+            <AdminEmptyState
+              icon={<Package className="h-8 w-8 text-muted-foreground/40" />}
+              title="Sin solicitudes"
+              description="Ajusta los filtros o espera carritos de usuarios."
+            />
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className={cn("divide-y", adminShell.dividerSoft)}>
               {result.items.map((row) => {
                 const active = selectedId === row.id;
                 return (
@@ -277,24 +276,23 @@ export function QuotesManager({
                     <button
                       type="button"
                       onClick={() => navigate({ id: row.id }, true)}
-                      className={`flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-zinc-50 ${
-                        active ? "bg-zinc-50 ring-1 ring-inset ring-zinc-200" : ""
-                      }`}
+                      className={cn(
+                        "flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-muted/30",
+                        active && "bg-copper/5 ring-1 ring-inset ring-copper/20",
+                      )}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-900">
-                            {displayEmail(row)}
-                          </p>
-                          <p className="mt-0.5 text-xs text-zinc-400">
+                          <p className="truncate text-sm font-medium">{displayEmail(row)}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
                             {formatDateTime(row.updatedAt)}
                           </p>
                         </div>
                         <StatusBadge status={row.status} />
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-zinc-500">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{row.itemCount} producto{row.itemCount === 1 ? "" : "s"}</span>
-                        <span className="font-semibold text-zinc-800">{formatPrice(row.total)}</span>
+                        <span className="font-semibold text-foreground">{formatPrice(row.total)}</span>
                       </div>
                     </button>
                   </li>
@@ -304,15 +302,15 @@ export function QuotesManager({
           )}
 
           {result.items.length > 0 && (
-            <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3">
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <div className={cn("flex items-center justify-between gap-3 border-t px-4 py-3", adminShell.dividerSoft)}>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>Por página</span>
                 <select
                   value={filters.per}
                   onChange={(e) =>
                     navigate({ per: e.target.value === "25" ? undefined : e.target.value })
                   }
-                  className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs"
+                  className={cn(adminShell.select, "h-8 px-2 text-xs")}
                 >
                   <option value="25">25</option>
                   <option value="50">50</option>
@@ -329,17 +327,17 @@ export function QuotesManager({
                     navigate({ page: result.page > 2 ? String(result.page - 1) : undefined }, true)
                   }
                   disabled={result.page <= 1}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 disabled:opacity-30"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="px-2 text-xs text-zinc-500">
+                <span className="px-2 text-xs text-muted-foreground">
                   {result.page} / {totalPages}
                 </span>
                 <button
                   onClick={() => navigate({ page: String(result.page + 1) }, true)}
                   disabled={result.page >= totalPages}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 disabled:opacity-30"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-30"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -351,29 +349,25 @@ export function QuotesManager({
         {/* Detalle */}
         <section className="min-w-0">
           {!detail ? (
-            <div className="grid min-h-[280px] place-items-center rounded-xl border border-dashed border-zinc-200 bg-white">
+            <div className={cn(adminShell.emptyState, "grid min-h-[280px] place-items-center p-6")}>
               <div className="max-w-xs text-center">
-                <Tag className="mx-auto h-8 w-8 text-zinc-300" />
-                <p className="mt-2 text-sm font-medium text-zinc-900">
+                <Tag className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-2 text-sm font-medium">
                   Selecciona una solicitud para ver el detalle.
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-xl border border-zinc-200 bg-white p-5">
+              <div className={cn(adminShell.cardSection, "p-5")}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                      Carrito
-                    </p>
+                    <p className={adminShell.groupLabel}>Carrito</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-zinc-900">
-                        {displayEmail(detail)}
-                      </h2>
+                      <h2 className={adminShell.sectionTitle}>{displayEmail(detail)}</h2>
                       <StatusBadge status={detail.status} />
                     </div>
-                    <p className="mt-1 text-xs text-zinc-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Creada {formatDateTime(detail.createdAt)} · Actualizada{" "}
                       {formatDateTime(detail.updatedAt)}
                     </p>
@@ -391,26 +385,22 @@ export function QuotesManager({
                         </option>
                       ))}
                     </select>
-                    {pending && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
+                    {pending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2">
-                    <p className="text-xs text-zinc-500">Productos</p>
-                    <p className="text-lg font-semibold text-zinc-900">{detail.itemCount}</p>
+                  <div className={cn(adminShell.mutedBox, "rounded-lg border border-border/60")}>
+                    <p className={adminShell.fieldLabel}>Productos</p>
+                    <p className={adminShell.statValue}>{detail.itemCount}</p>
                   </div>
-                  <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2">
-                    <p className="text-xs text-zinc-500">Total estimado</p>
-                    <p className="text-lg font-semibold text-zinc-900">
-                      {formatPrice(detail.total)}
-                    </p>
+                  <div className={cn(adminShell.mutedBox, "rounded-lg border border-border/60")}>
+                    <p className={adminShell.fieldLabel}>Total estimado</p>
+                    <p className={adminShell.statValue}>{formatPrice(detail.total)}</p>
                   </div>
-                  <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2">
-                    <p className="text-xs text-zinc-500">Estado</p>
-                    <p className="text-sm font-medium text-zinc-900">
-                      {QUOTE_STATUS_LABELS[detail.status]}
-                    </p>
+                  <div className={cn(adminShell.mutedBox, "rounded-lg border border-border/60")}>
+                    <p className={adminShell.fieldLabel}>Estado</p>
+                    <p className="text-sm font-medium">{QUOTE_STATUS_LABELS[detail.status]}</p>
                   </div>
                 </div>
 
@@ -418,11 +408,9 @@ export function QuotesManager({
                   detail.contactPhone ||
                   detail.contactEmail ||
                   detail.userEmail) && (
-                  <div className="mt-4 rounded-lg border border-zinc-100 bg-zinc-50/60 px-4 py-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      Contacto
-                    </p>
-                    <ul className="mt-2 space-y-1 text-zinc-700">
+                  <div className={cn(adminShell.mutedBox, "mt-4 rounded-lg border border-border/60 px-4 py-3 text-sm")}>
+                    <p className={adminShell.groupLabel}>Contacto</p>
+                    <ul className="mt-2 space-y-1 text-foreground/85">
                       {detail.contactName && <li>Nombre: {detail.contactName}</li>}
                       {(detail.contactEmail || detail.userEmail) && (
                         <li>Email: {detail.contactEmail ?? detail.userEmail}</li>
@@ -433,11 +421,9 @@ export function QuotesManager({
                 )}
 
                 {detail.note && (
-                  <div className="mt-3 rounded-lg border border-zinc-100 bg-white px-4 py-3 text-sm text-zinc-600">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      Nota
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap">{detail.note}</p>
+                  <div className={cn(adminShell.cardSection, "mt-3 px-4 py-3 text-sm")}>
+                    <p className={adminShell.groupLabel}>Nota</p>
+                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{detail.note}</p>
                   </div>
                 )}
 

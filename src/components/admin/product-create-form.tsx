@@ -20,13 +20,21 @@ import type {
 type FieldErrors = Record<string, string[]>;
 type PendingImage = { id: string; file: File; previewUrl: string };
 
-const inputBase =
-  "h-9 w-full rounded-lg border bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2";
-const inputOk = "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-100";
-const inputErr = "border-red-300 focus:border-red-400 focus:ring-red-100";
+import { AdminButton } from "@/components/admin/admin-button";
+import {
+  AdminFieldGroup,
+  AdminFormFeedback,
+  AdminSectionCard,
+  AdminToggle,
+  adminInputClass,
+  adminSelectClass,
+  adminTextareaClass,
+} from "@/components/admin/admin-patterns";
+import { adminShell } from "@/lib/design/admin-shell";
+import { cn } from "@/lib/utils";
 
 function inputCls(hasError: boolean) {
-  return `${inputBase} ${hasError ? inputErr : inputOk}`;
+  return adminInputClass(hasError);
 }
 
 function localId() {
@@ -230,24 +238,20 @@ export function ProductCreateForm({
       : "Guardar producto";
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-8">
-      {formError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {formError}
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      <AdminFormFeedback error={formError} />
 
       {/* Galería del producto */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
+      <section className={cn(adminShell.cardSection, "p-6")}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900">Galería del producto</h2>
-            <p className="mt-1 text-xs text-zinc-500">
+            <h2 className={adminShell.sectionTitleSm}>Galería del producto</h2>
+            <p className={adminShell.sectionDesc}>
               Hasta {MAX_GALLERY_IMAGES} imágenes. La primera es la principal. Arrastra para
               reordenar. JPG, PNG o WEBP, máx. 5 MB.
             </p>
           </div>
-          <span className="shrink-0 text-xs font-medium text-zinc-400">
+          <span className="shrink-0 text-xs font-medium text-muted-foreground">
             {images.length}/{MAX_GALLERY_IMAGES}
           </span>
         </div>
@@ -274,9 +278,12 @@ export function ProductCreateForm({
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
-            className={`mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-12 text-center transition-colors ${
-              dragOver ? "border-zinc-400 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
-            }`}
+            className={cn(
+              "mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-12 text-center transition-colors",
+              adminShell.emptyState,
+              "border-solid",
+              dragOver ? "border-copper/40 bg-copper/5" : "hover:border-copper/30",
+            )}
           >
             <Upload className="h-8 w-8 text-zinc-300" />
             <span className="text-sm font-medium text-zinc-700">
@@ -361,8 +368,8 @@ export function ProductCreateForm({
       </section>
 
       {/* Datos básicos */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Datos básicos</h2>
+      <section className={cn(adminShell.cardSection, "p-6")}>
+        <h2 className={adminShell.sectionTitleSm}>Datos básicos</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="Título" required error={errors.title} className="sm:col-span-2">
             <input
@@ -412,8 +419,8 @@ export function ProductCreateForm({
       </section>
 
       {/* Clasificación */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Clasificación</h2>
+      <section className={cn(adminShell.cardSection, "p-6")}>
+        <h2 className={adminShell.sectionTitleSm}>Clasificación</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Field label="Marca" required error={errors.brandId}>
             <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className={inputCls(Boolean(errors.brandId))}>
@@ -440,7 +447,10 @@ export function ProductCreateForm({
               value={subcategoryId}
               onChange={(e) => setSubcategoryId(e.target.value)}
               disabled={!categoryId || subcategories.length === 0}
-              className={`${inputCls(Boolean(errors.subcategoryId))} disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400`}
+              className={cn(
+                inputCls(Boolean(errors.subcategoryId)),
+                "disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground",
+              )}
             >
               <option value="">
                 {!categoryId ? "Elige una categoría" : subcategories.length === 0 ? "Sin subcategorías" : "Sin subcategoría"}
@@ -456,8 +466,8 @@ export function ProductCreateForm({
       </section>
 
       {/* Descripción */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Descripción</h2>
+      <section className={cn(adminShell.cardSection, "p-6")}>
+        <h2 className={adminShell.sectionTitleSm}>Descripción</h2>
         <div className="mt-4">
           <Field label="Descripción" error={errors.description}>
             <textarea
@@ -465,9 +475,7 @@ export function ProductCreateForm({
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
               placeholder="Describe el producto, sus características y diferenciadores."
-              className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 ${
-                errors.description ? inputErr : inputOk
-              }`}
+              className={adminTextareaClass(Boolean(errors.description))}
             />
           </Field>
         </div>
@@ -475,13 +483,13 @@ export function ProductCreateForm({
 
       {/* Inventario */}
       {branches.length > 0 && (
-        <section className="rounded-xl border border-zinc-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-zinc-900">Inventario por sucursal</h2>
-          <p className="mt-1 text-xs text-zinc-500">Existencias iniciales. Entero mayor o igual a cero.</p>
+        <section className={cn(adminShell.cardSection, "p-6")}>
+          <h2 className={adminShell.sectionTitleSm}>Inventario por sucursal</h2>
+          <p className={adminShell.sectionDesc}>Existencias iniciales. Entero mayor o igual a cero.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {branches.map((b) => (
               <div key={b.id}>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                <label className="mb-1.5 block text-sm font-medium text-foreground/90">
                   {b.displayName || b.name}
                 </label>
                 <input
@@ -500,8 +508,8 @@ export function ProductCreateForm({
       )}
 
       {/* Estado */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Estado</h2>
+      <section className={cn(adminShell.cardSection, "p-6")}>
+        <h2 className={adminShell.sectionTitleSm}>Estado</h2>
         <div className="mt-4 space-y-3">
           <Toggle
             label="Marcar como novedad"
@@ -519,21 +527,14 @@ export function ProductCreateForm({
       </section>
 
       {/* Acciones */}
-      <div className="flex items-center justify-end gap-3">
-        <Link
-          href="/admin/productos"
-          className="inline-flex h-9 items-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-        >
-          Cancelar
-        </Link>
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
-        >
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <AdminButton asChild variant="secondary">
+          <Link href="/admin/productos">Cancelar</Link>
+        </AdminButton>
+        <AdminButton type="submit" disabled={pending} variant="primary">
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel}
-        </button>
+        </AdminButton>
       </div>
     </form>
   );
@@ -556,7 +557,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+      <label className="mb-1.5 block text-sm font-medium text-foreground/90">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
@@ -564,7 +565,7 @@ function Field({
       {error?.[0] ? (
         <p className="mt-1 text-xs text-red-600">{error[0]}</p>
       ) : hint ? (
-        <p className="mt-1 text-xs text-zinc-400">{hint}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );

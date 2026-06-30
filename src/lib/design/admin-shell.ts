@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 export const adminShell = {
   layoutBg: "bg-background",
   sidebar:
-    "sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border/80 bg-card/40 backdrop-blur-sm",
+    "shrink-0 border-b border-border/80 bg-card/40 backdrop-blur-sm lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r",
   main: "min-w-0 flex-1 bg-background",
-  mainPadding: "px-6 py-7 md:px-8 md:py-8",
+  mainPadding: "px-4 py-6 sm:px-6 sm:py-7 md:px-8 md:py-8",
 
   card: cn(radius.cardAdmin, "border border-border bg-card"),
   cardInteractive: cn(
@@ -31,6 +31,25 @@ export const adminShell = {
     radius.input,
     "h-9 border border-border bg-card px-2.5 text-sm text-foreground focus:border-copper/40 focus:outline-none focus:ring-2 focus:ring-copper/10",
   ),
+  textarea: cn(
+    radius.input,
+    "w-full border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-copper/40 focus:outline-none focus:ring-2 focus:ring-copper/10",
+  ),
+  inputError: "border-red-300 focus:border-red-400 focus:ring-red-100",
+
+  tableShell: cn(radius.cardAdmin, "overflow-x-auto border border-border bg-card"),
+  tableHeadCell:
+    "whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+  tableCell: "px-4 py-3 text-sm text-foreground",
+  tableRow: "border-b border-border/60 transition-colors hover:bg-muted/20 last:border-b-0",
+
+  modalOverlay:
+    "fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 backdrop-blur-sm sm:p-6",
+  modalPanel: cn(
+    radius.cardAdmin,
+    "mt-6 w-full max-w-md border border-border bg-card shadow-2xl sm:mt-10",
+  ),
+  dangerZone: cn(radius.cardAdmin, "border border-red-200/70 bg-red-50/40 p-5"),
 
   filterActive: cn(radius.badge, "bg-foreground px-3 text-xs font-medium text-background"),
   filterInactive: cn(

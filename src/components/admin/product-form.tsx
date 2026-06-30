@@ -9,6 +9,17 @@ import type {
   CatalogCategoryTree,
   CatalogProduct,
 } from "@/lib/catalog/types";
+import { AdminButton } from "@/components/admin/admin-button";
+import {
+  AdminFieldGroup,
+  AdminFormFeedback,
+  AdminSectionCard,
+  AdminToggle,
+  adminInputClass,
+  adminSelectClass,
+  adminTextareaClass,
+} from "@/components/admin/admin-patterns";
+import { cn } from "@/lib/utils";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -16,21 +27,9 @@ type ProductFormProps = {
   mode: "create" | "edit";
   brands: CatalogBrand[];
   categories: CatalogCategoryTree[];
-  /** Solo en modo edición. */
   productId?: string;
   product?: CatalogProduct | null;
 };
-
-const inputBase =
-  "h-9 w-full rounded-lg border bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2";
-const inputOk =
-  "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-100";
-const inputErr =
-  "border-red-300 focus:border-red-400 focus:ring-red-100";
-
-function inputCls(hasError: boolean) {
-  return `${inputBase} ${hasError ? inputErr : inputOk}`;
-}
 
 export function ProductForm({
   mode,
@@ -62,7 +61,6 @@ export function ProductForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Subcategorías de la categoría seleccionada (dependiente).
   const subcategories = useMemo(() => {
     const cat = categories.find((c) => c.id === categoryId);
     return cat?.subcategories ?? [];
@@ -70,7 +68,6 @@ export function ProductForm({
 
   function handleCategoryChange(nextCategoryId: string) {
     setCategoryId(nextCategoryId);
-    // Si la subcategoría actual no pertenece a la nueva categoría, limpiarla.
     const cat = categories.find((c) => c.id === nextCategoryId);
     const stillValid = cat?.subcategories.some((s) => s.id === subcategoryId);
     if (!stillValid) setSubcategoryId("");
@@ -81,7 +78,6 @@ export function ProductForm({
       title: title.trim(),
       slug: slug.trim() || undefined,
       sku: sku.trim() || null,
-      // z.coerce.number convierte el string; "" se valida como inválido.
       price: price.trim() as unknown as number,
       brandId,
       categoryId,
@@ -114,8 +110,6 @@ export function ProductForm({
       }
 
       if (mode === "create") {
-        // Continuar en la pantalla de edición del producto recién creado
-        // (allí vivirán imagen e inventario en fases posteriores).
         router.push(`/admin/productos/${res.data.id}/editar`);
         router.refresh();
       } else {
@@ -127,33 +121,21 @@ export function ProductForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-8">
-      {(formError || success) && (
-        <div
-          className={`rounded-lg border px-4 py-3 text-sm ${
-            formError
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-emerald-200 bg-emerald-50 text-emerald-700"
-          }`}
-        >
-          {formError ?? success}
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      <AdminFormFeedback error={formError} success={success} />
 
-      {/* Datos básicos */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Datos básicos</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Título" required error={errors.title} className="sm:col-span-2">
+      <AdminSectionCard title="Datos básicos">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AdminFieldGroup label="Título" required error={errors.title} className="sm:col-span-2">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ej. Guitarra eléctrica Stratocaster"
-              className={inputCls(Boolean(errors.title))}
+              className={adminInputClass(Boolean(errors.title))}
             />
-          </Field>
+          </AdminFieldGroup>
 
-          <Field
+          <AdminFieldGroup
             label="Slug"
             error={errors.slug}
             hint="Se genera automáticamente desde el título si lo dejas vacío."
@@ -162,20 +144,20 @@ export function ProductForm({
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="guitarra-electrica-stratocaster"
-              className={inputCls(Boolean(errors.slug))}
+              className={adminInputClass(Boolean(errors.slug))}
             />
-          </Field>
+          </AdminFieldGroup>
 
-          <Field label="SKU" error={errors.sku}>
+          <AdminFieldGroup label="SKU" error={errors.sku}>
             <input
               value={sku}
               onChange={(e) => setSku(e.target.value)}
               placeholder="Opcional"
-              className={inputCls(Boolean(errors.sku))}
+              className={adminInputClass(Boolean(errors.sku))}
             />
-          </Field>
+          </AdminFieldGroup>
 
-          <Field label="Precio (MXN)" required error={errors.price}>
+          <AdminFieldGroup label="Precio (MXN)" required error={errors.price}>
             <input
               type="number"
               min={0}
@@ -184,30 +166,28 @@ export function ProductForm({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="0"
-              className={inputCls(Boolean(errors.price))}
+              className={adminInputClass(Boolean(errors.price))}
             />
-          </Field>
+          </AdminFieldGroup>
 
-          <Field label="Subtítulo" error={errors.subtitle}>
+          <AdminFieldGroup label="Subtítulo" error={errors.subtitle}>
             <input
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
               placeholder="Opcional"
-              className={inputCls(Boolean(errors.subtitle))}
+              className={adminInputClass(Boolean(errors.subtitle))}
             />
-          </Field>
+          </AdminFieldGroup>
         </div>
-      </section>
+      </AdminSectionCard>
 
-      {/* Clasificación */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Clasificación</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Field label="Marca" required error={errors.brandId}>
+      <AdminSectionCard title="Clasificación">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AdminFieldGroup label="Marca" required error={errors.brandId}>
             <select
               value={brandId}
               onChange={(e) => setBrandId(e.target.value)}
-              className={inputCls(Boolean(errors.brandId))}
+              className={adminSelectClass(Boolean(errors.brandId))}
             >
               <option value="">Selecciona…</option>
               {brands.map((b) => (
@@ -216,13 +196,13 @@ export function ProductForm({
                 </option>
               ))}
             </select>
-          </Field>
+          </AdminFieldGroup>
 
-          <Field label="Categoría" required error={errors.categoryId}>
+          <AdminFieldGroup label="Categoría" required error={errors.categoryId}>
             <select
               value={categoryId}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className={inputCls(Boolean(errors.categoryId))}
+              className={adminSelectClass(Boolean(errors.categoryId))}
             >
               <option value="">Selecciona…</option>
               {categories.map((c) => (
@@ -231,14 +211,17 @@ export function ProductForm({
                 </option>
               ))}
             </select>
-          </Field>
+          </AdminFieldGroup>
 
-          <Field label="Subcategoría" error={errors.subcategoryId}>
+          <AdminFieldGroup label="Subcategoría" error={errors.subcategoryId}>
             <select
               value={subcategoryId}
               onChange={(e) => setSubcategoryId(e.target.value)}
               disabled={!categoryId || subcategories.length === 0}
-              className={`${inputCls(Boolean(errors.subcategoryId))} disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400`}
+              className={cn(
+                adminSelectClass(Boolean(errors.subcategoryId)),
+                "disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground",
+              )}
             >
               <option value="">
                 {!categoryId
@@ -253,125 +236,51 @@ export function ProductForm({
                 </option>
               ))}
             </select>
-          </Field>
+          </AdminFieldGroup>
         </div>
-      </section>
+      </AdminSectionCard>
 
-      {/* Descripción */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Descripción</h2>
-        <div className="mt-4">
-          <Field label="Descripción" error={errors.description}>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={5}
-              placeholder="Describe el producto, sus características y diferenciadores."
-              className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 ${
-                errors.description ? inputErr : inputOk
-              }`}
-            />
-          </Field>
-        </div>
-      </section>
+      <AdminSectionCard title="Descripción">
+        <AdminFieldGroup label="Descripción" error={errors.description}>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={5}
+            placeholder="Describe el producto, sus características y diferenciadores."
+            className={adminTextareaClass(Boolean(errors.description))}
+          />
+        </AdminFieldGroup>
+      </AdminSectionCard>
 
-      {/* Estado */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">Estado</h2>
-        <div className="mt-4 space-y-3">
-          <Toggle
+      <AdminSectionCard title="Estado">
+        <div className="space-y-3">
+          <AdminToggle
             label="Marcar como novedad"
             description="Muestra la etiqueta “Nuevo” en el catálogo."
             checked={isNew}
             onChange={setIsNew}
           />
-          <Toggle
+          <AdminToggle
             label="Publicado"
             description="Si está activo, el producto es visible en el sitio público."
             checked={isPublished}
             onChange={setIsPublished}
           />
         </div>
-      </section>
+      </AdminSectionCard>
 
-      {/* Acciones */}
-      <div className="flex items-center justify-end gap-3">
-        <Link
-          href="/admin/productos"
-          className="inline-flex h-9 items-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-        >
-          Cancelar
-        </Link>
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex h-9 items-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
-        >
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <AdminButton asChild variant="secondary">
+          <Link href="/admin/productos">Cancelar</Link>
+        </AdminButton>
+        <AdminButton type="submit" disabled={pending} variant="primary">
           {pending
             ? "Guardando…"
             : mode === "create"
               ? "Crear producto"
               : "Guardar cambios"}
-        </button>
+        </AdminButton>
       </div>
     </form>
-  );
-}
-
-function Field({
-  label,
-  required,
-  error,
-  hint,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  error?: string[];
-  hint?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={className}>
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
-      {children}
-      {error?.[0] ? (
-        <p className="mt-1 text-xs text-red-600">{error[0]}</p>
-      ) : hint ? (
-        <p className="mt-1 text-xs text-zinc-400">{hint}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function Toggle({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-200"
-      />
-      <span>
-        <span className="block text-sm font-medium text-zinc-900">{label}</span>
-        <span className="block text-xs text-zinc-500">{description}</span>
-      </span>
-    </label>
   );
 }
