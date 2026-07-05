@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/auth/account";
 import { getCustomerOrder } from "@/lib/orders/customer-queries";
 import { CustomerOrderDetailView } from "@/components/account/customer-order-detail-view";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<{ paid?: string }>;
@@ -36,8 +38,21 @@ export default async function CuentaPedidoDetailPage({
   if (!order) notFound();
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 pb-28 pt-28 md:px-8 md:pt-32">
-      <CustomerOrderDetailView order={order} paidQuery={paid} />
-    </div>
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.cuenta,
+          siteCrumbs.pedidos,
+          { label: order.orderNumber },
+        ])}
+        title={order.orderNumber}
+        description="Detalle y seguimiento de tu solicitud de compra."
+      />
+
+      <div className="mx-auto w-full max-w-3xl px-5 pb-28 md:px-8">
+        <CustomerOrderDetailView order={order} paidQuery={paid} />
+      </div>
+    </>
   );
 }

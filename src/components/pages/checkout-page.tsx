@@ -7,8 +7,9 @@ import { CheckCircle2, Info, Store } from "lucide-react";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { CheckoutSubmitBlock } from "@/components/checkout/checkout-submit-block";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCartProducts } from "@/hooks/use-cart-products";
@@ -138,13 +139,18 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
   if (isEmpty) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 pb-40 sm:px-6 md:py-20 md:pb-24 lg:px-8">
-      <PageHeader
-        variant="account"
-        backLink={{ href: "/carrito", label: "Volver al carrito", icon: "arrow" }}
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.carrito,
+          siteCrumbs.checkout,
+        ])}
         title="Solicitar compra"
         description="Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago."
       />
+
+    <div className="mx-auto max-w-6xl px-4 pb-40 sm:px-6 md:pb-24 lg:px-8">
 
       <div className="mt-6 md:hidden">
         <CheckoutSummary rows={rows} compact />
@@ -327,20 +333,25 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 function CheckoutLoginGate({ hasItems }: { hasItems: boolean }) {
   return (
-    <div className="mx-auto flex min-h-[55vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
-      <div className="rounded-2xl border border-border bg-card px-6 py-8 text-center shadow-sm sm:px-8">
-        <h1 className="font-display text-xl font-semibold tracking-tight sm:text-[1.35rem]">
-          Inicia sesión para solicitar tu compra
-        </h1>
-        <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Necesitamos tu cuenta para guardar la solicitud, confirmar disponibilidad y avisarte
-          cuando esté lista para recoger.
-        </p>
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.carrito,
+          siteCrumbs.checkout,
+        ])}
+        title="Solicitar compra"
+        description="Inicia sesión para guardar tu solicitud, confirmar disponibilidad y avisarte cuando esté lista para recoger."
+      />
+
+      <div className="mx-auto flex max-w-md flex-col px-4 py-12 sm:px-6">
+        <div className="rounded-2xl border border-border bg-card px-6 py-8 text-center shadow-sm sm:px-8">
 
         {!hasItems && (
           <p className="mt-3 text-xs text-muted-foreground">
@@ -361,7 +372,8 @@ function CheckoutLoginGate({ hasItems }: { hasItems: boolean }) {
           Volver al carrito
         </Link>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -369,20 +381,25 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
   const whatsappMessage = `Hola, acabo de enviar la solicitud de compra ${order.orderNumber}. Quiero confirmar disponibilidad.`;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-16 sm:px-6 md:py-20">
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.carrito,
+          siteCrumbs.checkout,
+          { label: order.orderNumber },
+        ])}
+        title={order.orderNumber}
+        description="Recibimos tu solicitud. Revisaremos la disponibilidad y te avisaremos cuando tu pedido sea aprobado."
+      />
+
+      <div className="mx-auto max-w-xl px-4 py-10 sm:px-6 md:py-12">
       <div className="text-center">
         <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           {order.statusLabel}
-        </p>
-        <h1 className="mt-1.5 font-display text-2xl font-semibold tracking-tight tabular-nums md:text-3xl">
-          {order.orderNumber}
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Recibimos tu solicitud de compra. Radio Shalko revisará la disponibilidad de tus
-          productos y te avisará cuando tu pedido sea aprobado.
         </p>
       </div>
 
@@ -412,7 +429,8 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           </a>
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

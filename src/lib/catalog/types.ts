@@ -60,6 +60,9 @@ export type CatalogProduct = {
   name: string;
   subtitle: string | null;
   description: string | null;
+  specifications: string | null;
+  features: string | null;
+  includes: string | null;
   price: number;
   sku: string | null;
   isNew: boolean;
@@ -67,6 +70,7 @@ export type CatalogProduct = {
   brand: CatalogBrand | null;
   category: CatalogCategory | null;
   subcategory: CatalogSubcategory | null;
+  catalogVariant: string | null;
   images: CatalogImage[];
   specs: CatalogSpec[];
   inventory: CatalogInventory[];

@@ -39,27 +39,25 @@ function CatalogLinkList({
       {items.map((item) => {
         const hasChildren = Boolean(item.children?.length);
         const isActive = activeLabel === item.label;
-        const isLive = isActiveItem(item);
+        void isActiveItem;
         return (
           <li
             key={item.label}
             onMouseEnter={() => {
-              if (hasChildren && onHover) onHover(item.label);
+              if (onHover) onHover(item.label);
             }}
           >
             <button
               type="button"
               onClick={() => onItem(item)}
               onMouseEnter={() => {
-                if (hasChildren && onHover) onHover(item.label);
+                if (onHover) onHover(item.label);
               }}
               className={cn(
                 "block w-full py-1 text-left text-[13.5px] leading-snug transition-colors duration-150",
                 isActive
-                  ? "font-medium text-copper"
-                  : isLive
-                    ? "text-foreground/85 hover:text-copper"
-                    : "text-muted-foreground/55 hover:text-muted-foreground/75",
+                  ? "font-medium text-foreground"
+                  : "text-foreground/85 hover:font-medium hover:text-foreground",
               )}
             >
               {item.label}
@@ -185,7 +183,7 @@ export function ProductsMegaMenu({
 
   return (
     <div className={megaMenuShell}>
-      <div className={cn("grid w-full grid-cols-3 items-start", megaGutterGrid)}>
+      <div className={cn("grid w-full grid-cols-1 items-start md:grid-cols-2 lg:grid-cols-3", megaGutterGrid)}>
         {inst && (
           <CatalogFamilyColumn
             family={inst}
@@ -280,11 +278,11 @@ function BrandAlphaGrid({
   className?: string;
 }) {
   return (
-    <div className={cn("grid w-full grid-cols-5 items-start", megaGutterGrid, className)}>
+    <div className={cn("grid w-full grid-cols-2 items-start sm:grid-cols-3 lg:grid-cols-5", megaGutterGrid, className)}>
       {columns.map((col) => (
         <div key={col.label} className="min-w-0 text-center">
           <p className="mb-3 text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
-            {col.label.replace("Marcas ", "")}
+            {col.label.toUpperCase()}
           </p>
           <ul className="space-y-0.5">
             {col.items.length > 0 ? (
@@ -293,7 +291,7 @@ function BrandAlphaGrid({
                   <button
                     type="button"
                     onClick={() => onBrand(b)}
-                    className="block w-full py-1 text-center text-[13.5px] leading-snug text-foreground/80 transition-colors duration-150 hover:text-copper"
+                    className="block w-full py-1 text-center text-[13.5px] leading-snug text-foreground/85 transition-colors duration-150 hover:font-medium hover:text-foreground"
                   >
                     {b}
                   </button>
@@ -315,9 +313,7 @@ export function BrandsMegaMenu({
   onBrand,
   onViewAll,
 }: BrandsMegaMenuProps) {
-  const featured = FEATURED_BRAND_CANDIDATES.filter((b) =>
-    sortedBrands.includes(b),
-  ).slice(0, 9);
+  const featured = FEATURED_BRAND_CANDIDATES;
 
   return (
     <div className={megaMenuShell}>

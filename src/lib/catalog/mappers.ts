@@ -8,31 +8,16 @@ import type {
   CatalogSpec,
   CatalogSubcategory,
 } from "./types";
+import {
+  extractDetailSectionsFromSpecs,
+  filterPublicSpecs,
+  mergeDetailSections,
+} from "./detail-specs-fallback";
 
 /**
- * Select reutilizable para traer un producto con todos sus joins.
- * Usado por todas las queries de producto en queries.ts.
+ * Select reutilizable — ver product-select.ts (resolución dinámica pre/post migración).
  */
-export const PRODUCT_SELECT = `
-  id,
-  slug,
-  title,
-  subtitle,
-  description,
-  price,
-  sku,
-  is_new,
-  is_published,
-  brand:brands ( id, name, slug, logo_url ),
-  category:categories ( id, name, slug ),
-  subcategory:subcategories ( id, name, slug, category_id ),
-  images:product_images ( id, url, alt_text, sort_order ),
-  specs:product_specs ( id, label, value, sort_order ),
-  inventory:product_inventory (
-    quantity,
-    branch:branches ( id, slug, name, display_name, is_active, sort_order )
-  )
-` as const;
+export { PRODUCT_SELECT, PRODUCT_SELECT_BASE, PRODUCT_SELECT_EXTENDED } from "./product-select";
 
 // --- Shapes crudos que devuelve Supabase con el select de arriba ---
 
@@ -90,10 +75,14 @@ export type RawProduct = {
   title: string;
   subtitle: string | null;
   description: string | null;
+  specifications: string | null;
+  features: string | null;
+  includes: string | null;
   price: number;
   sku: string | null;
   is_new: boolean;
   is_published: boolean;
+  catalog_variant?: string | null;
   brand: RawBrand;
   category: RawCategory;
   subcategory: RawSubcategory;
@@ -180,12 +169,25 @@ export function normalizeInventory(rows: RawInventory[] | null): CatalogInventor
 
 /** Fila Supabase (producto + joins) → CatalogProduct de dominio. */
 export function mapProduct(row: RawProduct): CatalogProduct {
+  const specs = normalizeSpecs(row.specs);
+  const detail = mergeDetailSections(
+    {
+      specifications: row.specifications ?? null,
+      features: row.features ?? null,
+      includes: row.includes ?? null,
+    },
+    extractDetailSectionsFromSpecs(specs),
+  );
+
   return {
     id: row.id,
     slug: row.slug,
     name: row.title,
     subtitle: row.subtitle,
     description: row.description,
+    specifications: detail.specifications,
+    features: detail.features,
+    includes: detail.includes,
     price: row.price,
     sku: row.sku,
     isNew: row.is_new,
@@ -193,8 +195,9 @@ export function mapProduct(row: RawProduct): CatalogProduct {
     brand: mapBrand(row.brand),
     category: mapCategory(row.category),
     subcategory: mapSubcategory(row.subcategory),
+    catalogVariant: row.catalog_variant ?? null,
     images: normalizeImages(row.images),
-    specs: normalizeSpecs(row.specs),
+    specs: filterPublicSpecs(specs),
     inventory: normalizeInventory(row.inventory),
   };
 }

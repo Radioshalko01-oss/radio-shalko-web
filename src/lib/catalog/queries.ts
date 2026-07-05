@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  PRODUCT_SELECT,
+  getOfficialCatalogTypeSubcategories,
+  isOfficialBrandName,
+  sortByOfficialBrandOrder,
+} from "@/lib/navigation/catalog-taxonomy";
+import { resolveProductSelect } from "./product-select";
+import {
   mapProduct,
   mapBrand,
   mapCategory,
@@ -49,8 +54,9 @@ export async function getCatalogProducts(
   filters: CatalogFilters = {},
 ): Promise<CatalogProduct[]> {
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
-  let query = supabase.from("products").select(PRODUCT_SELECT);
+  let query = supabase.from("products").select(select);
 
   if (!filters.includeUnpublished) {
     query = query.eq("is_published", true);
@@ -89,10 +95,11 @@ export async function getProductBySlug(
   slug: string,
 ): Promise<CatalogProduct | null> {
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -111,10 +118,11 @@ export async function getProductsByIds(
   if (!ids.length) return [];
 
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .in("id", ids)
     .eq("is_published", true);
 
@@ -159,9 +167,10 @@ export async function getRelatedProducts(
 
   if (!base) return [];
 
+  const select = await resolveProductSelect(supabase);
   let query = supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .eq("is_published", true)
     .neq("id", productId);
 
@@ -180,14 +189,21 @@ export async function getRelatedProducts(
 }
 
 /** Árbol de categorías con subcategorías anidadas (menús/filtros). */
-export async function getCategoriesTree(): Promise<CatalogCategoryTree[]> {
+export async function getCategoriesTree(opts: {
+  activeOnly?: boolean;
+  includeSubcategoryIds?: string[];
+} = {}): Promise<CatalogCategoryTree[]> {
+  const { activeOnly = true, includeSubcategoryIds = [] } = opts;
   const supabase = await createClient();
+  const officialSubNames = new Set(
+    getOfficialCatalogTypeSubcategories().map((s) => s.name.toLowerCase()),
+  );
 
   const [{ data: cats }, { data: subs }] = await Promise.all([
     supabase.from("categories").select("id, name, slug").order("sort_order"),
     supabase
       .from("subcategories")
-      .select("id, name, slug, category_id")
+      .select("id, name, slug, category_id, is_active")
       .order("sort_order"),
   ]);
 
@@ -196,6 +212,10 @@ export async function getCategoriesTree(): Promise<CatalogCategoryTree[]> {
   const subsByCategory = new Map<string, RawSubcategory[]>();
   for (const s of (subs ?? []) as RawSubcategory[]) {
     if (!s?.category_id) continue;
+    const isIncluded = includeSubcategoryIds.includes(s.id);
+    const isActive = (s as RawSubcategory & { is_active?: boolean }).is_active !== false;
+    const isOfficial = officialSubNames.has(s.name.toLowerCase());
+    if (activeOnly && !isIncluded && (!isActive || !isOfficial)) continue;
     const list = subsByCategory.get(s.category_id) ?? [];
     list.push(s);
     subsByCategory.set(s.category_id, list);
@@ -236,27 +256,33 @@ export async function getActiveTaxonomyNames(): Promise<{
 }
 
 /**
- * Marcas ordenadas. Por defecto devuelve todas (admin/formulario de producto).
- * Pasa `{ activeOnly: true }` en superficies públicas para excluir ocultas.
+ * Marcas ordenadas según la lista oficial del menú.
+ * Por defecto solo activas; en edición pasa `includeBrandIds` para conservar la marca actual.
  */
 export async function getBrands(
-  opts: { activeOnly?: boolean } = {},
+  opts: { activeOnly?: boolean; includeBrandIds?: string[] } = {},
 ): Promise<CatalogBrand[]> {
+  const { activeOnly = true, includeBrandIds = [] } = opts;
   const supabase = await createClient();
 
-  let query = supabase
-    .from("brands")
-    .select("id, name, slug, logo_url")
-    .order("sort_order")
-    .order("name");
+  let query = supabase.from("brands").select("id, name, slug, logo_url, is_active");
 
-  if (opts.activeOnly) query = query.eq("is_active", true);
+  if (activeOnly && includeBrandIds.length > 0) {
+    query = query.or(
+      `is_active.eq.true,id.in.(${includeBrandIds.map((id) => `"${id}"`).join(",")})`,
+    );
+  } else if (activeOnly) {
+    query = query.eq("is_active", true);
+  }
 
   const { data, error } = await query;
 
   if (error || !data) return [];
 
-  return (data as RawBrand[])
-    .map(mapBrand)
-    .filter((b): b is CatalogBrand => b !== null);
+  return sortByOfficialBrandOrder(
+    (data as RawBrand[])
+      .map(mapBrand)
+      .filter((b): b is CatalogBrand => b !== null)
+      .filter((b) => isOfficialBrandName(b.name)),
+  );
 }

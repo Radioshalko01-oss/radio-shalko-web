@@ -38,8 +38,22 @@ SUPABASE_ACCESS_TOKEN=sbp_xxx node scripts/apply-supabase-migrations.mjs
 ## Crear primer administrador
 
 1. Activa **Google** en Authentication → Providers.  
-2. Configura **Redirect URLs:** `http://localhost:3000/auth/callback`  
-3. Inicia sesión una vez en la app.  
+2. Configura **Authentication → URL Configuration** en el [dashboard de Radio Shalko](https://supabase.com/dashboard/project/actxvfjtejmpkjernvtw/auth/url-configuration):
+
+   - **Site URL (producción):** `https://radio-shalko-web.vercel.app`
+   - **Redirect URLs** (añade todas las que uses en local):
+
+   ```
+   http://localhost:3002/auth/callback
+   http://localhost:3002/**
+   http://localhost:3000/auth/callback
+   http://localhost:3003/auth/callback
+   https://radio-shalko-web.vercel.app/auth/callback
+   ```
+
+   Si falta el puerto local en Redirect URLs, Supabase ignora `redirectTo` y manda el `code` a la Site URL de producción (Vercel).
+
+3. Inicia sesión en `http://localhost:3002/login` (el dev server usa puerto **3002**).
 4. En SQL Editor:
 
 ```sql

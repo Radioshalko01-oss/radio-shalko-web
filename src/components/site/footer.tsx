@@ -12,7 +12,7 @@ import {
 
 const HELP = [
   { label: "Preguntas frecuentes", to: "/servicios#preguntas-frecuentes" },
-  { label: "Contacto y atención", to: "/contacto#canales" },
+  { label: "Contacto y atención", to: "/contacto#formulario" },
   { label: "Garantía y servicios", to: "/garantia#servicio-tecnico" },
   { label: "Formas de pago", to: "/servicios#formas-pago" },
   { label: "Recolección en tienda", to: "/servicios#recoleccion-tienda" },
@@ -200,17 +200,24 @@ export function Footer() {
         </div>
 
         <div className="mt-10 border-t border-white/20 pt-8 lg:mt-12">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:gap-y-12">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.8fr)_1.1fr_1.1fr_minmax(11rem,1fr)] lg:items-start lg:gap-x-[var(--store-gutter)] [--store-gutter:clamp(1.75rem,4vw,3rem)]">
+            <div className="min-w-0">
               <FooterHeading>Nuestras tiendas</FooterHeading>
             </div>
 
             {SITE_CONTACT.stores.map((store) => (
-              <div key={store.id} className="flex gap-5 lg:col-span-3">
+              <div
+                key={store.id}
+                className={
+                  store.id === "amecameca"
+                    ? "flex min-w-0 gap-5 lg:-ml-3"
+                    : "flex min-w-0 gap-5 lg:-ml-3"
+                }
+              >
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5">
                   <MapPin className="h-4 w-4 text-white/90" aria-hidden />
                 </div>
-                <div className="space-y-3">
+                <div className="min-w-0 space-y-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                     {store.displayName}
                   </p>
@@ -232,10 +239,14 @@ export function Footer() {
               </div>
             ))}
 
-            <div className="max-w-[11rem] space-y-1 text-sm leading-relaxed text-white/70 lg:col-span-4 lg:pt-1">
-              <p>Visítanos en nuestras tiendas físicas.</p>
-              <p>Nuestro equipo estará encantado</p>
-              <p>de ayudarte.</p>
+            <div className="flex min-w-0 lg:justify-end">
+              <p className="max-w-[12rem] text-sm leading-snug text-white/70">
+                Visítanos en nuestras tiendas físicas.
+                <br />
+                Nuestro equipo estará encantado
+                <br />
+                de ayudarte.
+              </p>
             </div>
           </div>
         </div>
@@ -260,7 +271,7 @@ export function Footer() {
               ))}
             </nav>
 
-            <p className="text-xs text-white/55 lg:text-right">Música · Audio · Pasión</p>
+            <p className="text-xs text-white/55 lg:text-right">Música · Audio · Producción</p>
           </div>
         </div>
       </div>

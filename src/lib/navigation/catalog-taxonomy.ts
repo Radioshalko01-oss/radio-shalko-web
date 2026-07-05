@@ -112,6 +112,23 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
         label: "Violines",
         sub: "Violines",
         href: catalogHref({ cat: "Instrumentos", sub: "Violines" }),
+        children: [
+          {
+            label: "4/4",
+            sub: "Violines",
+            href: catalogHref({ cat: "Instrumentos", sub: "Violines", instrumento: "4-4" }),
+          },
+          {
+            label: "3/4",
+            sub: "Violines",
+            href: catalogHref({ cat: "Instrumentos", sub: "Violines", instrumento: "3-4" }),
+          },
+          {
+            label: "1/2",
+            sub: "Violines",
+            href: catalogHref({ cat: "Instrumentos", sub: "Violines", instrumento: "1-2" }),
+          },
+        ],
       },
       {
         label: "Ukuleles",
@@ -166,9 +183,6 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
         "Ukulele",
         "Docerola",
         "Mandolina",
-        "Vihuela",
-        "Requinto",
-        "Tricordio",
       ]),
       acc("Fundas y estuches", [
         "Guitarra eléctrica",
@@ -177,93 +191,48 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
         "Bajo",
         "Docerola",
         "Ukulele",
-        "Violín",
         "Teclado",
-        "Mandolina",
       ]),
-      acc("Cables", [
-        "Instrumento",
-        "Micrófono",
-        "RCA",
-        "TRS",
-        "TS",
-        "Speakon",
-        "Powercon",
-      ], { sub: "Cables" }),
+      {
+        label: "Cables",
+        href: catalogHref({ cat: "Accesorios", tipo: "cables" }),
+        children: [
+          { label: "XLR / micrófono", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "xlr" }) },
+          { label: "TRS", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "trs" }) },
+          { label: "TS / instrumento", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "ts" }) },
+          { label: "RCA", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "rca" }) },
+          { label: "Speakon", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "speakon" }) },
+          { label: "Powercon", href: catalogHref({ cat: "Accesorios", tipo: "cables", instrumento: "powercon" }) },
+        ],
+      },
       acc("Amplificadores", ["Guitarra", "Bajo"], { sub: "Amplificadores" }),
-      acc("Pedales de efectos", ["Guitarra", "Bajo"], { sub: "Pedales" }),
       {
-        label: "Pedal de sustain",
-        href: catalogHref({ cat: "Accesorios", tipo: "pedal-de-sustain" }),
+        label: "Pedales",
+        href: catalogHref({ cat: "Accesorios", tipo: "pedales" }),
         children: [
-          {
-            label: "Teclado",
-            href: catalogHref({
-              cat: "Accesorios",
-              tipo: "pedal-de-sustain",
-              instrumento: "teclado",
-            }),
-          },
+          { label: "Pedal de sustain", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "pedal-de-sustain" }) },
+          { label: "Distortion", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "distortion" }) },
+          { label: "Fuzz", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "fuzz" }) },
+          { label: "Compressor", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "compressor" }) },
+          { label: "Chorus", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "chorus" }) },
+          { label: "Flanger", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "flanger" }) },
+          { label: "Delay", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "delay" }) },
+          { label: "Reverb", href: catalogHref({ cat: "Accesorios", tipo: "pedales", instrumento: "reverb" }) },
         ],
       },
-      {
-        label: "Afinadores",
-        href: catalogHref({ cat: "Accesorios", tipo: "afinadores" }),
-        children: [
-          {
-            label: "Universal",
-            href: catalogHref({
-              cat: "Accesorios",
-              tipo: "afinadores",
-              instrumento: "universal",
-            }),
-          },
-        ],
-      },
+      accSimple("Afinadores"),
       accSimple("Capotrastes"),
       acc("Pastillas de amplificación", ["Guitarra", "Violín"]),
       accSimple("Audífonos"),
-      accSimple("Interfaces"),
       {
-        label: "Pedestales de micrófono",
-        href: catalogHref({ cat: "Accesorios", tipo: "pedestales-de-microfono" }),
+        label: "Soportes y Atriles",
+        href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles" }),
         children: [
-          {
-            label: "Micrófono",
-            href: catalogHref({
-              cat: "Accesorios",
-              tipo: "pedestales-de-microfono",
-              instrumento: "microfono",
-            }),
-          },
-        ],
-      },
-      {
-        label: "Bases de teclado",
-        href: catalogHref({ cat: "Accesorios", tipo: "bases-de-teclado" }),
-        children: [
-          {
-            label: "Teclado",
-            href: catalogHref({
-              cat: "Accesorios",
-              tipo: "bases-de-teclado",
-              instrumento: "teclado",
-            }),
-          },
-        ],
-      },
-      {
-        label: "Atriles de partituras",
-        href: catalogHref({ cat: "Accesorios", tipo: "atriles-de-partituras" }),
-        children: [
-          {
-            label: "Universal",
-            href: catalogHref({
-              cat: "Accesorios",
-              tipo: "atriles-de-partituras",
-              instrumento: "universal",
-            }),
-          },
+          { label: "Soportes para micrófono", href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles", instrumento: "microfono" }) },
+          { label: "Soportes para teclado", href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles", instrumento: "teclado" }) },
+          { label: "Atriles para partituras", href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles", instrumento: "partituras" }) },
+          { label: "Soportes para guitarra", href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles", instrumento: "guitarra" }) },
+          { label: "Soportes para violín", href: catalogHref({ cat: "Accesorios", tipo: "soportes-y-atriles", instrumento: "violin" }) },
         ],
       },
     ],
@@ -293,8 +262,19 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
         label: "Mezcladoras",
         sub: "Mezcladoras",
         href: catalogHref({ cat: "Equipos de Audio", sub: "Mezcladoras" }),
+        children: [
+          { label: "Pasivas", sub: "Mezcladoras", href: catalogHref({ cat: "Equipos de Audio", sub: "Mezcladoras", instrumento: "pasivas" }) },
+          { label: "Activas", sub: "Mezcladoras", href: catalogHref({ cat: "Equipos de Audio", sub: "Mezcladoras", instrumento: "activas" }) },
+        ],
       },
-      { label: "Micrófonos", href: catalogHref({ cat: "Equipos de Audio", tipo: "microfonos" }) },
+      {
+        label: "Micrófonos",
+        href: catalogHref({ cat: "Equipos de Audio", tipo: "microfonos" }),
+        children: [
+          { label: "Dinámico", href: catalogHref({ cat: "Equipos de Audio", tipo: "microfonos", instrumento: "dinamico" }) },
+          { label: "Condensador", href: catalogHref({ cat: "Equipos de Audio", tipo: "microfonos", instrumento: "condensador" }) },
+        ],
+      },
       { label: "Interfaces de audio", href: catalogHref({ cat: "Equipos de Audio", tipo: "interfaces" }) },
       { label: "Amplificadores de potencia", href: catalogHref({ cat: "Equipos de Audio", tipo: "amplificadores-potencia" }) },
       { label: "Crossover", href: catalogHref({ cat: "Equipos de Audio", tipo: "crossover" }) },
@@ -310,30 +290,261 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
           { label: "Luces de escenario", href: catalogHref({ cat: "Equipos de Audio", tipo: "iluminacion-dmx", instrumento: "luces-escenario" }) },
         ],
       },
-      {
-        label: "Cables de audio",
-        href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio" }),
-        children: [
-          { label: "XLR / micrófono", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "xlr" }) },
-          { label: "TRS", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "trs" }) },
-          { label: "TS", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "ts" }) },
-          { label: "RCA", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "rca" }) },
-          { label: "Speakon", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "speakon" }) },
-          { label: "Powercon", href: catalogHref({ cat: "Equipos de Audio", tipo: "cables-audio", instrumento: "powercon" }) },
-        ],
-      },
     ],
   },
 ];
 
-export const FEATURED_BRAND_CANDIDATES = [
-  "Fender",
-  "Yamaha",
-  "Roland",
-  "Pearl",
-  "Behringer",
-  "Gibson",
-  "Taylor",
+/** Marcas oficiales que se venden en Radio Shalko (fuente de verdad del menú). */
+export const OFFICIAL_BRANDS = [
+  "Casio",
+  "SHURE",
   "Ibanez",
-  "JBL",
+  "Extreme",
+  "Century",
+  "McCartney",
+  "Segovia",
+  "Epiphone",
+  "Tagima",
+  "Roland",
+  "Fender",
+  "Behringer",
+  "Yamaha",
+  "Radox",
+  "Dannyukes",
+  "Laney",
+  "Meteoro",
+  "JZG",
+  "AlíenPro",
+  "Bellator",
+  "Cort",
+  "Evolution",
+  "Jendrix",
+  "Dandwood",
+  "Purépecha",
+  "Steelpro",
+  "Elton",
+  "Silvertone",
 ];
+
+export const FEATURED_BRAND_CANDIDATES = [
+  "Casio",
+  "Yamaha",
+  "Ibanez",
+  "Tagima",
+  "Behringer",
+  "McCartney",
+];
+
+/** Slugs de las tres categorías raíz del catálogo (alineados a BD). */
+export const OFFICIAL_CATEGORY_SLUGS: Record<string, string> = {
+  Instrumentos: "instrumentos",
+  Accesorios: "accesorios",
+  "Equipos de Audio": "equipos-de-audio",
+};
+
+function walkMenuItems(
+  items: CatalogMenuItem[],
+  categoryName: string,
+  out: Map<string, { categoryName: string; categorySlug: string; name: string; slug: string }>,
+) {
+  for (const item of items) {
+    if (item.sub) {
+      const key = `${categoryName}::${item.sub}`;
+      if (!out.has(key)) {
+        out.set(key, {
+          categoryName,
+          categorySlug: OFFICIAL_CATEGORY_SLUGS[categoryName] ?? slugify(categoryName),
+          name: item.sub,
+          slug: slugify(item.sub),
+        });
+      }
+    }
+    if (item.children?.length) walkMenuItems(item.children, categoryName, out);
+  }
+}
+
+/** Parsea href del megamenú (`/productos?cat=…&sub=…&tipo=…`). */
+export function parseCatalogHref(href?: string): {
+  sub?: string;
+  tipo?: string;
+  instrumento?: string;
+} {
+  if (!href) return {};
+  try {
+    const u = new URL(href, "http://local");
+    return {
+      sub: u.searchParams.get("sub") ?? undefined,
+      tipo: u.searchParams.get("tipo") ?? undefined,
+      instrumento: u.searchParams.get("instrumento") ?? undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+/** Nombre de subcategoría en BD para un ítem del megamenú. */
+export function getSubcategoryNameForMenuItem(item: CatalogMenuItem): string {
+  if (item.sub) return item.sub;
+  const parsed = parseCatalogHref(item.href);
+  if (parsed.sub) return parsed.sub;
+  if (item.label === "Baterías y percusión") return "Baterías";
+  return item.label;
+}
+
+export type CatalogTypeOption = {
+  label: string;
+  subcategoryName: string;
+  variants: Array<{ label: string; slug: string }>;
+};
+
+/** Tipos de producto (nivel 2 del megamenú) por familia. */
+export function getCatalogTypeOptions(
+  familyKey: CatalogFamily["key"],
+): CatalogTypeOption[] {
+  const family = CATALOG_FAMILIES.find((f) => f.key === familyKey);
+  if (!family) return [];
+
+  return family.items.map((item) => ({
+    label: item.label,
+    subcategoryName: getSubcategoryNameForMenuItem(item),
+    variants: (item.children ?? []).map((child) => ({
+      label: child.label,
+      slug: slugify(child.label),
+    })),
+  }));
+}
+
+/** Subcategorías oficiales = tipos de producto del megamenú (nivel 2). */
+export function getOfficialCatalogTypeSubcategories(): Array<{
+  categoryName: string;
+  categorySlug: string;
+  name: string;
+  slug: string;
+}> {
+  const seen = new Map<
+    string,
+    { categoryName: string; categorySlug: string; name: string; slug: string }
+  >();
+
+  for (const family of CATALOG_FAMILIES) {
+    for (const item of family.items) {
+      const name = getSubcategoryNameForMenuItem(item);
+      const key = `${family.cat}::${name}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          categoryName: family.cat,
+          categorySlug: OFFICIAL_CATEGORY_SLUGS[family.cat] ?? slugify(family.cat),
+          name,
+          slug: slugify(name),
+        });
+      }
+    }
+  }
+
+  return [...seen.values()];
+}
+
+export type ClassificationSelection = {
+  familyKey: CatalogFamily["key"];
+  typeLabel: string;
+  variantLabel?: string;
+};
+
+/** Resuelve familia/tipo/variante → ids de categoría y subcategoría + slug de variante. */
+export function resolveClassificationSelection(
+  categories: Array<{ id: string; name: string; subcategories: Array<{ id: string; name: string }> }>,
+  selection: ClassificationSelection,
+): {
+  categoryId: string;
+  subcategoryId: string;
+  catalogVariant: string | null;
+} | null {
+  const family = CATALOG_FAMILIES.find((f) => f.key === selection.familyKey);
+  if (!family) return null;
+
+  const typeItem = family.items.find((i) => i.label === selection.typeLabel);
+  if (!typeItem) return null;
+
+  const category = categories.find((c) => c.name === family.cat);
+  if (!category) return null;
+
+  const subName = getSubcategoryNameForMenuItem(typeItem);
+  const sub = category.subcategories.find(
+    (s) => s.name.toLowerCase() === subName.toLowerCase(),
+  );
+  if (!sub) return null;
+
+  let catalogVariant: string | null = null;
+  if (selection.variantLabel && typeItem.children?.length) {
+    const variant = typeItem.children.find((c) => c.label === selection.variantLabel);
+    if (variant) catalogVariant = slugify(selection.variantLabel);
+  }
+
+  return {
+    categoryId: category.id,
+    subcategoryId: sub.id,
+    catalogVariant,
+  };
+}
+
+/** Inicializa el picker desde un producto guardado. */
+export function classificationFromStoredProduct(input: {
+  categoryName?: string | null;
+  subcategoryName?: string | null;
+  catalogVariant?: string | null;
+}): ClassificationSelection | null {
+  const { categoryName, subcategoryName, catalogVariant } = input;
+  if (!categoryName || !subcategoryName) return null;
+
+  const family = CATALOG_FAMILIES.find((f) => f.cat === categoryName);
+  if (!family) return null;
+
+  for (const item of family.items) {
+    const itemSub = getSubcategoryNameForMenuItem(item);
+    if (itemSub.toLowerCase() !== subcategoryName.toLowerCase()) continue;
+
+    let variantLabel: string | undefined;
+    if (catalogVariant && item.children?.length) {
+      const match = item.children.find((c) => slugify(c.label) === catalogVariant);
+      if (match) variantLabel = match.label;
+    }
+
+    return {
+      familyKey: family.key,
+      typeLabel: item.label,
+      variantLabel,
+    };
+  }
+
+  return null;
+}
+
+/** Subcategorías de producto derivadas del megamenú (tipos nivel 2). */
+export function getOfficialProductSubcategories() {
+  return getOfficialCatalogTypeSubcategories();
+}
+
+/** Árbol de subcategorías por categoría (fallback cuando no hay BD). */
+export function getOfficialCategoryTree(): Record<string, string[]> {
+  const tree: Record<string, string[]> = {};
+  for (const sub of getOfficialProductSubcategories()) {
+    const list = tree[sub.categoryName] ?? [];
+    if (!list.includes(sub.name)) list.push(sub.name);
+    tree[sub.categoryName] = list;
+  }
+  return tree;
+}
+
+export function isOfficialBrandName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return OFFICIAL_BRANDS.some((b) => b.toLowerCase() === lower);
+}
+
+export function sortByOfficialBrandOrder<T extends { name: string }>(brands: T[]): T[] {
+  const order = new Map(OFFICIAL_BRANDS.map((n, i) => [n.toLowerCase(), i]));
+  return [...brands].sort((a, b) => {
+    const ia = order.get(a.name.toLowerCase()) ?? 999;
+    const ib = order.get(b.name.toLowerCase()) ?? 999;
+    return ia - ib || a.name.localeCompare(b.name, "es");
+  });
+}

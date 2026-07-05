@@ -3,7 +3,24 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.generated";
 import { isAdminUser } from "@/lib/auth/is-admin";
 
+/** Si Supabase devuelve `?code=` fuera de /auth/callback, reenviar al canje PKCE. */
+function redirectOAuthCodeIfNeeded(request: NextRequest): NextResponse | null {
+  const { pathname, searchParams } = request.nextUrl;
+  const code = searchParams.get("code");
+  if (!code || pathname.startsWith("/auth/callback")) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = "/auth/callback";
+  if (!url.searchParams.has("next")) {
+    url.searchParams.set("next", pathname === "/" ? "/cuenta" : pathname);
+  }
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
+  const oauthRedirect = redirectOAuthCodeIfNeeded(request);
+  if (oauthRedirect) return oauthRedirect;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

@@ -21,6 +21,8 @@ import {
 } from "@/lib/notifications/customer-notification-queries";
 import { getQuoteItems } from "@/lib/quotes/actions";
 import { signOut } from "@/lib/auth/actions";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
 
@@ -46,22 +48,25 @@ export default async function CuentaPage() {
   const accountType = account.isAdmin ? "Administrador" : "Usuario";
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 pb-28 pt-28 md:px-8 md:pt-32">
-      {/* Encabezado */}
-      <header className="flex items-center gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-foreground text-xl font-semibold text-background">
-          {(account.email?.[0] ?? "U").toUpperCase()}
-        </span>
-        <div className="min-w-0">
-          <h1 className={cn("truncate capitalize", typography.pageTitle)}>
-            {username}
-          </h1>
-          <p className="truncate text-sm text-muted-foreground">{email}</p>
-        </div>
-      </header>
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.cuenta])}
+        title="Mi cuenta"
+        description={email}
+      />
 
+      <div className="mx-auto w-full max-w-5xl px-5 pb-28 md:px-8">
       {/* Sección 1 — Perfil */}
       <Section title="Perfil">
+        <div className="mt-1 flex items-center gap-4 pb-2">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-foreground text-xl font-semibold text-background">
+            {(account.email?.[0] ?? "U").toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className={cn("truncate capitalize", typography.pageTitle)}>{username}</p>
+            <p className="truncate text-sm text-muted-foreground">{accountType}</p>
+          </div>
+        </div>
         <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">
           <Cell label="Nombre" value={username} capitalize />
           <Cell label="Correo" value={email} />
@@ -192,7 +197,8 @@ export default async function CuentaPage() {
           </Link>
         </Section>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

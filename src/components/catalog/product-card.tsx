@@ -16,7 +16,7 @@
  */
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, Plus } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, GitCompare, Heart, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/catalog/format";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
@@ -24,6 +24,7 @@ import { isAvailable } from "@/lib/catalog/inventory";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useQuote } from "@/hooks/use-quote";
+import { useCompare } from "@/hooks/use-compare";
 import { cn } from "@/lib/utils";
 
 export type ProductCardVariant = "featured" | "grid" | "row" | "compact";
@@ -51,6 +52,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
 function useCardState(product: CatalogProduct) {
   const { has, toggle } = useFavorites();
   const { has: inQuote, toggle: toggleQuote } = useQuote();
+  const { has: inCompare, add: addCompare, openDrawer } = useCompare();
   return {
     href: `/productos/${product.slug}`,
     brand: product.brand?.name ?? "",
@@ -60,6 +62,14 @@ function useCardState(product: CatalogProduct) {
     toggleFav: () => toggle(product.id),
     isQuoted: inQuote(product.id),
     toggleQuote: () => toggleQuote(product.id),
+    isCompared: inCompare(product.id),
+    toggleCompare: () => {
+      if (inCompare(product.id)) {
+        openDrawer();
+        return;
+      }
+      if (addCompare(product.id)) openDrawer();
+    },
   };
 }
 
@@ -148,13 +158,13 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
           />
         </button>
 
-        {hasGallery && hovered && (
+        {hasGallery && (
           <>
             <button
               type="button"
               onClick={goPrev}
               aria-label="Imagen anterior"
-              className="absolute left-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 shadow-sm backdrop-blur-sm transition-colors hover:border-border hover:bg-background hover:text-foreground"
+              className="absolute left-2.5 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-100 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:opacity-0 md:group-hover/card:opacity-100"
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={1.25} />
             </button>
@@ -162,7 +172,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
               type="button"
               onClick={goNext}
               aria-label="Imagen siguiente"
-              className="absolute right-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 shadow-sm backdrop-blur-sm transition-colors hover:border-border hover:bg-background hover:text-foreground"
+              className="absolute right-2.5 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-100 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:opacity-0 md:group-hover/card:opacity-100"
             >
               <ChevronRight className="h-4 w-4" strokeWidth={1.25} />
             </button>
@@ -234,7 +244,17 @@ function BoxVariant({
   compact: boolean;
   className?: string;
 }) {
-  const { href, brand, available, isFav, toggleFav, isQuoted, toggleQuote } = useCardState(product);
+  const {
+    href,
+    brand,
+    available,
+    isFav,
+    toggleFav,
+    isQuoted,
+    toggleQuote,
+    isCompared,
+    toggleCompare,
+  } = useCardState(product);
   const mainImage = product.images[0];
 
   return (
@@ -268,6 +288,23 @@ function BoxVariant({
         className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-foreground hover:text-background"
       >
         <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          toggleCompare();
+        }}
+        aria-label={isCompared ? "Ver comparación" : "Agregar a comparación"}
+        aria-pressed={isCompared}
+        className={cn(
+          "absolute grid h-9 w-9 place-items-center rounded-full shadow-sm backdrop-blur transition-colors",
+          compact ? "right-3 top-14" : "right-14 top-3",
+          isCompared
+            ? "bg-foreground text-background"
+            : "bg-background/90 text-foreground hover:bg-foreground hover:text-background",
+        )}
+      >
+        <GitCompare className="h-4 w-4" />
       </button>
       <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-5")}>
         <p className={siteShell.brandEyebrow}>{brand}</p>

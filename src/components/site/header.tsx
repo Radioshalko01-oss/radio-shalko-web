@@ -10,7 +10,8 @@ import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useLayoutEffect, type ReactNode } from "react";
+import { useIsBelowLg } from "@/hooks/use-media-query";
 import {
   Sheet,
   SheetContent,
@@ -18,7 +19,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { BRANDS, CATEGORY_TREE, formatPrice } from "@/lib/products";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useQuote } from "@/hooks/use-quote";
@@ -32,8 +32,19 @@ import {
 } from "@/components/site/mega-menus";
 import {
   CATALOG_FAMILIES,
+  FEATURED_BRAND_CANDIDATES,
+  OFFICIAL_BRANDS,
   type CatalogMenuItem,
 } from "@/lib/navigation/catalog-taxonomy";
+
+const PANEL_SHEET_CLOSE =
+  "[&>button]:right-5 [&>button]:top-5 [&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-full [&>button]:border [&>button]:border-border/70 [&>button]:bg-background [&>button]:opacity-100 [&>button]:shadow-none [&>button]:transition-colors [&>button]:hover:bg-muted [&>button]:focus:ring-0";
+
+const panelBtnPrimary =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-foreground text-sm font-medium text-background transition-opacity hover:opacity-90";
+
+const panelBtnSecondary =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted/50";
 
 /** Índice ligero de productos (Supabase) para búsqueda y drawers del header. */
 export type HeaderProduct = {
@@ -80,6 +91,14 @@ const QUICK_SEARCHES = [
   "Mezcladoras",
 ];
 
+const HEADER_SCROLL_RANGE = 64;
+
+function applyHeaderReveal(el: HTMLElement, scrollY: number) {
+  const reveal = Math.min(1, Math.max(0, scrollY / HEADER_SCROLL_RANGE));
+  el.style.setProperty("--header-reveal", reveal.toFixed(3));
+  el.dataset.state = reveal > 0.3 ? "solid" : "hero";
+}
+
 /** Taxonomía del mega menú: `src/lib/navigation/catalog-taxonomy.ts` */
 
 export function SiteHeader({
@@ -95,7 +114,11 @@ export function SiteHeader({
   /** Marcas activas reales (nombres) para el menú de Marcas. Fallback estático. */
   brands?: string[];
 }) {
-  const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const isBelowLg = useIsBelowLg();
+  const hasHero = pathname === "/";
+  const headerRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"productos" | "marcas" | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -107,13 +130,10 @@ export function SiteHeader({
   const [recent, setRecent] = useState<string[]>([]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const pathname = usePathname();
   // Solo la home tiene un hero visual a sangre completa: ahí el header arranca
   // integrado (transparente) y se vuelve sólido al hacer scroll. El resto de
   // rutas no tienen hero, por lo que el header inicia sólido para conservar
   // legibilidad sobre fondos claros.
-  const hasHero = pathname === "/";
   const { ids: favIds, remove: removeFav, count: favCount } = useFavorites();
   const {
     ids: quoteIds,
@@ -189,12 +209,40 @@ export function SiteHeader({
     router.push("/productos");
   };
 
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    if (!hasHero) {
+      el.style.setProperty("--header-reveal", "1");
+      el.dataset.state = "solid";
+      return;
+    }
+    applyHeaderReveal(el, window.scrollY);
+    if (window.scrollY <= 0) el.dataset.state = "hero";
+  }, [hasHero]);
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
+    const el = headerRef.current;
+    if (!el || !hasHero) return;
+
+    let rafId = 0;
+    const update = () => {
+      rafId = 0;
+      const node = headerRef.current;
+      if (!node || node.dataset.forcedSolid === "true") return;
+      applyHeaderReveal(node, window.scrollY);
+    };
+
+    const onScroll = () => {
+      if (!rafId) rafId = requestAnimationFrame(update);
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, [hasHero]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -253,9 +301,10 @@ export function SiteHeader({
     router.push(`/marcas?b=${encodeURIComponent(brand)}`);
   };
 
-  // Group brands by letter ranges similar to Veerkamp. Usa marcas activas reales
-  // si se proveen; si no, cae al listado estático para no romper el menú.
-  const brandList = brands && brands.length > 0 ? brands : BRANDS;
+  // Group brands by letter ranges similar to Veerkamp. Usa la lista oficial de
+  // marcas de la tienda; conserva `brands`/`BRANDS` como respaldo defensivo.
+  const brandList =
+    OFFICIAL_BRANDS.length > 0 ? OFFICIAL_BRANDS : brands && brands.length > 0 ? brands : BRANDS;
   const sortedBrands = [...brandList].sort((a, b) => a.localeCompare(b));
   const brandColumns: Array<{ label: string; items: string[] }> = (() => {
     const ranges: Array<[string, string]> = [
@@ -315,6 +364,34 @@ export function SiteHeader({
     setMobilePanel(null);
   };
 
+  /** Misma ruta de primer nivel: scroll al tope en lugar de recargar. */
+  const isSameNavPage = (to: string) =>
+    pathname === to || pathname === `${to}/`;
+
+  const navigateOrScrollTop = (href: string, onAfter?: () => void) => {
+    if (isSameNavPage(href)) {
+      onAfter?.();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    onAfter?.();
+    router.push(href);
+  };
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+    onAfter?: () => void,
+  ) => {
+    if (isSameNavPage(href)) {
+      e.preventDefault();
+      onAfter?.();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      onAfter?.();
+    }
+  };
+
   const toggleMobileMenu = () => {
     setOpen((current) => {
       if (current) setMobilePanel(null);
@@ -322,59 +399,72 @@ export function SiteHeader({
     });
   };
 
-  const headerSolid = scrolled || megaPanel !== null || open;
-  // Estado "integrado al hero": solo en home, en el tope, sin paneles abiertos.
-  const transparent = hasHero && !headerSolid;
+  const headerForcedSolid = !hasHero || megaPanel !== null || open;
+  const heroBlend = hasHero && !headerForcedSolid;
 
-  // Botón de icono que adapta su color al estado del header (claro sobre hero,
-  // neutro sobre panel sólido).
-  const iconBtn = cn(
-    "relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-[250ms] ease-out",
-    transparent
-      ? "text-white hover:bg-white/12"
-      : "text-foreground/80 hover:bg-muted hover:text-foreground",
-  );
-  const badgeClass = cn(
-    "absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums ring-2 transition-colors",
-    transparent
-      ? "bg-copper text-copper-foreground ring-transparent"
-      : "bg-copper text-copper-foreground ring-background",
-  );
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    if (headerForcedSolid) {
+      el.style.setProperty("--header-reveal", "1");
+      el.dataset.state = "solid";
+      return;
+    }
+    if (hasHero) {
+      applyHeaderReveal(el, window.scrollY);
+    }
+  }, [headerForcedSolid, hasHero]);
+
+  const iconBtn =
+    "site-header__icon-btn relative grid h-11 w-11 place-items-center rounded-full transition-colors duration-300 ease-out";
+  const badgeClass =
+    "site-header__badge absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold tabular-nums text-copper-foreground ring-2";
 
   return (
     <header
-      className={cn(
-        "relative fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-[250ms] ease-out",
-        transparent
-          ? "bg-transparent"
-          : "bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.06)]",
-      )}
-      data-state={transparent ? "hero" : "solid"}
+      ref={headerRef}
+      className="site-header fixed inset-x-0 top-0 z-50"
+      data-has-hero={hasHero ? "true" : "false"}
+      data-forced-solid={headerForcedSolid ? "true" : "false"}
       onMouseLeave={scheduleClose}
     >
-      {/* Scrim sobre el hero: degradado extendido sin borde duro al pie del header */}
-      {transparent && (
+      <div className="site-header__bg pointer-events-none absolute inset-0 bg-background" aria-hidden />
+      {heroBlend && (
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-black/50 via-black/15 to-transparent md:h-32"
+          className="site-header__scrim pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-black/45 via-black/12 to-transparent md:h-32"
           aria-hidden
         />
       )}
-      <div className="relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
+      <div className="site-header__bar relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
           className="group relative z-10 flex shrink-0 items-center"
           aria-label={BRAND_ARIA_LABEL}
         >
-          <SiteLogo
-            variant="horizontal"
-            context="header"
-            tone={transparent ? "on-dark" : "default"}
-            interactive
-          />
+          <div className="relative">
+            {heroBlend && (
+              <div className="site-header__logo-light">
+                <SiteLogo
+                  variant="horizontal"
+                  context="header"
+                  tone="on-dark"
+                  interactive
+                />
+              </div>
+            )}
+            <div className={cn(heroBlend && "site-header__logo-dark absolute inset-0")}>
+              <SiteLogo
+                variant="horizontal"
+                context="header"
+                tone="default"
+                interactive
+              />
+            </div>
+          </div>
         </Link>
 
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
-          <div className="flex items-center gap-7 lg:gap-9">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
+          <div className="flex items-center gap-5 xl:gap-9">
             {NAV.map((item) => {
               const isActive = megaPanel === item.panel && Boolean(item.panel);
               return (
@@ -385,19 +475,13 @@ export function SiteHeader({
                 >
                   <Link
                     href={item.to}
-                    onClick={() => setMegaPanel(null)}
-                    className={cn(
-                      "group relative text-[12px] font-medium uppercase tracking-[0.2em] transition-colors",
-                      transparent
-                        ? "text-white/90 hover:text-white"
-                        : "text-foreground/80 hover:text-foreground",
-                    )}
+                    onClick={(e) => handleNavClick(e, item.to, () => setMegaPanel(null))}
+                    className="site-header__nav-link group relative text-[12px] font-medium uppercase tracking-[0.2em] transition-colors duration-300 ease-out"
                   >
                     {item.label}
                     <span
                       className={cn(
-                        "absolute -bottom-1.5 left-0 h-px transition-[width,background-color] duration-[250ms] ease-out",
-                        transparent ? "bg-white/90" : "bg-copper",
+                        "site-header__nav-underline absolute -bottom-1.5 left-0 h-px transition-[width] duration-300 ease-out",
                         isActive ? "w-full" : "w-0 group-hover:w-full",
                       )}
                     />
@@ -408,7 +492,7 @@ export function SiteHeader({
           </div>
         </nav>
 
-        <div className="relative z-10 flex shrink-0 items-center justify-end gap-1.5">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-1 sm:gap-1.5">
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
@@ -419,7 +503,7 @@ export function SiteHeader({
           <button
             aria-label={favCount > 0 ? `Favoritos (${favCount})` : "Favoritos"}
             onClick={() => setFavOpen(true)}
-            className={iconBtn}
+            className={cn(iconBtn, "hidden sm:grid")}
           >
             <Heart className="h-[18px] w-[18px]" />
             {favCount > 0 && (
@@ -438,10 +522,7 @@ export function SiteHeader({
           </button>
 
           <span
-            className={cn(
-              "mx-1 hidden h-5 w-px md:block",
-              transparent ? "bg-white/25" : "bg-border/70",
-            )}
+            className="site-header__divider mx-1 hidden h-5 w-px md:block"
             aria-hidden
           />
 
@@ -452,24 +533,26 @@ export function SiteHeader({
                 <button
                   aria-label="Mi cuenta"
                   aria-expanded={accountOpen}
-                  onClick={() => setAccountOpen((v) => !v)}
+                  onClick={() => {
+                    if (isBelowLg) {
+                      setAccountOpen(false);
+                      setOpen(true);
+                      return;
+                    }
+                    setAccountOpen((v) => !v);
+                  }}
                   className={iconBtn}
                 >
                   <User className="h-[18px] w-[18px]" />
                   {(account.hasOrderAttention || (account.unreadNotifications ?? 0) > 0) && (
                     <span
-                      className={cn(
-                        "absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2",
-                        transparent
-                          ? "bg-copper ring-transparent"
-                          : "bg-foreground ring-background",
-                      )}
+                      className="site-header__account-dot absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2"
                       aria-hidden
                     />
                   )}
                 </button>
                 {accountOpen && (
-                  <div className="absolute right-0 top-12 z-[60] w-72 origin-top-right rounded-2xl border border-border/70 bg-background p-1.5 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="absolute right-0 top-12 z-[60] hidden w-72 origin-top-right rounded-2xl border border-border/70 bg-background p-1.5 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] animate-in fade-in slide-in-from-top-1 duration-200 md:block">
                     <div className="flex items-center gap-3 px-2.5 py-2.5">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-sm font-semibold text-background">
                         {(account.email?.[0] ?? "U").toUpperCase()}
@@ -583,7 +666,7 @@ export function SiteHeader({
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
             onClick={toggleMobileMenu}
-            className={cn(iconBtn, "md:hidden")}
+            className={cn(iconBtn, "lg:hidden")}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -595,7 +678,7 @@ export function SiteHeader({
         onMouseEnter={() => megaPanel && openPanel(megaPanel)}
         onMouseLeave={scheduleClose}
         className={cn(
-          "hidden overflow-hidden border-t border-border/25 bg-background shadow-[0_20px_44px_-28px_rgba(0,0,0,0.14)] transition-[max-height,opacity] duration-300 ease-out md:block",
+          "site-header__mega hidden overflow-hidden border-t border-border/25 bg-background shadow-[0_20px_44px_-28px_rgba(0,0,0,0.14)] transition-[max-height,opacity] duration-300 ease-out lg:block",
           megaPanel
             ? "max-h-[560px] overflow-visible opacity-100"
             : "pointer-events-none max-h-0 overflow-hidden opacity-0",
@@ -614,10 +697,7 @@ export function SiteHeader({
             brandColumns={brandColumns}
             sortedBrands={sortedBrands}
             onBrand={goBrand}
-            onViewAll={() => {
-              setMegaPanel(null);
-              router.push("/marcas");
-            }}
+            onViewAll={() => navigateOrScrollTop("/marcas", () => setMegaPanel(null))}
           />
         )}
       </div>
@@ -627,10 +707,10 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="fixed inset-0 top-16 z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 md:hidden"
+            className="fixed inset-0 top-16 z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
             onClick={closeMobileMenu}
           />
-          <div className="relative z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden">
+          <div className="relative z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col px-5 py-6">
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
@@ -657,7 +737,7 @@ export function SiteHeader({
                   />
                 ))}
                 <button
-                  onClick={() => { closeMobileMenu(); router.push("/productos"); }}
+                  onClick={() => navigateOrScrollTop("/productos", closeMobileMenu)}
                   className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
                 >
                   Ver catálogo completo
@@ -687,7 +767,7 @@ export function SiteHeader({
                   ))}
                 </ul>
                 <button
-                  onClick={() => { closeMobileMenu(); router.push("/marcas"); }}
+                  onClick={() => navigateOrScrollTop("/marcas", closeMobileMenu)}
                   className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
                 >
                   Ver todas las marcas
@@ -700,7 +780,7 @@ export function SiteHeader({
               <Link
                 key={item.label}
                 href={item.to}
-                onClick={closeMobileMenu}
+                onClick={(e) => handleNavClick(e, item.to, closeMobileMenu)}
                 className="group flex items-center justify-between border-t border-border/60 px-1 py-4 transition-[color,transform] duration-300 hover:translate-x-0.5 hover:text-copper"
               >
                 <span className="flex items-baseline gap-3">
@@ -888,14 +968,17 @@ export function SiteHeader({
       <Sheet open={quoteOpen} onOpenChange={setQuoteOpen}>
         <SheetContent
           side="right"
-          className="flex h-full w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[400px]"
+          className={cn(
+            "flex h-full w-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0 sm:max-w-[400px]",
+            PANEL_SHEET_CLOSE,
+          )}
         >
-          <div className="shrink-0 border-b border-border px-5 pb-4 pt-6 pr-12">
-            <SheetHeader className="space-y-1 text-left">
-              <SheetTitle className="font-display text-xl font-semibold tracking-tight">
+          <div className="shrink-0 border-b border-border/80 px-5 pb-5 pt-6 pr-14">
+            <SheetHeader className="space-y-1.5 text-left">
+              <SheetTitle className="font-display text-[1.35rem] font-semibold tracking-tight">
                 Tu carrito
               </SheetTitle>
-              <SheetDescription className="text-xs">
+              <SheetDescription className="text-[13px] leading-snug text-muted-foreground">
                 {quoteRows.length === 0
                   ? "Aún no agregas productos."
                   : `${quoteRows.length} producto${quoteRows.length === 1 ? "" : "s"}`}
@@ -903,36 +986,41 @@ export function SiteHeader({
             </SheetHeader>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
             {quoteRows.length === 0 ? (
-              <div className="grid place-items-center rounded-xl border border-dashed border-border py-16 text-center">
-                <ShoppingBag className="h-7 w-7 text-muted-foreground" />
-                <p className="mt-3 text-sm text-muted-foreground">Tu carrito está vacío</p>
+              <div className="flex flex-col items-center justify-center px-2 py-16 text-center">
+                <span className="grid h-12 w-12 place-items-center rounded-full border border-border/80 bg-muted/30">
+                  <ShoppingBag className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                </span>
+                <p className="mt-4 text-sm font-medium text-foreground">Tu carrito está vacío</p>
+                <p className="mt-1 max-w-[220px] text-[13px] leading-relaxed text-muted-foreground">
+                  Explora el catálogo y agrega lo que te interese.
+                </p>
                 <button
                   type="button"
                   onClick={() => {
                     setQuoteOpen(false);
                     router.push("/productos");
                   }}
-                  className="mt-4 text-sm font-medium text-copper hover:underline"
+                  className={cn(panelBtnPrimary, "mt-6 max-w-[240px]")}
                 >
                   Explorar catálogo
                 </button>
               </div>
             ) : (
-              <ul className="divide-y divide-border/80">
+              <ul className="divide-y divide-border/70">
                 {quoteRows.map(({ p, qty }) => (
-                  <li key={p.id} className="flex gap-3 py-3">
+                  <li key={p.id} className="flex gap-3.5 py-4">
                     <Link
                       href={`/productos/${p.slug}`}
                       onClick={() => setQuoteOpen(false)}
-                      className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border/50 bg-muted"
+                      className="h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40"
                     >
                       {p.image && (
                         <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                       )}
                     </Link>
-                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
                       <div className="flex items-start justify-between gap-2">
                         <Link
                           href={`/productos/${p.slug}`}
@@ -940,18 +1028,20 @@ export function SiteHeader({
                           className="min-w-0"
                         >
                           {p.brand && (
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-copper">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                               {p.brand}
                             </p>
                           )}
-                          <p className="line-clamp-2 text-[13px] font-medium leading-snug">{p.name}</p>
+                          <p className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
+                            {p.name}
+                          </p>
                         </Link>
                         <button
                           aria-label="Quitar"
                           onClick={() => removeQuote(p.id)}
-                          className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                       <div className="flex items-center justify-between gap-2">
@@ -960,9 +1050,7 @@ export function SiteHeader({
                           size="sm"
                           onChange={(next) => setQuoteQty(p.id, next)}
                         />
-                        <span className="text-sm font-semibold tabular-nums">
-                          {formatPrice(p.price * qty)}
-                        </span>
+                        <span className={typography.priceInline}>{formatPrice(p.price * qty)}</span>
                       </div>
                     </div>
                   </li>
@@ -972,11 +1060,13 @@ export function SiteHeader({
           </div>
 
           {quoteRows.length > 0 && (
-            <div className="shrink-0 border-t border-border bg-background px-5 py-4">
-              <p className={cn(siteShell.labelCaps, "mt-0.5")}>Total estimado</p>
-              <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(quoteTotal)}</p>
+            <div className="shrink-0 border-t border-border/80 bg-background px-5 py-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className={siteShell.labelCaps}>Total estimado</p>
+                <p className={typography.priceTotal}>{formatPrice(quoteTotal)}</p>
+              </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2.5">
                 {account?.isAdmin ? (
                   <CartShareActions lines={shareLines} variant="primary" compact />
                 ) : (
@@ -985,23 +1075,23 @@ export function SiteHeader({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setQuoteOpen(false)}
-                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-copper text-sm font-semibold text-copper-foreground transition-colors hover:bg-copper/90"
+                    className={panelBtnPrimary}
                   >
                     <MessageCircle className="h-4 w-4" />
                     Solicitar asesoría
                   </a>
                 )}
 
-                <Button
-                  variant="outline"
+                <button
+                  type="button"
                   onClick={() => {
                     setQuoteOpen(false);
                     router.push("/carrito");
                   }}
-                  className="h-10 w-full rounded-full text-sm"
+                  className={panelBtnSecondary}
                 >
                   Ver carrito
-                </Button>
+                </button>
 
                 <button
                   type="button"
@@ -1009,7 +1099,7 @@ export function SiteHeader({
                     setQuoteOpen(false);
                     router.push("/productos");
                   }}
-                  className="w-full py-1.5 text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="w-full py-1 text-center text-[13px] text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Seguir explorando
                 </button>
@@ -1021,77 +1111,92 @@ export function SiteHeader({
 
       {/* Favorites panel */}
       <Sheet open={favOpen} onOpenChange={setFavOpen}>
-        <SheetContent side="right" className="bg-background w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="text-left">
-            <SheetTitle className="font-display text-2xl font-medium tracking-tight">
-              Tus favoritos
-            </SheetTitle>
-            <SheetDescription>
-              {favProducts.length === 0
-                ? "Aún no has guardado productos."
-                : `${favProducts.length} producto${favProducts.length === 1 ? "" : "s"} guardado${favProducts.length === 1 ? "" : "s"}.`}
-            </SheetDescription>
-          </SheetHeader>
-
-          {favProducts.length === 0 ? (
-            <div className="mt-8 grid place-items-center rounded-xl border border-dashed border-border py-14 text-center">
-              <Heart className="h-8 w-8 text-muted-foreground" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                Toca el corazón en cualquier producto para guardarlo aquí.
-              </p>
-            </div>
-          ) : (
-            <ul className="mt-6 divide-y divide-border">
-              {favProducts.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-3">
-                  <Link
-                    href={`/productos/${p.slug}`}
-                    onClick={() => setFavOpen(false)}
-                    className="flex flex-1 items-center gap-3"
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
-                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {p.brand}
-                      </p>
-                      <p className="truncate text-sm font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatPrice(p.price)}</p>
-                    </div>
-                  </Link>
-                  <button
-                    aria-label="Quitar"
-                    onClick={() => removeFav(p.id)}
-                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <SheetContent
+          side="right"
+          className={cn(
+            "flex h-full w-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0 sm:max-w-[400px]",
+            PANEL_SHEET_CLOSE,
           )}
+        >
+          <div className="shrink-0 border-b border-border/80 px-5 pb-5 pt-6 pr-14">
+            <SheetHeader className="space-y-1.5 text-left">
+              <SheetTitle className="font-display text-[1.35rem] font-semibold tracking-tight">
+                Tus favoritos
+              </SheetTitle>
+              <SheetDescription className="text-[13px] leading-snug text-muted-foreground">
+                {favProducts.length === 0
+                  ? "Aún no has guardado productos."
+                  : `${favProducts.length} producto${favProducts.length === 1 ? "" : "s"} guardado${favProducts.length === 1 ? "" : "s"}.`}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
 
-          <div className="mt-6 flex flex-col gap-2">
-            <Button
-              onClick={() => {
-                setFavOpen(false);
-                router.push("/favoritos");
-              }}
-              className="h-11"
-            >
-              Ver panel completo
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFavOpen(false);
-                router.push("/productos");
-              }}
-              className="h-11"
-            >
-              Seguir explorando
-            </Button>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
+            {favProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center px-2 py-16 text-center">
+                <span className="grid h-12 w-12 place-items-center rounded-full border border-border/80 bg-muted/30">
+                  <Heart className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                </span>
+                <p className="mt-4 text-sm font-medium text-foreground">Sin favoritos aún</p>
+                <p className="mt-1 max-w-[240px] text-[13px] leading-relaxed text-muted-foreground">
+                  Toca el corazón en cualquier producto para guardarlo aquí.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border/70">
+                {favProducts.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3.5 py-4">
+                    <Link
+                      href={`/productos/${p.slug}`}
+                      onClick={() => setFavOpen(false)}
+                      className="flex min-w-0 flex-1 items-center gap-3.5"
+                    >
+                      <div className="h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40">
+                        <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          {p.brand}
+                        </p>
+                        <p className="truncate text-[13px] font-medium text-foreground">{p.name}</p>
+                        <p className={cn(typography.priceInline, "mt-1 text-[14px]")}>
+                          {formatPrice(p.price)}
+                        </p>
+                      </div>
+                    </Link>
+                    <button
+                      aria-label="Quitar"
+                      onClick={() => removeFav(p.id)}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="shrink-0 border-t border-border/80 px-5 py-5">
+            <div className="flex flex-col gap-2.5">
+              <Link
+                href="/favoritos"
+                onClick={() => setFavOpen(false)}
+                className={panelBtnPrimary}
+              >
+                Ver panel completo
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setFavOpen(false);
+                  router.push("/productos");
+                }}
+                className={panelBtnSecondary}
+              >
+                Seguir explorando
+              </button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -1200,7 +1305,7 @@ function SearchPanel({
   }, [products, q, hasQuery]);
 
   const SUGGESTIONS = ["Guitarras eléctricas", "Teclados", "Baterías", "Mezcladoras"];
-  const FAV_BRANDS = ["Fender", "Yamaha", "Shure", "Roland", "Pearl"];
+  const featuredBrands = FEATURED_BRAND_CANDIDATES;
 
   return (
     <div className="mx-auto flex max-h-[88vh] w-full max-w-2xl flex-col px-5 pt-8 pb-8 md:px-6 md:pt-10">
@@ -1213,13 +1318,13 @@ function SearchPanel({
         className="border-b border-border/70 pb-4"
       >
         <div className="flex items-center gap-3">
-          <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground/80" strokeWidth={1.75} />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Busca instrumentos, marcas, accesorios…"
-            className="w-full bg-transparent font-display text-xl font-light tracking-tight text-foreground placeholder:text-muted-foreground/60 focus:outline-none md:text-2xl"
+            className="w-full bg-transparent text-lg font-medium tracking-normal text-foreground placeholder:text-muted-foreground/45 focus:outline-none md:text-[1.35rem]"
           />
           {query && (
             <button
@@ -1294,11 +1399,12 @@ function SearchPanel({
                 Marcas
               </p>
               <div className="flex flex-wrap gap-2">
-                {FAV_BRANDS.map((b) => (
+                {featuredBrands.map((b) => (
                   <button
                     key={b}
+                    type="button"
                     onClick={() => onPickBrand(b)}
-                    className="rounded-full border border-border px-3.5 py-1.5 text-xs uppercase tracking-[0.12em] text-foreground/80 transition-colors hover:border-copper hover:text-copper"
+                    className="rounded-md border border-border/40 bg-background px-3 py-1.5 text-[12.5px] font-medium text-foreground/85 transition-colors hover:border-foreground/25 hover:bg-muted/40 hover:text-foreground"
                   >
                     {b}
                   </button>
@@ -1338,7 +1444,7 @@ function SearchPanel({
                           {p.name}
                         </p>
                       </div>
-                      <span className="hidden font-mono text-xs text-foreground/80 sm:inline">
+                      <span className={cn(typography.priceInline, "hidden sm:inline")}>
                         {formatPrice(p.price)}
                       </span>
                     </button>

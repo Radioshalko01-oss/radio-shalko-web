@@ -46,7 +46,7 @@ export function CustomerOrderDetailView({
   const waLink = whatsappHref(undefined, buildCustomerOrderWhatsAppMessage(order.orderNumber));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       <Link
         href="/cuenta/pedidos"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

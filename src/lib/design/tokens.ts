@@ -22,12 +22,12 @@ export const typography = {
   labelCaps: "text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground",
   /** Button label default */
   button: "text-sm font-medium",
-  /** Featured price (PDP, cards) */
-  priceHero: "font-display text-xl font-semibold tabular-nums tracking-tight md:text-2xl",
+  /** Featured price (PDP, cards) — sans, limpio */
+  priceHero: "text-[17px] font-semibold tabular-nums tracking-normal text-foreground md:text-lg",
   /** Inline price in lists */
-  priceInline: "font-display text-base font-semibold tabular-nums",
-  /** Cart / checkout / order totals — important but not billboard-sized */
-  priceTotal: "font-display text-xl font-semibold tabular-nums tracking-tight md:text-2xl",
+  priceInline: "text-[15px] font-semibold tabular-nums tracking-normal text-foreground",
+  /** Cart / checkout / order totals */
+  priceTotal: "text-xl font-semibold tabular-nums tracking-normal text-foreground md:text-[1.35rem]",
 } as const;
 
 export const spacing = {

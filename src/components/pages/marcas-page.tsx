@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BRANDS } from "@/lib/products";
+import { OFFICIAL_BRANDS } from "@/lib/navigation/catalog-taxonomy";
 import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ArrowUpRight } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { SiteClosingCta } from "@/components/site/site-closing-cta";
+import { whatsappHref, SITE_CONTACT } from "@/lib/site-contact";
+import { marcasCatalogBreadcrumbs } from "@/lib/site/breadcrumbs";
 import { siteShell } from "@/lib/design/site-shell";
 import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
-
 
 export function MarcasPage({
   products,
@@ -21,15 +24,26 @@ export function MarcasPage({
   /** Marcas activas reales (orden por sort_order). Fallback estático. */
   brandNames?: string[];
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const search = { b: searchParams.get("b") ?? undefined };
-  const targetRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLElement | null>(null);
+  const brandIndexRef = useRef<HTMLElement | null>(null);
 
-  // Fuente de marcas: reales activas si se proveen; si no, listado estático.
-  const activeBrands = brandNames && brandNames.length > 0 ? brandNames : BRANDS;
+  // Lista oficial de marcas como fuente de verdad; se conservan brandNames/BRANDS
+  // como respaldo defensivo. Las secciones siguen dependiendo de productos reales.
+  const activeBrands =
+    OFFICIAL_BRANDS.length > 0
+      ? OFFICIAL_BRANDS
+      : brandNames && brandNames.length > 0
+        ? brandNames
+        : BRANDS;
 
-  // Brand sections: solo marcas activas que tienen productos, en su orden real.
-  const brandSections = useMemo(() => {
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(() =>
+    search.b && activeBrands.includes(search.b) ? search.b : null,
+  );
+
+  const productsByBrand = useMemo(() => {
     const map = new Map<string, CatalogProduct[]>();
     products.forEach((p) => {
       const brand = p.brand?.name;
@@ -37,83 +51,133 @@ export function MarcasPage({
       if (!map.has(brand)) map.set(brand, []);
       map.get(brand)!.push(p);
     });
-    return activeBrands
-      .filter((b) => map.has(b))
-      .map((b) => ({ brand: b, products: map.get(b)! }));
-  }, [products, activeBrands]);
+    return map;
+  }, [products]);
 
-  // Marcas activas sin productos todavía (franja "próximamente").
-  const upcomingBrands = useMemo(
-    () => activeBrands.filter((b) => !brandSections.some((s) => s.brand === b)),
-    [activeBrands, brandSections],
+  const brandSections = useMemo(
+    () =>
+      activeBrands
+        .filter((b) => productsByBrand.has(b))
+        .map((b) => ({ brand: b, products: productsByBrand.get(b)! })),
+    [activeBrands, productsByBrand],
   );
 
-  useEffect(() => {
-    if (search.b) {
-      const id = `brand-${search.b.toLowerCase().replace(/\s+/g, "-")}`;
-      const el = document.getElementById(id);
-      if (el) {
-        setTimeout(
-          () => el.scrollIntoView({ behavior: "smooth", block: "start" }),
-          80,
-        );
-      }
+  const displaySections = useMemo(() => {
+    if (!selectedBrand) return brandSections;
+    const selectedProducts = productsByBrand.get(selectedBrand) ?? [];
+    const rest = brandSections.filter((s) => s.brand !== selectedBrand);
+    return [{ brand: selectedBrand, products: selectedProducts }, ...rest];
+  }, [brandSections, selectedBrand, productsByBrand]);
+
+  const scrollToBrandContent = () => {
+    const content = contentRef.current;
+    const brandIndex = brandIndexRef.current;
+    if (!content || !brandIndex) return;
+
+    const headerOffset = window.matchMedia("(min-width: 768px)").matches ? 80 : 64;
+    const targetTop = content.offsetTop - headerOffset - brandIndex.offsetHeight;
+
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
+  };
+
+  const scheduleScrollToContent = () => {
+    window.setTimeout(scrollToBrandContent, 0);
+  };
+
+  const selectBrand = (brand: string) => {
+    if (selectedBrand === brand) {
+      setSelectedBrand(null);
+      router.replace("/marcas", { scroll: false });
+      scheduleScrollToContent();
+      return;
     }
-  }, [search.b]);
+
+    setSelectedBrand(brand);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("b", brand);
+    router.replace(`/marcas?${params.toString()}`, { scroll: false });
+    scheduleScrollToContent();
+  };
+
+  useEffect(() => {
+    if (search.b && activeBrands.includes(search.b)) {
+      setSelectedBrand(search.b);
+    } else if (!search.b) {
+      setSelectedBrand(null);
+    }
+  }, [search.b, activeBrands]);
+
+  const breadcrumbs = useMemo(
+    () =>
+      marcasCatalogBreadcrumbs(
+        selectedBrand && activeBrands.includes(selectedBrand) ? selectedBrand : null,
+      ),
+    [selectedBrand, activeBrands],
+  );
 
   return (
-    <div className="pt-28 md:pt-32">
-      
-        {/* Hero */}
-        <section id="marcas" className="mx-auto max-w-7xl px-5 md:px-8">
-          <PageHeader
-            eyebrow="Marcas"
-            title="Las marcas que tocan los profesionales"
-            description="Recorre cada fabricante y descubre los productos disponibles. Distribuidor autorizado con garantía de origen."
-          />
-        </section>
+    <>
+      <SitePageHero
+        id="marcas"
+        breadcrumbs={breadcrumbs}
+        title="Marcas"
+        description="Marcas líderes en instrumentos y audio profesional. Explora cada fabricante y encuentra el equipo que tu proyecto necesita."
+      />
 
-
-        {/* Quick brand index */}
-        <section className="sticky top-16 z-30 mt-12 border-y border-border/60 bg-background/85 backdrop-blur-xl md:top-20">
-          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-5 py-3 md:px-8">
-            {brandSections.map((s) => (
-              <a
-                key={s.brand}
-                href={`#brand-${s.brand.toLowerCase().replace(/\s+/g, "-")}`}
-                className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-copper hover:text-copper"
+      <section
+        ref={brandIndexRef}
+        className="sticky top-16 z-30 border-b border-border/60 bg-background md:top-20"
+      >
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-2.5 px-5 py-4 md:gap-3 md:px-8 md:py-5">
+          {activeBrands.map((brand) => {
+            const isActive = selectedBrand === brand;
+            return (
+              <button
+                key={brand}
+                type="button"
+                onClick={() => selectBrand(brand)}
+                aria-pressed={isActive}
+                className={cn(
+                  "inline-flex h-10 shrink-0 items-center rounded-full border px-4 text-[13px] font-semibold tracking-[0.01em] transition-all duration-150 motion-reduce:transition-none",
+                  isActive
+                    ? "border-foreground bg-foreground text-background shadow-[0_8px_20px_-12px_rgba(0,0,0,0.45)]"
+                    : "border-border/80 bg-card text-foreground/75 hover:border-copper/45 hover:bg-copper/[0.06] hover:text-copper",
+                )}
               >
-                {s.brand}
-              </a>
-            ))}
-          </div>
-        </section>
+                {brand}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-        {/* Brand sections */}
-        <section ref={targetRef} className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-24">
-          <div className="space-y-24 md:space-y-32">
-            {brandSections.map(({ brand, products }, idx) => {
-              const id = `brand-${brand.toLowerCase().replace(/\s+/g, "-")}`;
-              const visible = products.slice(0, 4);
-              return (
-                <article
-                  key={brand}
-                  id={id}
-                  className="scroll-mt-32 border-t border-border/60 pt-10 md:pt-14"
-                >
-                  {/* Brand header */}
-                  <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-                    <div>
-                      <p className={siteShell.brandEyebrow}>
-                        / {(idx + 1).toString().padStart(2, "0")} — Marca
-                      </p>
-                      <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight md:text-3xl">
-                        {brand}
-                      </h2>
-                      <p className="mt-1.5 text-sm text-muted-foreground">
-                        {products.length} productos disponibles
-                      </p>
-                    </div>
+      <section ref={contentRef} className="mx-auto max-w-7xl px-5 pb-6 pt-5 md:px-8 md:pb-8 md:pt-6">
+        <div className="space-y-5 md:space-y-7">
+          {displaySections.map(({ brand, products }, idx) => {
+            const id = `brand-${brand.toLowerCase().replace(/\s+/g, "-")}`;
+            const visible = products.slice(0, 4);
+
+            return (
+              <article
+                key={brand}
+                id={id}
+                className={cn(idx > 0 && "border-t border-border/60 pt-4 md:pt-5")}
+              >
+                <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+                  <div>
+                    <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                      {brand}
+                    </h2>
+                    <p className="mt-1.5 text-sm text-muted-foreground">
+                      {products.length > 0
+                        ? `${products.length} productos disponibles`
+                        : "Próximamente en tienda"}
+                    </p>
+                  </div>
+                  {products.length > 0 ? (
                     <Link
                       href={`/productos?brand=${encodeURIComponent(brand)}`}
                       className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-copper hover:text-copper"
@@ -121,68 +185,84 @@ export function MarcasPage({
                       Ver todo {brand}
                       <ArrowUpRight className="h-4 w-4" />
                     </Link>
-                  </header>
+                  ) : (
+                    <a
+                      href={whatsappHref(
+                        SITE_CONTACT.whatsapp.e164,
+                        `Hola, ¿tienen productos de la marca ${brand}?`,
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-copper hover:text-copper"
+                    >
+                      Consultar disponibilidad
+                      <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  )}
+                </header>
 
-                  {/* Products grid */}
-                  <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {visible.map((p) => (
-                      <Link
-                        key={p.id}
-                        href={`/productos/${p.slug}`}
-                        className={cn(siteShell.card, "group overflow-hidden transition-colors hover:border-copper/50")}
-                      >
-                        <div className="relative aspect-square overflow-hidden bg-muted">
-                          {p.images[0] && (
-                            <img
-                              src={p.images[0].url}
-                              alt={p.images[0].alt ?? p.name}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
-                            />
-                          )}
-                          {p.isNew && (
-                            <span className="absolute left-3 top-3 rounded-full bg-copper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-background">
-                              Nuevo
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-4">
-                          <p className={siteShell.brandEyebrow}>{p.subcategory?.name}</p>
-                          <h3 className="mt-1.5 line-clamp-2 font-display text-sm font-medium leading-snug">
-                            {p.name}
-                          </h3>
-                          <p className={cn(typography.priceInline, "mt-3")}>
-                            {formatPrice(p.price)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
+                {products.length === 0 ? (
+                  <div className="mt-4 rounded-2xl border border-dashed border-border bg-muted/20 px-5 py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Aún no tenemos productos de {brand} publicados en línea. Escríbenos y
+                      te decimos qué modelos podemos conseguir para ti.
+                    </p>
                   </div>
-                </article>
-              );
-            })}
-          </div>
+                ) : (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {visible.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/productos/${p.slug}`}
+                      className={cn(
+                        siteShell.card,
+                        "group overflow-hidden transition-colors hover:border-copper/50",
+                      )}
+                    >
+                      <div className="relative aspect-square overflow-hidden bg-muted">
+                        {p.images[0] && (
+                          <img
+                            src={p.images[0].url}
+                            alt={p.images[0].alt ?? p.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                          />
+                        )}
+                        {p.isNew && (
+                          <span className="absolute left-3 top-3 rounded-full bg-copper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-background">
+                            Nuevo
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <p className={siteShell.brandEyebrow}>{p.subcategory?.name}</p>
+                        <h3 className="mt-1.5 line-clamp-2 font-display text-sm font-medium leading-snug">
+                          {p.name}
+                        </h3>
+                        <p className={cn(typography.priceInline, "mt-3")}>{formatPrice(p.price)}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
-          {/* Upcoming brands */}
-          {upcomingBrands.length > 0 && (
-            <div className={cn(siteShell.card, "mt-24 p-7 md:mt-32 md:p-10")}>
-              <p className={siteShell.eyebrow}>Próximamente</p>
-              <h3 className="mt-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
-                Más marcas en camino
-              </h3>
-              <ul className="mt-6 flex flex-wrap gap-2">
-                {upcomingBrands.map((b) => (
-                  <li
-                    key={b}
-                    className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground"
-                  >
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      </div>
+      <SiteClosingCta
+        className="mt-0 pt-0 pb-14 md:pt-1 md:pb-20"
+        eyebrow="Marcas que confiamos"
+        title="Seleccionamos lo que realmente vale la pena"
+        description="Nuestro catálogo refleja las marcas con las que trabajamos día a día. Si buscas un modelo que no ves aquí, consúltanos: revisamos disponibilidad con nuestra red de proveedores."
+        primary={{
+          label: "Consultar una marca",
+          href: whatsappHref(SITE_CONTACT.whatsapp.e164, "Hola, ¿tienen productos de la marca:"),
+          external: true,
+        }}
+        secondary={{ label: "Ver todos los productos", href: "/productos" }}
+      />
+    </>
   );
 }

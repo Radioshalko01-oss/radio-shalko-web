@@ -3,6 +3,8 @@ import { HashScroll } from "@/components/site/hash-scroll";
 import { SiteHeader, type HeaderProduct } from "@/components/site/header";
 import { FavoritesProvider } from "@/components/providers/favorites-provider";
 import { QuoteProvider } from "@/components/providers/quote-provider";
+import { CompareProvider } from "@/components/providers/compare-provider";
+import { CompareUi } from "@/components/catalog/compare-ui";
 import { getCatalogProducts } from "@/lib/catalog";
 import { getActiveTaxonomyNames, getBrands } from "@/lib/catalog/queries";
 import { getCurrentAccount } from "@/lib/auth/account";
@@ -69,28 +71,31 @@ export default async function SiteLayout({
   return (
     <FavoritesProvider isAuthed={account !== null} initialIds={favoriteIds}>
       <QuoteProvider isAuthed={account !== null} initialItems={quoteItems}>
-        <div className="min-h-screen bg-background text-foreground">
-          <SiteHeader
-            products={headerProducts}
-            account={
-              account
-                ? {
-                    ...account,
-                    hasOrderAttention: account.isAdmin
-                      ? adminOrderAttention
-                      : (orderSummary?.hasAttention ?? false),
-                    unreadNotifications: notificationSummary?.unreadCount ?? 0,
-                    cartItemCount: quoteItems.reduce((sum, item) => sum + item.quantity, 0),
-                  }
-                : null
-            }
-            taxonomy={taxonomy}
-            brands={brandNames}
-          />
-          <HashScroll />
-          <main>{children}</main>
-          <Footer />
-        </div>
+        <CompareProvider>
+          <div className="min-h-dvh bg-background text-foreground">
+            <SiteHeader
+              products={headerProducts}
+              account={
+                account
+                  ? {
+                      ...account,
+                      hasOrderAttention: account.isAdmin
+                        ? adminOrderAttention
+                        : (orderSummary?.hasAttention ?? false),
+                      unreadNotifications: notificationSummary?.unreadCount ?? 0,
+                      cartItemCount: quoteItems.reduce((sum, item) => sum + item.quantity, 0),
+                    }
+                  : null
+              }
+              taxonomy={taxonomy}
+              brands={brandNames}
+            />
+            <HashScroll />
+            <main>{children}</main>
+            <Footer />
+            <CompareUi />
+          </div>
+        </CompareProvider>
       </QuoteProvider>
     </FavoritesProvider>
   );

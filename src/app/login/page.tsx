@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { LoginEnter, LoginFooterLink } from "@/components/auth/login-enter";
 import { SiteLogo } from "@/components/brand/site-logo";
 
 export const metadata: Metadata = {
@@ -57,8 +58,9 @@ export default async function LoginPage({
   const next = safeNextPath(sp.next);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-[400px]">
+    <main className="flex flex-1 items-center justify-center bg-background px-4 py-12">
+      <LoginEnter>
+      <div className="w-full">
         <div className="rounded-2xl border border-border bg-card px-7 py-8 shadow-sm sm:px-8 sm:py-9">
           <div className="text-center">
             <SiteLogo variant="horizontal" context="login" size="md" className="mx-auto" />
@@ -94,15 +96,16 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <p className="mt-5 text-center">
+        <LoginFooterLink>
           <Link
             href="/"
             className="text-sm text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline motion-reduce:transition-none"
           >
             Volver a la tienda
           </Link>
-        </p>
+        </LoginFooterLink>
       </div>
+      </LoginEnter>
     </main>
   );
 }

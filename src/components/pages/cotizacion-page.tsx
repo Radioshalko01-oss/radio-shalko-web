@@ -5,8 +5,9 @@ import Link from "next/link";
 import { ArrowLeft, MessageCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
 import { useQuote } from "@/hooks/use-quote";
@@ -25,10 +26,20 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const idsKey = useMemo(() => [...ids].sort().join(","), [ids.join(",")]);
+
   useEffect(() => {
+    if (!idsKey) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    const requestedIds = idsKey.split(",");
     let active = true;
     setLoading(true);
-    fetchProductsByIds(ids)
+
+    fetchProductsByIds(requestedIds)
       .then((res) => {
         if (active) {
           setProducts(res);
@@ -38,10 +49,11 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       .catch(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
-  }, [ids]);
+  }, [idsKey]);
 
   const rows = useMemo(() => {
     const byId = new Map(products.map((p) => [p.id, p]));
@@ -81,15 +93,31 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
   );
 
   const hasItems = count > 0;
+  const showInitialLoader = loading && ids.length > 0 && rows.length === 0;
 
   return (
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.carrito])}
+        title={isAdmin ? "Carrito tienda" : "Tu carrito"}
+        description={
+          isAdmin
+            ? count === 0
+              ? "Agrega productos desde el catálogo."
+              : "Prepara una selección de productos y compártela con un cliente."
+            : count === 0
+              ? "Agrega productos desde el catálogo."
+              : `${count} producto${count === 1 ? "" : "s"} · ${units} unidad${units === 1 ? "" : "es"}`
+        }
+      />
+
     <div
       className={cn(
-        "mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-24 lg:px-8",
+        "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
         hasItems && "pb-32 md:pb-24",
       )}
     >
-      <nav className="flex items-center justify-between gap-4">
+      <nav className="flex items-center justify-between gap-4 pt-8">
         <Link
           href="/productos"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -104,25 +132,8 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
         )}
       </nav>
 
-      <PageHeader
-        variant="account"
-        className="mt-6 md:mt-8"
-        title={isAdmin ? "Carrito tienda" : "Tu carrito"}
-        description={
-          isAdmin ? (
-            count === 0
-              ? "Agrega productos desde el catálogo."
-              : "Usa este carrito para preparar una selección de productos y compartirla con un cliente."
-          ) : count === 0 ? (
-            "Agrega productos desde el catálogo."
-          ) : (
-            `${count} producto${count === 1 ? "" : "s"} · ${units} unidad${units === 1 ? "" : "es"}`
-          )
-        }
-      />
-
-      {loading && ids.length > 0 ? (
-        <p className="mt-12 text-sm text-muted-foreground">Cargando tu carrito…</p>
+      {showInitialLoader ? (
+        <CartLoadingSkeleton />
       ) : count === 0 ? (
         <div className={cn(siteShell.emptyState, "mt-12")}>
           <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
@@ -137,8 +148,8 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
           </Button>
         </div>
       ) : (
-        <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_320px] md:items-start lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
-          <section aria-label="Productos">
+        <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
+          <section aria-label="Productos" className="min-w-0 w-full md:flex-1">
             <div className="hidden border-b border-border px-1 pb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
               <span>Producto</span>
               <span className="text-center">Cantidad</span>
@@ -232,7 +243,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
             </ul>
           </section>
 
-          <aside className="hidden md:block md:sticky md:top-24">
+          <aside className="hidden md:sticky md:top-24 md:block md:w-[320px] md:shrink-0 lg:w-[340px] xl:w-[380px]">
             <CartSummaryPanel
               count={count}
               units={units}
@@ -247,8 +258,8 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       )}
 
       {hasItems && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm md:hidden">
-          <div className="mx-auto flex max-w-6xl items-center gap-3">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm md:hidden">
+          <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className={siteShell.labelCaps}>Total estimado</p>
               <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
@@ -271,6 +282,37 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
           </div>
         </div>
       )}
+    </div>
+    </>
+  );
+}
+
+function CartLoadingSkeleton() {
+  return (
+    <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
+      <div className="min-w-0 flex-1 space-y-0 divide-y divide-border">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="flex gap-4 py-5 animate-pulse motion-reduce:animate-none"
+          >
+            <div className="h-[72px] w-[72px] shrink-0 rounded-lg bg-muted" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-2.5 w-16 rounded bg-muted" />
+              <div className="h-4 w-3/4 max-w-xs rounded bg-muted" />
+              <div className="h-3 w-20 rounded bg-muted md:hidden" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden w-[320px] shrink-0 rounded-2xl border border-border bg-card p-6 md:block lg:w-[340px] xl:w-[380px]">
+        <div className="h-3 w-32 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+        <div className="mt-5 space-y-3">
+          <div className="h-3 w-full animate-pulse rounded bg-muted motion-reduce:animate-none" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+        </div>
+        <div className="mt-6 h-11 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
+      </div>
     </div>
   );
 }

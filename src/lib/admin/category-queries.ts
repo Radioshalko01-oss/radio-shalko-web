@@ -5,6 +5,7 @@
  * Lecturas puras; la protección de rol vive en las acciones/layout que las usan.
  */
 import { createClient } from "@/lib/supabase/server";
+import { getOfficialCatalogTypeSubcategories } from "@/lib/navigation/catalog-taxonomy";
 import { listAdminProducts } from "./product-queries";
 
 /** Producto en forma ligera para el panel de categorías (detalle + asignación). */
@@ -91,8 +92,11 @@ export async function listAdminCategories(): Promise<AdminCategory[]> {
     if (p.subcategory_id) subCounts.set(p.subcategory_id, (subCounts.get(p.subcategory_id) ?? 0) + 1);
   }
 
+  const officialSubSlugs = new Set(getOfficialCatalogTypeSubcategories().map((s) => s.slug));
+
   const subsByCategory = new Map<string, AdminSubcategory[]>();
   for (const s of (subs ?? []) as RawSub[]) {
+    if (!officialSubSlugs.has(s.slug)) continue;
     const list = subsByCategory.get(s.category_id) ?? [];
     list.push({
       id: s.id,

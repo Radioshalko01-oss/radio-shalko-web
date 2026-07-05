@@ -74,23 +74,27 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
   return (
     <aside className={adminShell.sidebar}>
       <div className="border-b border-border/60 px-4 py-4 lg:px-5 lg:py-5">
-        <Link href="/admin" className="flex min-w-0 items-center">
+        <Link href="/" className="flex min-w-0 items-center">
           <SiteLogo variant="horizontal" context="admin" size="sm" />
         </Link>
       </div>
 
       <nav
-        className="flex-1 overflow-y-auto px-3 py-3 lg:space-y-7 lg:py-4"
+        className="flex-1 overflow-y-auto px-3 py-3 lg:space-y-9 lg:py-4"
         aria-label="Administración"
       >
         {GROUPS.map((group, i) => (
-          <div key={group.title ?? `g-${i}`} className="mb-4 last:mb-0 lg:mb-0">
+          <div
+            key={group.title ?? `g-${i}`}
+            className={cn("mb-4 last:mb-0 lg:mb-0", group.title && i > 0 && "lg:mt-2")}
+          >
             {group.title && (
               <p
                 className={cn(
                   "px-3 pb-2",
                   typography.eyebrow,
                   "hidden text-[10px] tracking-[0.16em] lg:block",
+                  i === 1 && "lg:pt-5",
                 )}
               >
                 {group.title}

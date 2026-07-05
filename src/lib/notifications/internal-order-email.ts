@@ -9,6 +9,7 @@
  * Fallos de email nunca bloquean la creación del pedido.
  */
 import { formatPrice } from "@/lib/catalog/format";
+import { siteBaseUrl } from "@/lib/site/site-url";
 
 export type AdminNewOrderEmailPayload = {
   orderId: string;
@@ -30,8 +31,7 @@ export function isAdminOrderEmailConfigured(): boolean {
 }
 
 function adminOrderDetailUrl(orderId: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-  return `${base}/admin/pedidos/${orderId}`;
+  return `${siteBaseUrl()}/admin/pedidos/${orderId}`;
 }
 
 function buildPlainText(payload: AdminNewOrderEmailPayload): string {

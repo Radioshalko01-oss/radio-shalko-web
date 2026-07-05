@@ -7,6 +7,11 @@
 
 
 
+import {
+  getOfficialCategoryTree,
+  OFFICIAL_BRANDS,
+} from "@/lib/navigation/catalog-taxonomy";
+
 export type Category = "Instrumentos" | "Accesorios" | "Equipos de Audio";
 export type Subcategory =
   | "Guitarras acústicas"
@@ -60,28 +65,15 @@ export function getProductImages(product: Product): string[] {
   return [product.image, alt];
 }
 
+const officialTree = getOfficialCategoryTree();
+
 export const CATEGORY_TREE: Record<Category, Subcategory[]> = {
-  Instrumentos: [
-    "Guitarras acústicas",
-    "Guitarras eléctricas",
-    "Bajos",
-    "Docerolas",
-    "Teclados",
-    "Violines",
-    "Baterías",
-    "Ukuleles",
-  ],
-  Accesorios: ["Amplificadores", "Pedales", "Cables"],
-  "Equipos de Audio": ["Mezcladoras", "Bafles"],
+  Instrumentos: (officialTree.Instrumentos ?? []) as Subcategory[],
+  Accesorios: (officialTree.Accesorios ?? []) as Subcategory[],
+  "Equipos de Audio": (officialTree["Equipos de Audio"] ?? []) as Subcategory[],
 };
 
-export const BRANDS = [
-  "Fender", "Gibson", "Yamaha", "Roland", "Shure", "Pioneer DJ",
-  "Behringer", "Korg", "Marshall", "Ibanez", "Casio", "Pearl",
-  "Tama", "Zildjian", "Mapex", "PRS", "Epiphone", "Squier",
-  "Taylor", "Martin", "Mackie", "QSC", "JBL", "Sennheiser",
-  "AKG", "Audio-Technica", "Numark", "Boss",
-];
+export const BRANDS = [...OFFICIAL_BRANDS];
 
 const IMG: Record<Subcategory, string> = {
   "Guitarras acústicas": "/images/categories/cat-grid-acoustic.jpg",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { oauthCallbackUrl } from "@/lib/site/site-url";
 import { cn } from "@/lib/utils";
 
 type GoogleSignInButtonProps = {
@@ -25,10 +26,11 @@ export function GoogleSignInButton({
     setLoading(true);
     setError(null);
     const supabase = createClient();
+    const redirectTo = oauthCallbackUrl(next, window.location.origin);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo,
         queryParams: {
           prompt: "select_account",
         },

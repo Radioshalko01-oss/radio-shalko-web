@@ -20,9 +20,9 @@ export const siteShell = {
   ),
 
   iconButton:
-    "grid h-10 w-10 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground",
+    "grid h-11 w-11 place-items-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground",
   iconButtonSm:
-    "grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+    "grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-8 md:w-8",
 
   ctaPrimary: cn(
     radius.button,

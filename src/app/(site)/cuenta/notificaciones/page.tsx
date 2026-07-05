@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/auth/account";
 import { listCustomerNotifications } from "@/lib/notifications/customer-notification-queries";
 import { CustomerNotificationsList } from "@/components/account/customer-notifications-list";
-import { PageHeader } from "@/components/ui/page-header";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 
 export const metadata: Metadata = {
   title: "Notificaciones | Radio Shalko",
@@ -17,10 +20,13 @@ export default async function CuentaNotificacionesPage() {
   const notifications = await listCustomerNotifications();
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 pb-28 pt-28 md:px-8 md:pt-32">
-      <PageHeader
-        variant="account"
-        backLink={{ href: "/cuenta", label: "Volver a mi cuenta", icon: "arrow" }}
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.cuenta,
+          siteCrumbs.notificaciones,
+        ])}
         title="Notificaciones"
         description={
           account.isAdmin
@@ -29,9 +35,19 @@ export default async function CuentaNotificacionesPage() {
         }
       />
 
-      <div className="mt-6">
-        <CustomerNotificationsList notifications={notifications} isAdmin={account.isAdmin} />
+      <div className="mx-auto w-full max-w-3xl px-5 pb-28 md:px-8">
+        <Link
+          href="/cuenta"
+          className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver a mi cuenta
+        </Link>
+
+        <div className="mt-6">
+          <CustomerNotificationsList notifications={notifications} isAdmin={account.isAdmin} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
