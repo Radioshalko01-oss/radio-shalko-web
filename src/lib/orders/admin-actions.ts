@@ -19,6 +19,7 @@ import { isStripeConfigured } from "@/lib/stripe/client";
 import { notifyCustomerPaymentLink } from "@/lib/notifications/customer-payment-email";
 import { notifyCustomerPickupReady } from "@/lib/notifications/customer-pickup-email";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
+import { logAdminAudit } from "@/lib/admin/audit-log";
 
 const uuidSchema = z.string().uuid("Identificador de pedido inválido.");
 
@@ -142,6 +143,23 @@ export async function submitOrderAvailabilityReview(input: {
     console.error("[submitOrderAvailabilityReview] history insert:", historyError.message);
   }
 
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.availability_review_submitted",
+    entity: "order",
+    entityId: orderId,
+    metadata: {
+      order_id: orderId,
+      order_number: order.order_number,
+      previous_status: order.status,
+      new_status: newStatus,
+      payment_status: "unpaid",
+      availability_decision: decision,
+      pickup_available_date: dateResult.date,
+      reviewed_at: reviewedAt,
+    },
+  });
+
   if (!isUnavailable && order.user_id) {
     notifyCustomer({
       userId: order.user_id,
@@ -239,6 +257,20 @@ export async function createStripeCheckoutForOrder(
   };
 
   if (row.stripe_payment_url && row.payment_status === "unpaid") {
+    void logAdminAudit({
+      actorId: user.id,
+      action: "order.stripe_checkout_created",
+      entity: "order",
+      entityId: orderId,
+      metadata: {
+        order_id: orderId,
+        order_number: row.order_number,
+        payment_status: row.payment_status,
+        amount: row.total,
+        reused: true,
+        stripe_checkout_session_id: row.stripe_checkout_session_id,
+      },
+    });
     return { ok: true, url: row.stripe_payment_url, reused: true };
   }
 
@@ -286,6 +318,21 @@ export async function createStripeCheckoutForOrder(
       .eq("id", orderId);
 
     if (updateError) return { ok: false, error: updateError.message };
+
+    void logAdminAudit({
+      actorId: user.id,
+      action: "order.stripe_checkout_created",
+      entity: "order",
+      entityId: orderId,
+      metadata: {
+        order_id: orderId,
+        order_number: row.order_number,
+        payment_status: row.payment_status,
+        amount: row.total,
+        reused: false,
+        stripe_checkout_session_id: sessionId,
+      },
+    });
 
     const branchLabel = branchDisplayName(
       row.branches?.slug ?? null,

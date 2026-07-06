@@ -32,11 +32,19 @@ function rpcErrorMessage(code: string | undefined): string {
       return "Tu carrito está vacío.";
     case "branch_required":
       return "Elige dónde quieres recoger tu pedido.";
+    case "invalid_branch":
+      return "La sucursal seleccionada no está disponible.";
+    case "product_not_found":
+    case "product_not_published":
+      return "Uno o más productos ya no están disponibles.";
+    case "invalid_product_id":
+    case "invalid_quantity":
+    case "invalid_product_price":
+      return "Hay un problema con los productos de tu carrito. Actualízalo e intenta de nuevo.";
     case "invalid_customer":
       return "Revisa tus datos de contacto.";
     case "invalid_delivery_method":
     case "invalid_payment_method":
-    case "invalid_totals":
       return "Revisa la información de tu solicitud e intenta de nuevo.";
     default:
       return "No pudimos enviar tu solicitud. Intenta de nuevo en unos momentos.";
