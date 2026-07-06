@@ -12,6 +12,7 @@ export * from "./format";
 export * from "./inventory";
 export {
   getCatalogProducts,
+  getHeaderCatalogProducts,
   getProductBySlug,
   getProductsByIds,
   getRelatedProducts,

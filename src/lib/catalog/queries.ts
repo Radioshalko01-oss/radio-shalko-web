@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   getOfficialCatalogTypeSubcategories,
@@ -30,6 +31,72 @@ export type CatalogFilters = {
   includeUnpublished?: boolean;
 };
 
+/** Índice ligero para header (búsqueda, favoritos, cotización). */
+export type HeaderCatalogProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  subcategory: string;
+  category: string;
+  price: number;
+  image: string;
+};
+
+const HEADER_PRODUCT_SELECT = `
+  id,
+  slug,
+  title,
+  price,
+  brand:brands ( name ),
+  category:categories ( name ),
+  subcategory:subcategories ( name ),
+  images:product_images ( url, alt_text, sort_order )
+` as const;
+
+type RawHeaderProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  price: number;
+  brand: { name: string } | null;
+  category: { name: string } | null;
+  subcategory: { name: string } | null;
+  images: { url: string; alt_text: string | null; sort_order: number | null }[] | null;
+};
+
+function mapHeaderProduct(raw: RawHeaderProduct): HeaderCatalogProduct {
+  const images = [...(raw.images ?? [])].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
+  return {
+    id: raw.id,
+    name: raw.title,
+    slug: raw.slug,
+    brand: raw.brand?.name ?? "",
+    subcategory: raw.subcategory?.name ?? "",
+    category: raw.category?.name ?? "",
+    price: raw.price,
+    image: images[0]?.url ?? "",
+  };
+}
+
+/**
+ * Catálogo mínimo para el header: sin specs, inventario ni descripciones.
+ * Mucho más rápido que getCatalogProducts en cada navegación.
+ */
+export const getHeaderCatalogProducts = cache(async (): Promise<HeaderCatalogProduct[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(HEADER_PRODUCT_SELECT)
+    .eq("is_published", true)
+    .order("title", { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as RawHeaderProduct[]).map(mapHeaderProduct);
+});
+
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 /** Resuelve un slug de taxonomía a su id; null si no existe. */
@@ -50,7 +117,7 @@ async function resolveId(
  * Lista de productos del catálogo. Por defecto solo publicados.
  * Filtros opcionales por categoría, subcategoría, marca (por slug) y texto.
  */
-export async function getCatalogProducts(
+async function fetchCatalogProducts(
   filters: CatalogFilters = {},
 ): Promise<CatalogProduct[]> {
   const supabase = await createClient();
@@ -89,6 +156,11 @@ export async function getCatalogProducts(
 
   return (data as unknown as RawProduct[]).map(mapProduct);
 }
+
+export const getCatalogProducts = cache(
+  async (filters: CatalogFilters = {}): Promise<CatalogProduct[]> =>
+    fetchCatalogProducts(filters),
+);
 
 /** Un producto por slug (solo publicado). null si no existe o es borrador. */
 export async function getProductBySlug(

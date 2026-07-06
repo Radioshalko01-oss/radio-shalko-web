@@ -20,11 +20,15 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    HERO_SLIDES.forEach((slide) => {
+    const slide = HERO_SLIDES[index];
+    const nextSlide = HERO_SLIDES[(index + 1) % slideCount];
+    const preload = (src: string) => {
       const img = new Image();
-      img.src = slide.image;
-    });
-  }, []);
+      img.src = src;
+    };
+    preload(slide.image);
+    if (nextSlide.image !== slide.image) preload(nextSlide.image);
+  }, [index, slideCount]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -49,6 +53,8 @@ export function Hero() {
       <div className="absolute inset-0" aria-hidden="true">
         {HERO_SLIDES.map((slide, i) => {
           const isActive = i === index;
+          const isNext = i === (index + 1) % slideCount;
+          const shouldRender = isActive || isNext;
 
           return (
             <div
@@ -63,16 +69,18 @@ export function Hero() {
                 zIndex: isActive ? 2 : 1,
               }}
             >
-              <img
-                src={slide.image}
-                alt=""
-                width={1920}
-                height={1080}
-                fetchPriority={i === 0 ? "high" : "auto"}
-                loading="eager"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover brightness-[0.76] motion-safe:animate-hero-ken-burns [backface-visibility:hidden] [transform:translateZ(0)]"
-              />
+              {shouldRender ? (
+                <img
+                  src={slide.image}
+                  alt=""
+                  width={1920}
+                  height={1080}
+                  fetchPriority={i === 0 ? "high" : "low"}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover brightness-[0.76] motion-safe:animate-hero-ken-burns [backface-visibility:hidden] [transform:translateZ(0)]"
+                />
+              ) : null}
             </div>
           );
         })}

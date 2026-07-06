@@ -262,12 +262,12 @@ function CompareProductColumn({ product }: { product: CatalogProduct }) {
 
   return (
     <article className="rounded-xl border border-border/70 bg-white p-4 md:p-5">
-      <div className="mx-auto flex aspect-[4/3] max-h-[220px] w-full max-w-[calc(220px*4/3)] items-center justify-center overflow-hidden rounded-xl bg-[#f3f3f3]">
+      <div className="mx-auto flex w-full items-center justify-center py-2 md:py-4">
         {image ? (
           <img
             src={image}
             alt={product.name}
-            className="h-full w-full object-contain p-3"
+            className="max-h-[200px] w-full object-contain object-center md:max-h-[340px] lg:max-h-[400px]"
           />
         ) : null}
       </div>

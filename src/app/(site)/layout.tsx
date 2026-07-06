@@ -5,8 +5,7 @@ import { FavoritesProvider } from "@/components/providers/favorites-provider";
 import { QuoteProvider } from "@/components/providers/quote-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
 import { CompareUi } from "@/components/catalog/compare-ui";
-import { getCatalogProducts } from "@/lib/catalog";
-import { getActiveTaxonomyNames, getBrands } from "@/lib/catalog/queries";
+import { getHeaderCatalogProducts, getActiveTaxonomyNames, getBrands } from "@/lib/catalog/queries";
 import { getCurrentAccount } from "@/lib/auth/account";
 import { getFavoriteIds } from "@/lib/favorites/actions";
 import { getQuoteItems } from "@/lib/quotes/actions";
@@ -21,9 +20,9 @@ export default async function SiteLayout({
 }>) {
   const account = await getCurrentAccount();
 
-  const [products, favoriteIds, quoteItems, activeBrands, activeTaxonomy, orderSummary, adminOrderAttention, notificationSummary] =
+  const [headerCatalog, favoriteIds, quoteItems, activeBrands, activeTaxonomy, orderSummary, adminOrderAttention, notificationSummary] =
     await Promise.all([
-      getCatalogProducts(),
+      getHeaderCatalogProducts(),
       getFavoriteIds(),
       getQuoteItems(),
       getBrands({ activeOnly: true }),
@@ -35,26 +34,17 @@ export default async function SiteLayout({
   const brandNames = activeBrands.map((b) => b.name);
   const activeCatSet = new Set(activeTaxonomy.categoryNames);
   const activeSubSet = new Set(activeTaxonomy.subcategoryNames);
-  const headerProducts: HeaderProduct[] = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    brand: p.brand?.name ?? "",
-    subcategory: p.subcategory?.name ?? "",
-    price: p.price,
-    image: p.images[0]?.url ?? "",
-  }));
+  const headerProducts = headerCatalog;
 
   // Taxonomía real (categoría → subcategorías) para el mega menú. Orden estable
   // y solo categorías/subcategorías que existen en el catálogo (rutas válidas).
   const CATEGORY_ORDER = ["Instrumentos", "Accesorios", "Equipos de Audio"];
   const taxonomyMap: Record<string, string[]> = {};
-  for (const p of products) {
-    const cat = p.category?.name;
-    // Solo categorías/subcategorías activas aparecen en el menú.
+  for (const p of headerCatalog) {
+    const cat = p.category;
     if (!cat || !activeCatSet.has(cat)) continue;
     if (!taxonomyMap[cat]) taxonomyMap[cat] = [];
-    const sub = p.subcategory?.name;
+    const sub = p.subcategory;
     if (sub && activeSubSet.has(sub) && !taxonomyMap[cat].includes(sub)) {
       taxonomyMap[cat].push(sub);
     }

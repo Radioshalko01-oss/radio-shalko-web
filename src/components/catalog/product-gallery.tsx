@@ -1,13 +1,44 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import type { CatalogImage } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 
-const ZOOM_SCALE = 2.4;
+const ZOOM_LEVEL = 1.85;
 const LENS_RATIO = 0.34;
+
+type ImageLayout = {
+  offsetX: number;
+  offsetY: number;
+  width: number;
+  height: number;
+};
+
+function getContainedLayout(
+  containerW: number,
+  containerH: number,
+  imageW: number,
+  imageH: number,
+): ImageLayout {
+  if (!containerW || !containerH || !imageW || !imageH) {
+    return { offsetX: 0, offsetY: 0, width: containerW, height: containerH };
+  }
+
+  const containerRatio = containerW / containerH;
+  const imageRatio = imageW / imageH;
+
+  if (imageRatio > containerRatio) {
+    const width = containerW;
+    const height = containerW / imageRatio;
+    return { offsetX: 0, offsetY: (containerH - height) / 2, width, height };
+  }
+
+  const height = containerH;
+  const width = containerH * imageRatio;
+  return { offsetX: (containerW - width) / 2, offsetY: 0, width, height };
+}
 
 function useGalleryState(images: CatalogImage[]) {
   const [active, setActive] = useState(0);
@@ -78,7 +109,13 @@ function GalleryThumbnails({
                 : "border-border/70 hover:border-foreground/40",
             )}
           >
-            <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <img
+              src={img.url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           </button>
         ))}
       </div>
@@ -107,32 +144,84 @@ function GalleryMain({
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const [hovering, setHovering] = useState(false);
+  const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const [lens, setLens] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const [focus, setFocus] = useState({ x: 50, y: 50 });
+  const [zoomOffset, setZoomOffset] = useState({ x: 0, y: 0 });
 
-  const zoomActive = enableLensZoom && !reduceMotion && hovering && !!main;
+  const zoomActive = enableLensZoom && !reduceMotion && hovering && !!main && naturalSize.w > 0;
+
+  useEffect(() => {
+    setNaturalSize({ w: 0, h: 0 });
+  }, [main?.url]);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    const update = () => {
+      setContainerSize({ w: node.clientWidth, h: node.clientHeight });
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [main?.url]);
+
+  const imageLayout = getContainedLayout(
+    containerSize.w,
+    containerSize.h,
+    naturalSize.w,
+    naturalSize.h,
+  );
 
   const handleMove = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const node = containerRef.current;
-      if (!node || !enableLensZoom || reduceMotion) return;
+      if (!node || !enableLensZoom || reduceMotion || !naturalSize.w) return;
 
       const rect = node.getBoundingClientRect();
-      const lensW = rect.width * LENS_RATIO;
-      const lensH = rect.height * LENS_RATIO;
+      const layout = getContainedLayout(rect.width, rect.height, naturalSize.w, naturalSize.h);
 
-      let x = event.clientX - rect.left - lensW / 2;
-      let y = event.clientY - rect.top - lensH / 2;
-      x = Math.max(0, Math.min(x, rect.width - lensW));
-      y = Math.max(0, Math.min(y, rect.height - lensH));
+      const lensW = layout.width * LENS_RATIO;
+      const lensH = layout.height * LENS_RATIO;
 
-      const focusX = ((x + lensW / 2) / rect.width) * 100;
-      const focusY = ((y + lensH / 2) / rect.height) * 100;
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
 
-      setLens({ x, y, width: lensW, height: lensH });
-      setFocus({ x: focusX, y: focusY });
+      const relX = pointerX - layout.offsetX;
+      const relY = pointerY - layout.offsetY;
+
+      const clampedRelX = Math.max(0, Math.min(relX, layout.width));
+      const clampedRelY = Math.max(0, Math.min(relY, layout.height));
+
+      let lensX = layout.offsetX + clampedRelX - lensW / 2;
+      let lensY = layout.offsetY + clampedRelY - lensH / 2;
+      lensX = Math.max(layout.offsetX, Math.min(lensX, layout.offsetX + layout.width - lensW));
+      lensY = Math.max(layout.offsetY, Math.min(lensY, layout.offsetY + layout.height - lensH));
+
+      const ratioX = layout.width > 0 ? (clampedRelX / layout.width) * 100 : 50;
+      const ratioY = layout.height > 0 ? (clampedRelY / layout.height) * 100 : 50;
+
+      const zoomW = layout.width * ZOOM_LEVEL;
+      const zoomH = layout.height * ZOOM_LEVEL;
+      const panelW = layout.width;
+      const panelH = layout.height;
+
+      const offsetX = Math.max(
+        Math.min(-((ratioX / 100) * zoomW - panelW / 2), 0),
+        panelW - zoomW,
+      );
+      const offsetY = Math.max(
+        Math.min(-((ratioY / 100) * zoomH - panelH / 2), 0),
+        panelH - zoomH,
+      );
+
+      setLens({ x: lensX, y: lensY, width: lensW, height: lensH });
+      setZoomOffset({ x: offsetX, y: offsetY });
     },
-    [enableLensZoom, reduceMotion],
+    [enableLensZoom, naturalSize.h, naturalSize.w, reduceMotion],
   );
 
   return (
@@ -146,14 +235,25 @@ function GalleryMain({
       {zoomActive && main && (
         <div
           aria-hidden
-          className="pointer-events-none absolute left-full top-0 z-50 ml-10 hidden h-full w-[min(35rem,60vw)] overflow-hidden rounded-2xl border border-border bg-white shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)] lg:block"
+          className="pointer-events-none absolute left-full top-0 z-50 ml-10 hidden overflow-hidden rounded-2xl border border-border bg-white shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)] lg:block"
           style={{
-            backgroundImage: `url(${main.url})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: `${ZOOM_SCALE * 100}%`,
-            backgroundPosition: `${focus.x}% ${focus.y}%`,
+            width: imageLayout.width,
+            height: imageLayout.height,
           }}
-        />
+        >
+          <img
+            src={main.url}
+            alt=""
+            draggable={false}
+            className="absolute max-w-none select-none"
+            style={{
+              width: imageLayout.width * ZOOM_LEVEL,
+              height: imageLayout.height * ZOOM_LEVEL,
+              left: zoomOffset.x,
+              top: zoomOffset.y,
+            }}
+          />
+        </div>
       )}
 
       <div
@@ -183,7 +283,13 @@ function GalleryMain({
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-full w-full select-none object-contain p-3 sm:p-4 md:p-6"
+              onLoad={(e) => {
+                setNaturalSize({
+                  w: e.currentTarget.naturalWidth,
+                  h: e.currentTarget.naturalHeight,
+                });
+              }}
+              className="absolute inset-0 h-full w-full select-none object-contain p-3 sm:p-4 md:p-6"
             />
 
             {zoomActive && (
@@ -198,7 +304,6 @@ function GalleryMain({
                 }}
               />
             )}
-
           </>
         ) : (
           <div className="grid h-full w-full place-items-center text-sm text-muted-foreground">

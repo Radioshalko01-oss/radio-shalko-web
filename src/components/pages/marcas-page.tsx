@@ -129,7 +129,7 @@ export function MarcasPage({
 
       <section
         ref={brandIndexRef}
-        className="sticky top-16 z-30 border-b border-border/60 bg-background md:top-20"
+        className="sticky top-16 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20"
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-2.5 px-5 py-4 md:gap-3 md:px-8 md:py-5">
           {activeBrands.map((brand) => {

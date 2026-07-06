@@ -287,7 +287,7 @@ export function ProductosPage({
 
 
         {/* Toolbar */}
-        <section className="sticky top-16 z-30 border-y border-border/60 bg-background md:top-20">
+        <section className="sticky top-16 z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
             <div className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 sm:grid-cols-[1fr_auto_1fr]">
             <div className="flex items-center gap-2 justify-self-start">

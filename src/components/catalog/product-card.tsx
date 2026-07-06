@@ -264,7 +264,13 @@ function BoxVariant({
         className,
       )}
     >
-      <Link href={href} className="relative block aspect-square overflow-hidden bg-muted">
+      <Link
+        href={href}
+        className={cn(
+          "relative block overflow-hidden bg-muted",
+          compact ? "aspect-[11/10]" : "aspect-square",
+        )}
+      >
         {mainImage && (
           <img
             src={mainImage.url}
@@ -274,21 +280,11 @@ function BoxVariant({
           />
         )}
         {product.isNew && (
-          <span className="absolute left-3 top-3 rounded-full bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
+          <span className="absolute right-14 top-3 rounded-full bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
             Nuevo
           </span>
         )}
       </Link>
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          toggleFav();
-        }}
-        aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-        className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-foreground hover:text-background"
-      >
-        <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
-      </button>
       <button
         onClick={(e) => {
           e.preventDefault();
@@ -297,14 +293,23 @@ function BoxVariant({
         aria-label={isCompared ? "Ver comparación" : "Agregar a comparación"}
         aria-pressed={isCompared}
         className={cn(
-          "absolute grid h-9 w-9 place-items-center rounded-full shadow-sm backdrop-blur transition-colors",
-          compact ? "right-3 top-14" : "right-14 top-3",
+          "absolute left-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full shadow-sm backdrop-blur transition-colors",
           isCompared
             ? "bg-foreground text-background"
             : "bg-background/90 text-foreground hover:bg-foreground hover:text-background",
         )}
       >
         <GitCompare className="h-4 w-4" />
+      </button>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          toggleFav();
+        }}
+        aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+        className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-foreground hover:text-background"
+      >
+        <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
       </button>
       <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-5")}>
         <p className={siteShell.brandEyebrow}>{brand}</p>
@@ -330,7 +335,8 @@ function BoxVariant({
             onClick={toggleQuote}
             aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
-              "mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+              "mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+              compact ? "py-2.5" : "py-2",
               isQuoted
                 ? "bg-secondary text-foreground ring-1 ring-foreground/20 hover:bg-secondary/80"
                 : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",

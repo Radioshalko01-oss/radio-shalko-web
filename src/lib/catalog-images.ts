@@ -13,7 +13,7 @@
  */
 export const CATEGORIAS_DIR = "/images/categorias-v2";
 
-const src = (file: string) => `${CATEGORIAS_DIR}/${file}`;
+const src = (file: string) => `${CATEGORIAS_DIR}/${file.replace(/\.png$/, ".webp")}`;
 
 export type CategoryMedia = {
   img: string;
