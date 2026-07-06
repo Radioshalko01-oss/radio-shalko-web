@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { oauthCallbackUrl } from "@/lib/site/site-url";
+import {
+  AUTH_NEXT_COOKIE,
+  oauthCallbackRedirectUrl,
+  safeAuthNextPath,
+} from "@/lib/site/site-url";
 import { cn } from "@/lib/utils";
 
 type GoogleSignInButtonProps = {
@@ -11,8 +15,15 @@ type GoogleSignInButtonProps = {
   buttonClassName?: string;
 };
 
+function setAuthNextCookie(next: string) {
+  const safeNext = safeAuthNextPath(next);
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(safeNext)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
+}
+
 /**
  * Botón "Continuar con Google". Inicia OAuth (PKCE) con selector de cuenta.
+ * redirectTo = mismo origen + /auth/callback (sin query) para uri_allow_list.
  */
 export function GoogleSignInButton({
   next = "/cuenta",
@@ -25,8 +36,10 @@ export function GoogleSignInButton({
   const signIn = async () => {
     setLoading(true);
     setError(null);
+    setAuthNextCookie(next);
+
     const supabase = createClient();
-    const redirectTo = oauthCallbackUrl(next, window.location.origin);
+    const redirectTo = oauthCallbackRedirectUrl(window.location.origin);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

@@ -36,6 +36,11 @@ const REQUIRED_REDIRECTS = [
   "http://localhost:3003/auth/callback",
   "https://radio-shalko-web.vercel.app/auth/callback",
   "https://radio-shalko-web.vercel.app/**",
+  // Vercel Preview (branch + deployment URLs)
+  "https://radio-shalko-*-radio-shalko.vercel.app/auth/callback",
+  "https://radio-shalko-*-radio-shalko.vercel.app/**",
+  "https://radio-shalko-web-git-*-radio-shalko.vercel.app/auth/callback",
+  "https://radio-shalko-web-git-*-radio-shalko.vercel.app/**",
 ];
 
 const SITE_URL = "https://radio-shalko-web.vercel.app";
