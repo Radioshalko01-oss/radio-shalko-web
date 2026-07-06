@@ -20,17 +20,6 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    const slide = HERO_SLIDES[index];
-    const nextSlide = HERO_SLIDES[(index + 1) % slideCount];
-    const preload = (src: string) => {
-      const img = new Image();
-      img.src = src;
-    };
-    preload(slide.image);
-    if (nextSlide.image !== slide.image) preload(nextSlide.image);
-  }, [index, slideCount]);
-
-  useEffect(() => {
     const id = window.setInterval(() => {
       setIndex((current) => {
         const next = (current + 1) % slideCount;
@@ -75,8 +64,8 @@ export function Hero() {
                   alt=""
                   width={1920}
                   height={1080}
-                  fetchPriority={i === 0 ? "high" : "low"}
-                  loading={i === 0 ? "eager" : "lazy"}
+                  fetchPriority={isActive && index === 0 ? "high" : "auto"}
+                  loading={isActive ? "eager" : "lazy"}
                   decoding="async"
                   className="absolute inset-0 h-full w-full object-cover brightness-[0.76] motion-safe:animate-hero-ken-burns [backface-visibility:hidden] [transform:translateZ(0)]"
                 />

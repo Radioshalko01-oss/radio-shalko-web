@@ -13,10 +13,12 @@ export * from "./inventory";
 export {
   getCatalogProducts,
   getHeaderCatalogProducts,
+  getHomeFeaturedProducts,
   getProductBySlug,
   getProductsByIds,
   getRelatedProducts,
   getCategoriesTree,
   getBrands,
   type CatalogFilters,
+  type HomeFeaturedProducts,
 } from "./queries";

@@ -82,28 +82,49 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
 
   const [imageIndex, setImageIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [loadedIndices, setLoadedIndices] = useState<Set<number>>(() => new Set([0]));
+
+  const ensureLoaded = useCallback((indexToLoad: number) => {
+    setLoadedIndices((prev) => {
+      if (prev.has(indexToLoad)) return prev;
+      const next = new Set(prev);
+      next.add(indexToLoad);
+      return next;
+    });
+  }, []);
 
   const goPrev = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      setImageIndex((i) => (i - 1 + images.length) % images.length);
+      setImageIndex((i) => {
+        const next = (i - 1 + images.length) % images.length;
+        ensureLoaded(next);
+        return next;
+      });
     },
-    [images.length],
+    [images.length, ensureLoaded],
   );
 
   const goNext = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      setImageIndex((i) => (i + 1) % images.length);
+      setImageIndex((i) => {
+        const next = (i + 1) % images.length;
+        ensureLoaded(next);
+        return next;
+      });
     },
-    [images.length],
+    [images.length, ensureLoaded],
   );
 
   const onEnter = () => {
     setHovered(true);
-    if (hasGallery) setImageIndex(1);
+    if (hasGallery) {
+      ensureLoaded(1);
+      setImageIndex(1);
+    }
   };
   const onLeave = () => {
     setHovered(false);
@@ -118,19 +139,22 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
     >
       <div className="relative aspect-[5/6] overflow-hidden rounded-2xl bg-muted/50">
         <Link href={href} className="absolute inset-0 z-0" aria-label={product.name}>
-          {images.map((img, i) => (
-            <img
-              key={`${product.id}-${img.url}-${i}`}
-              src={img.url}
-              alt=""
-              loading="lazy"
-              className={cn(
-                "absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out",
-                i === imageIndex ? "opacity-100" : "opacity-0",
-                i === imageIndex && "group-hover/card:scale-[1.02]",
-              )}
-            />
-          ))}
+          {images.map((img, i) =>
+            loadedIndices.has(i) ? (
+              <img
+                key={`${product.id}-${img.url}-${i}`}
+                src={img.url}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className={cn(
+                  "absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out",
+                  i === imageIndex ? "opacity-100" : "opacity-0",
+                  i === imageIndex && "group-hover/card:scale-[1.02]",
+                )}
+              />
+            ) : null,
+          )}
         </Link>
 
         {product.isNew && (
@@ -276,6 +300,7 @@ function BoxVariant({
             src={mainImage.url}
             alt={mainImage.alt ?? product.name}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         )}
@@ -374,6 +399,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
             src={mainImage.url}
             alt={mainImage.alt ?? product.name}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
           />
         )}

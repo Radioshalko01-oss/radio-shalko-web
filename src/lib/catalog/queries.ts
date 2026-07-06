@@ -97,6 +97,97 @@ export const getHeaderCatalogProducts = cache(async (): Promise<HeaderCatalogPro
   return (data as unknown as RawHeaderProduct[]).map(mapHeaderProduct);
 });
 
+/** Select ligero para tarjetas destacadas en home (sin specs ni detalle extendido). */
+const HOME_FEATURED_SELECT = `
+  id,
+  slug,
+  title,
+  subtitle,
+  description,
+  price,
+  sku,
+  is_new,
+  is_published,
+  brand:brands ( id, name, slug, logo_url ),
+  category:categories ( id, name, slug ),
+  subcategory:subcategories ( id, name, slug, category_id ),
+  images:product_images ( id, url, alt_text, sort_order ),
+  inventory:product_inventory (
+    quantity,
+    branch:branches ( id, slug, name, display_name, is_active, sort_order )
+  )
+` as const;
+
+export type HomeFeaturedProducts = {
+  novedades: CatalogProduct[];
+  destacados: CatalogProduct[];
+};
+
+/**
+ * Productos para la sección destacada del home: consulta mínima (8+8 filas)
+ * en lugar de cargar el catálogo completo con specs e inventario detallado.
+ */
+export const getHomeFeaturedProducts = cache(async (): Promise<HomeFeaturedProducts> => {
+  const supabase = await createClient();
+
+  const [newRes, priceRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .eq("is_new", true)
+      .order("title", { ascending: true })
+      .limit(8),
+    supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("price", { ascending: false })
+      .limit(8),
+  ]);
+
+  const mapRows = (rows: unknown[] | null): CatalogProduct[] =>
+    (rows ?? []).map((row) =>
+      mapProduct({
+        ...(row as object),
+        specifications: null,
+        features: null,
+        includes: null,
+        specs: null,
+        catalog_variant: null,
+      } as RawProduct),
+    );
+
+  const novedadesRaw = mapRows(newRes.data as unknown[] | null);
+  const novedades = novedadesRaw.length > 0 ? novedadesRaw.slice(0, 4) : [];
+
+  const destacados = mapRows(priceRes.data as unknown[] | null).slice(0, 4);
+
+  if (novedades.length === 0 && destacados.length === 0) {
+    const { data } = await supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("title", { ascending: true })
+      .limit(4);
+
+    const fallback = mapRows(data as unknown[] | null);
+    return { novedades: fallback, destacados: fallback };
+  }
+
+  if (novedades.length === 0) {
+    const { data } = await supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("title", { ascending: true })
+      .limit(4);
+    return { novedades: mapRows(data as unknown[] | null), destacados };
+  }
+
+  return { novedades, destacados };
+});
+
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 /** Resuelve un slug de taxonomía a su id; null si no existe. */

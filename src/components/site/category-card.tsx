@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type CategoryItem = {
@@ -11,11 +14,21 @@ export type CategoryItem = {
   imageClassName?: string;
 };
 
+const CATEGORY_IMAGE_SIZES = "(min-width: 1024px) 210px, (min-width: 768px) 33vw, 50vw";
+
 export function CategoryCard({ category, className }: { category: CategoryItem; className?: string }) {
+  const [hoverReady, setHoverReady] = useState(false);
+
+  const loadHover = () => {
+    if (category.hover) setHoverReady(true);
+  };
+
   return (
     <Link
       href={category.href}
       aria-label={`Explorar ${category.name}`}
+      onMouseEnter={loadHover}
+      onFocus={loadHover}
       className={cn(
         "group flex flex-col items-center rounded-2xl p-3 text-center outline-none transition-transform duration-300 motion-safe:hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-4 md:p-4",
         className,
@@ -31,19 +44,19 @@ export function CategoryCard({ category, className }: { category: CategoryItem; 
           src={category.img}
           alt=""
           fill
-          sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
+          sizes={CATEGORY_IMAGE_SIZES}
           loading="lazy"
           className={cn(
             "object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.14)] transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover:scale-[1.03]",
             category.hover && "motion-safe:group-hover:opacity-0",
           )}
         />
-        {category.hover ? (
+        {category.hover && hoverReady ? (
           <Image
             src={category.hover}
             alt=""
             fill
-            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
+            sizes={CATEGORY_IMAGE_SIZES}
             loading="lazy"
             aria-hidden
             className="object-contain opacity-0 drop-shadow-[0_18px_28px_rgba(0,0,0,0.14)] transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover:opacity-100 motion-safe:group-hover:scale-[1.03]"
