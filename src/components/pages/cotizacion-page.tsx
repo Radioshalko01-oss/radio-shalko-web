@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, MessageCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -135,18 +136,13 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       {showInitialLoader ? (
         <CartLoadingSkeleton />
       ) : count === 0 ? (
-        <div className={cn(siteShell.emptyState, "mt-12")}>
-          <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <p className="mt-4 font-display text-lg font-medium">Tu carrito está vacío</p>
-          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-            Explora el catálogo y agrega los productos que te interesen.
-          </p>
-          <Button asChild className="mt-6 h-11 rounded-full px-8">
-            <Link href="/productos">Explorar catálogo</Link>
-          </Button>
-        </div>
+        <SiteEmptyState
+          className="mt-10 md:mt-12"
+          icon={<ShoppingBag className="h-6 w-6" />}
+          title="Tu carrito está vacío"
+          description="Explora el catálogo y agrega los productos que te interesen."
+          action={{ label: "Explorar catálogo", href: "/productos" }}
+        />
       ) : (
         <div className="mt-5 flex flex-col gap-10 md:mt-6 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
           <section aria-label="Productos" className="min-w-0 w-full md:flex-1">
