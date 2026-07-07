@@ -5,6 +5,7 @@ import {
   customerOrderStatusBadgeClass,
   customerOrderStatusUi,
 } from "@/lib/orders/customer-status-labels";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
 import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
 import type { CustomerOrderListItem } from "@/lib/orders/customer-queries";
@@ -19,23 +20,17 @@ function formatDateTime(iso: string) {
 export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[] }) {
   if (orders.length === 0) {
     return (
-      <div className={siteShell.emptyState}>
-        <Package className="h-9 w-9 text-muted-foreground/40" />
-        <div>
-          <p className="text-sm font-medium text-foreground">Aún no tienes pedidos</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Cuando envíes una solicitud de compra, aparecerá aquí.
-          </p>
-        </div>
-        <Link href="/productos" className={cn(siteShell.ctaDark, "mt-2 h-10 px-5")}>
-          Explorar productos
-        </Link>
-      </div>
+      <SiteEmptyState
+        icon={<Package className="h-6 w-6" />}
+        title="Aún no tienes pedidos"
+        description="Cuando envíes una solicitud de compra, aparecerá aquí con su estado y seguimiento."
+        action={{ label: "Explorar productos", href: "/productos" }}
+      />
     );
   }
 
   return (
-    <ul className="grid gap-3">
+    <ul className="grid gap-4">
       {orders.map((order) => {
         const status = customerOrderStatusUi(order.status, order.paymentStatus, {
           hasPaymentUrl: order.hasPaymentUrl,

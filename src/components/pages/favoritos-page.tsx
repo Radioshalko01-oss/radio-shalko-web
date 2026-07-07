@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useFavorites } from "@/hooks/use-favorites";
 import { fetchProductsByIds } from "@/lib/catalog/actions";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
-import { siteShell } from "@/lib/design/site-shell";
 
 function FavoritosSkeleton() {
   return (
@@ -82,19 +81,12 @@ export function FavoritosPage() {
           {showInitialLoader ? (
             <FavoritosSkeleton />
           ) : items.length === 0 ? (
-            <div className={siteShell.emptyState}>
-              <Heart className="h-8 w-8 text-muted-foreground" />
-              <p className="mt-4 font-display text-lg">Tu lista de favoritos está vacía</p>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Explora el catálogo y toca el corazón para guardar lo que más te guste.
-              </p>
-              <Link
-                href="/productos"
-                className="mt-6 inline-flex items-center justify-center bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-background hover:opacity-90"
-              >
-                Ver productos
-              </Link>
-            </div>
+            <SiteEmptyState
+              icon={<Heart className="h-6 w-6" />}
+              title="Tu lista de favoritos está vacía"
+              description="Explora el catálogo y toca el corazón para guardar lo que más te guste."
+              action={{ label: "Ver productos", href: "/productos" }}
+            />
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
               {items.map((p) => (

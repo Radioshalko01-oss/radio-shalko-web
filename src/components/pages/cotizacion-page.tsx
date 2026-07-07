@@ -117,7 +117,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
         hasItems && "pb-32 md:pb-24",
       )}
     >
-      <nav className="flex items-center justify-between gap-4 pt-8">
+      <nav className="flex items-center justify-between gap-4 pt-5 md:pt-6">
         <Link
           href="/productos"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -148,20 +148,20 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
           </Button>
         </div>
       ) : (
-        <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
+        <div className="mt-5 flex flex-col gap-10 md:mt-6 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
           <section aria-label="Productos" className="min-w-0 w-full md:flex-1">
-            <div className="hidden border-b border-border px-1 pb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
+            <div className="hidden border-b border-border px-1 pb-4 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
               <span>Producto</span>
               <span className="text-center">Cantidad</span>
               <span className="text-right">Subtotal</span>
               <span className="sr-only">Quitar</span>
             </div>
 
-            <ul className="divide-y divide-border md:mt-0">
+            <ul className="divide-y divide-border md:mt-4">
               {rows.map(({ product: p, quantity, subtotal }) => (
                 <li
                   key={p.id}
-                  className="grid gap-3 py-4 first:pt-0 md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:items-center md:gap-4 md:py-5"
+                  className="grid gap-3 py-5 md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:items-center md:gap-4 md:py-6"
                 >
                   <div className="flex min-w-0 gap-3 md:gap-4">
                     <Link
@@ -180,14 +180,14 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
                         </div>
                       )}
                     </Link>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 pt-0.5">
                       <Link href={`/productos/${p.slug}`} className="block min-w-0">
                         {p.brand?.name && (
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-copper">
                             {p.brand.name}
                           </p>
                         )}
-                        <p className="mt-0.5 line-clamp-2 text-sm font-medium leading-snug sm:text-[15px]">
+                        <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug sm:text-[15px]">
                           {p.name}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground tabular-nums md:hidden">

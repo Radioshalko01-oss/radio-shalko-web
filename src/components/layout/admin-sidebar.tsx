@@ -73,8 +73,8 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
 
   return (
     <aside className={adminShell.sidebar}>
-      <div className="border-b border-border/60 px-4 py-4 lg:px-5 lg:py-5">
-        <Link href="/" className="flex min-w-0 items-center">
+      <div className="border-b border-border/60 px-4 py-5 lg:px-5 lg:py-6">
+        <Link href="/" className="flex min-w-0 items-center justify-center">
           <SiteLogo variant="horizontal" context="admin" size="sm" />
         </Link>
       </div>
