@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -15,7 +16,8 @@ import {
   createCheckoutSessionForOrder,
   validateOrderForStripeCheckout,
 } from "@/lib/stripe/checkout";
-import { isStripeConfigured } from "@/lib/stripe/client";
+import { isStripeConfigured, getStripeClient } from "@/lib/stripe/client";
+import { stripeReturnBaseUrl } from "@/lib/site/site-url";
 import { notifyCustomerPaymentLink } from "@/lib/notifications/customer-payment-email";
 import { notifyCustomerPickupReady } from "@/lib/notifications/customer-pickup-email";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
@@ -256,22 +258,37 @@ export async function createStripeCheckoutForOrder(
     }> | null;
   };
 
+  const returnBase = stripeReturnBaseUrl(await headers());
+
   if (row.stripe_payment_url && row.payment_status === "unpaid") {
-    void logAdminAudit({
-      actorId: user.id,
-      action: "order.stripe_checkout_created",
-      entity: "order",
-      entityId: orderId,
-      metadata: {
-        order_id: orderId,
-        order_number: row.order_number,
-        payment_status: row.payment_status,
-        amount: row.total,
-        reused: true,
-        stripe_checkout_session_id: row.stripe_checkout_session_id,
-      },
-    });
-    return { ok: true, url: row.stripe_payment_url, reused: true };
+    let canReuse = false;
+    if (row.stripe_checkout_session_id) {
+      try {
+        const stripe = getStripeClient();
+        const session = await stripe.checkout.sessions.retrieve(row.stripe_checkout_session_id);
+        canReuse = Boolean(session.success_url?.startsWith(`${returnBase}/`));
+      } catch {
+        canReuse = false;
+      }
+    }
+
+    if (canReuse) {
+      void logAdminAudit({
+        actorId: user.id,
+        action: "order.stripe_checkout_created",
+        entity: "order",
+        entityId: orderId,
+        metadata: {
+          order_id: orderId,
+          order_number: row.order_number,
+          payment_status: row.payment_status,
+          amount: row.total,
+          reused: true,
+          stripe_checkout_session_id: row.stripe_checkout_session_id,
+        },
+      });
+      return { ok: true, url: row.stripe_payment_url, reused: true };
+    }
   }
 
   const lineItems = (row.order_items ?? []).map((item) => ({
@@ -293,15 +310,18 @@ export async function createStripeCheckoutForOrder(
   if (!validation.ok) return validation;
 
   try {
-    const { sessionId, url } = await createCheckoutSessionForOrder({
-      id: row.id,
-      orderNumber: row.order_number,
-      userId: row.user_id,
-      customerEmail: row.customer_email,
-      shippingCost: row.shipping_cost,
-      total: row.total,
-      items: lineItems,
-    });
+    const { sessionId, url } = await createCheckoutSessionForOrder(
+      {
+        id: row.id,
+        orderNumber: row.order_number,
+        userId: row.user_id,
+        customerEmail: row.customer_email,
+        shippingCost: row.shipping_cost,
+        total: row.total,
+        items: lineItems,
+      },
+      { returnBaseUrl: returnBase },
+    );
 
     const now = new Date().toISOString();
 

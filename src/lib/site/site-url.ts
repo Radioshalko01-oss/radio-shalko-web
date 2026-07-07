@@ -7,6 +7,14 @@
  */
 export function siteBaseUrl(): string {
   const vercelEnv = process.env.VERCEL_ENV;
+
+  // Preview estable por rama (ej. …-git-public-redesign-local-….vercel.app).
+  // VERCEL_URL apunta al deployment único; las cookies no cruzan entre subdominios.
+  const branchUrl = process.env.VERCEL_BRANCH_URL?.trim();
+  if (vercelEnv === "preview" && branchUrl) {
+    return `https://${branchUrl.replace(/\/+$/, "")}`;
+  }
+
   const vercelUrl = process.env.VERCEL_URL?.trim();
 
   if ((vercelEnv === "preview" || vercelEnv === "production") && vercelUrl) {
@@ -17,6 +25,11 @@ export function siteBaseUrl(): string {
   if (fromEnv) return fromEnv.replace(/\/+$/, "");
 
   return "http://localhost:3002";
+}
+
+/** Base URL para success/cancel de Stripe: mismo origen que el request actual. */
+export function stripeReturnBaseUrl(headers: Headers): string {
+  return requestSiteOrigin(headers);
 }
 
 /** Ruta interna segura para redirigir tras login. */
