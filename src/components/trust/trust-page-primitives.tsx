@@ -28,16 +28,20 @@ export function TrustSection({
   children,
   className,
   narrow,
+  center,
 }: {
   children: ReactNode;
   className?: string;
   narrow?: boolean;
+  /** Centra intro, cards y enlaces en secciones estrechas */
+  center?: boolean;
 }) {
   return (
     <section
       className={cn(
         "mx-auto px-5 pt-10 md:px-8 md:pt-12",
         narrow ? "max-w-3xl" : "max-w-7xl",
+        center && "flex flex-col items-center text-center",
         className,
       )}
     >
@@ -185,13 +189,21 @@ export function TrustProseBlock({
 
 export function TrustRelatedLinks({
   links,
+  center,
+  className,
 }: {
   links: { label: string; href: string }[];
+  center?: boolean;
+  className?: string;
 }) {
   return (
     <nav
       aria-label="Páginas relacionadas"
-      className="mt-8 flex flex-wrap gap-3 border-t border-border pt-6"
+      className={cn(
+        "mt-8 flex flex-wrap gap-3 border-t border-border pt-6",
+        center && "justify-center",
+        className,
+      )}
     >
       {links.map((link) => (
         <Link
@@ -212,5 +224,33 @@ export function TrustDisclaimer({ children }: { children: ReactNode }) {
     <p className="mt-8 rounded-xl border border-border/80 bg-muted/20 px-5 py-4 text-xs leading-relaxed text-muted-foreground">
       {children}
     </p>
+  );
+}
+
+export function TrustFaqList({
+  items,
+}: {
+  items: readonly { q: string; a: string }[];
+}) {
+  const motionProps = useTrustMotion();
+  return (
+    <dl className="mt-8 w-full overflow-hidden rounded-2xl border border-border bg-card">
+      {items.map((item, index) => (
+        <motion.div
+          key={item.q}
+          {...motionProps}
+          transition={{ ...(motionProps as { transition?: object }).transition, delay: index * 0.04 }}
+          className={cn(
+            "px-6 py-5 text-left md:px-8 md:py-6",
+            index > 0 && "border-t border-border/80",
+          )}
+        >
+          <dt className="font-display text-base font-semibold tracking-tight text-foreground md:text-[1.05rem]">
+            {item.q}
+          </dt>
+          <dd className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{item.a}</dd>
+        </motion.div>
+      ))}
+    </dl>
   );
 }

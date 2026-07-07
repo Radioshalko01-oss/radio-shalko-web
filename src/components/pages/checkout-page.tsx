@@ -8,6 +8,10 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { CheckoutSubmitBlock } from "@/components/checkout/checkout-submit-block";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
 import { SitePageHero } from "@/components/site/site-page-hero";
+import {
+  PurchaseTrustLinkRow,
+  PurchaseTrustNote,
+} from "@/components/trust/purchase-trust-note";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -285,6 +289,17 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
                 instrucciones de pago. No se realizará ningún cargo en este momento.
               </p>
             </div>
+            <PurchaseTrustNote
+              className="mt-4"
+              compact
+              title="Antes de confirmar tu compra"
+              lines={[
+                "Al enviar tu solicitud, nuestro equipo revisará disponibilidad, precio final y forma de entrega.",
+                "El pedido no se considera confirmado hasta validar disponibilidad y pago.",
+                "Nunca compartas comprobantes o pagos fuera de canales oficiales.",
+              ]}
+              linkKeys={["compraSegura", "metodosPago"]}
+            />
           </CheckoutSection>
 
           {errors.cart && (
@@ -325,7 +340,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
             {submitting ? "Enviando…" : "Enviar solicitud"}
           </Button>
           <p className="text-center text-xs leading-relaxed text-muted-foreground">
-            No se realizará ningún cobro en este momento.
+            No se realizará ningún cobro en este momento. Solo paga por canales oficiales.
           </p>
           {submitError && (
             <p className="text-center text-xs text-red-600">{submitError}</p>
@@ -390,7 +405,7 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           { label: order.orderNumber },
         ])}
         title={order.orderNumber}
-        description="Recibimos tu solicitud. Revisaremos la disponibilidad y te avisaremos cuando tu pedido sea aprobado."
+        description="Solicitud recibida. Estamos revisando disponibilidad y te contactaremos por canales oficiales."
       />
 
       <div className="mx-auto max-w-xl px-4 py-10 sm:px-6 md:py-12">
@@ -399,8 +414,9 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          {order.statusLabel}
+          Solicitud recibida
         </p>
+        <p className="mt-1 text-sm text-muted-foreground">{order.statusLabel}</p>
       </div>
 
       <dl className="mt-10 space-y-4 rounded-2xl border border-border bg-card p-6 text-sm">
@@ -410,14 +426,21 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
       </dl>
 
       <p className="mt-6 rounded-xl border border-border/80 bg-muted/30 px-4 py-3 text-center text-xs leading-relaxed text-muted-foreground">
-        No se realizó ningún cobro. El pago se solicitará después de confirmar disponibilidad.
+        No se realizó ningún cobro. Te avisaremos cuando confirmemos disponibilidad y el método de
+        pago. Revisa el estado en Mi cuenta.
       </p>
 
       <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
         <Button asChild className="h-11 rounded-full">
-          <Link href="/productos">Ver catálogo</Link>
+          <Link href="/cuenta/pedidos">Ver en Mi cuenta</Link>
         </Button>
         <Button asChild variant="outline" className="h-11 rounded-full">
+          <Link href="/productos">Ver catálogo</Link>
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <Button asChild variant="ghost" className="h-10 rounded-full text-sm text-muted-foreground">
           <Link href="/">Volver al inicio</Link>
         </Button>
       </div>
@@ -429,6 +452,8 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           </a>
         </Button>
       </div>
+
+      <PurchaseTrustLinkRow className="mt-6" linkKeys={["compraSegura", "metodosPago", "comoComprar"]} />
       </div>
     </>
   );

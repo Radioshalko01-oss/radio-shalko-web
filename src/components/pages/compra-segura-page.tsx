@@ -23,7 +23,7 @@ import { CONTACT_CHANNELS, SITE_CONTACT } from "@/lib/site-contact";
 const PROTECTION = [
   "Radio Shalko es una tienda física con más de 40 años en Chalco y Amecameca.",
   "La web sirve para explorar el catálogo y enviar solicitudes de compra o cotización.",
-  "Tu pedido se revisa antes de confirmarse: disponibilidad, precio final y entrega.",
+  "Tu pedido se revisa antes de confirmarse: disponibilidad, precio final y recolección en tienda.",
   "Solo debes pagar por los canales oficiales que Radio Shalko te indique para tu solicitud.",
 ] as const;
 
@@ -31,12 +31,12 @@ const OFFICIAL_CHANNELS = [
   `WhatsApp: ${SITE_CONTACT.whatsapp.display}`,
   `Correo: ${SITE_CONTACT.email}`,
   `Teléfono: ${SITE_CONTACT.phone.displayIntl}`,
-  "Tiendas físicas en Valle de Chalco y Amecameca",
+  "Tiendas físicas en Chalco y Amecameca",
 ] as const;
 
 const BEFORE_PAY = [
   "Verifica que la persona que te contacta represente a Radio Shalko.",
-  "Confirma el monto, productos y forma de entrega antes de transferir o pagar.",
+  "Confirma el monto, productos y sucursal de recolección antes de transferir o pagar.",
   "No deposites a cuentas que no hayan sido confirmadas dentro de tu pedido.",
   "Si tienes duda, escríbenos por WhatsApp o correo antes de pagar.",
 ] as const;
@@ -44,7 +44,7 @@ const BEFORE_PAY = [
 const AFTER_PAY = [
   "Guarda tu comprobante de pago o ticket.",
   "Espera la confirmación de Radio Shalko sobre el estado de tu pedido.",
-  "Coordinamos recolección en tienda o entrega según lo acordado previamente.",
+  "Coordinamos la recolección en la sucursal acordada previamente.",
   "Si algo no coincide, contáctanos de inmediato por un canal oficial.",
 ] as const;
 
@@ -104,6 +104,7 @@ export function CompraSeguraPage() {
 
         <TrustSection className="mt-4 md:mt-6">
           <TrustSectionIntro
+            align="center"
             eyebrow="Canales oficiales"
             title="Comunícate solo por vías confirmadas"
             description="Estos son los medios que Radio Shalko utiliza para atender solicitudes, pedidos y cotizaciones."
@@ -140,19 +141,22 @@ export function CompraSeguraPage() {
           </div>
         </TrustSection>
 
-        <TrustSection narrow className="mt-4 md:mt-6">
-          <TrustCard icon={AlertTriangle} eyebrow="Precaución" title="Señales de alerta" delay={0}>
-            <p>Si algo no te parece correcto, detente y contáctanos por un canal oficial.</p>
-            <TrustBulletList items={WARNING_SIGNS} />
-          </TrustCard>
+        <TrustSection narrow center className="mt-4 md:mt-6">
+          <div className="w-full max-w-2xl">
+            <TrustCard icon={AlertTriangle} eyebrow="Precaución" title="Señales de alerta" delay={0}>
+              <p>Si algo no te parece correcto, detente y contáctanos por un canal oficial.</p>
+              <TrustBulletList items={WARNING_SIGNS} />
+            </TrustCard>
 
-          <TrustRelatedLinks
-            links={[
-              { label: "Métodos de pago", href: "/metodos-de-pago" },
-              { label: "Cómo comprar", href: "/como-comprar" },
-              { label: "Contacto", href: "/contacto" },
-            ]}
-          />
+            <TrustRelatedLinks
+              center
+              links={[
+                { label: "Métodos de pago", href: "/metodos-de-pago" },
+                { label: "Cómo comprar", href: "/como-comprar" },
+                { label: "Contacto", href: "/contacto" },
+              ]}
+            />
+          </div>
         </TrustSection>
 
         <SiteClosingCta

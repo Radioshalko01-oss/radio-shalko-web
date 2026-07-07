@@ -5,6 +5,7 @@ import { SitePageHero } from "@/components/site/site-page-hero";
 import { SiteClosingCta } from "@/components/site/site-closing-cta";
 import {
   TrustCard,
+  TrustFaqList,
   TrustPageBody,
   TrustRelatedLinks,
   TrustSection,
@@ -58,9 +59,9 @@ const STEPS = [
   },
   {
     step: "08",
-    title: "Recoges o coordinamos entrega",
+    title: "Recoges en tienda",
     description:
-      "Puedes recoger en nuestras tiendas. La entrega fuera de tienda se coordina según disponibilidad y previa confirmación.",
+      "Una vez confirmado tu pedido y el pago, pasas a recogerlo en Chalco o Amecameca. Te avisamos cuando esté listo.",
   },
 ] as const;
 
@@ -70,12 +71,12 @@ const FAQ = [
     a: "No automáticamente. Primero revisamos disponibilidad, precio y condiciones. Te confirmamos antes de pedir pago.",
   },
   {
-    q: "¿Puedo comprar solo visitando la tienda?",
-    a: "Sí. Puedes acudir a Chalco o Amecameca, recibir asesoría y comprar presencialmente sin usar la web.",
+    q: "¿Puedo comprar directamente en sucursal?",
+    a: "Sí. En Chalco y Amecameca te atendemos con asesoría personalizada: puedes ver productos, recibir orientación y concretar tu compra sin usar la web.",
   },
   {
     q: "¿Hacen envíos a todo México?",
-    a: "La entrega se evalúa caso por caso según disponibilidad, producto y confirmación previa con nuestro equipo.",
+    a: "No. Por el momento no realizamos envíos. Puedes recoger tu pedido en nuestras tiendas de Chalco o Amecameca una vez confirmada tu compra.",
   },
   {
     q: "¿Puedo cotizar sin comprar de inmediato?",
@@ -89,7 +90,7 @@ export function ComoComprarPage() {
       <SitePageHero
         breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.comoComprar])}
         title="Cómo comprar"
-        description="Un proceso claro, con acompañamiento humano. Te guiamos desde la exploración del catálogo hasta la entrega o recolección."
+        description="Un proceso claro, con acompañamiento humano. Te guiamos desde la exploración del catálogo hasta la recolección en tienda."
       />
 
       <TrustPageBody>
@@ -140,26 +141,26 @@ export function ComoComprarPage() {
           </div>
         </TrustSection>
 
-        <TrustSection narrow className="mt-4 md:mt-6">
+        <TrustSection narrow center className="mt-4 md:mt-6">
           <TrustSectionIntro
+            align="center"
             eyebrow="Preguntas frecuentes"
             title="Lo que más nos preguntan"
+            description="Respuestas claras sobre solicitudes, compra en tienda y recolección."
           />
-          <div className="mt-8 space-y-4">
-            {FAQ.map((item, i) => (
-              <TrustCard key={item.q} title={item.q} delay={i * 0.05}>
-                <p>{item.a}</p>
-              </TrustCard>
-            ))}
-          </div>
+          <div className="w-full max-w-2xl">
+            <TrustFaqList items={FAQ} />
 
-          <TrustRelatedLinks
-            links={[
-              { label: "Compra segura", href: "/compra-segura" },
-              { label: "Métodos de pago", href: "/metodos-de-pago" },
-              { label: "Contacto", href: "/contacto" },
-            ]}
-          />
+            <TrustRelatedLinks
+              center
+              className="w-full"
+              links={[
+                { label: "Compra segura", href: "/compra-segura" },
+                { label: "Métodos de pago", href: "/metodos-de-pago" },
+                { label: "Contacto", href: "/contacto" },
+              ]}
+            />
+          </div>
         </TrustSection>
 
         <SiteClosingCta

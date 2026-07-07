@@ -14,6 +14,7 @@ import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
 import type { CustomerOrderDetail } from "@/lib/orders/customer-queries";
 import { CustomerOrderLineRow } from "@/components/account/customer-orders-list";
+import { PurchaseTrustLinkRow } from "@/components/trust/purchase-trust-note";
 
 function formatDateTime(iso: string) {
   return new Intl.DateTimeFormat("es-MX", {
@@ -267,7 +268,12 @@ export function CustomerOrderDetailView({
       )}
 
       {!isAdminViewer && (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-4">
+          <PurchaseTrustLinkRow
+            className="justify-start"
+            linkKeys={["metodosPago", "compraSegura", "comoComprar"]}
+          />
+          <div className="flex flex-wrap gap-2">
           <a
             href={waLink}
             target="_blank"
@@ -277,6 +283,7 @@ export function CustomerOrderDetailView({
             <MessageCircle className="h-4 w-4" />
             Contactar a Radio Shalko
           </a>
+        </div>
         </div>
       )}
     </div>

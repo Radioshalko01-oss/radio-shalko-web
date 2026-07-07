@@ -11,16 +11,14 @@ import type { CatalogProduct } from "@/lib/catalog/types";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { cn } from "@/lib/utils";
 
-export function ProductActions({ product }: { product: CatalogProduct }) {
-  const { has, getQuantity, setQuantity } = useQuote();
-  const { has: hasFav, toggle: toggleFav } = useFavorites();
+export function ProductCompareButton({
+  product,
+  placement = "default",
+}: {
+  product: CatalogProduct;
+  placement?: "default" | "header";
+}) {
   const { startCompare, has: inCompare, count: compareCount, openDrawer } = useCompare();
-  const inQuote = has(product.id);
-  const isFav = hasFav(product.id);
-  const [localQty, setLocalQty] = useState(1);
-  const quantity = inQuote ? getQuantity(product.id) || 1 : localQty;
-
-  const browseHref = `/productos${product.subcategory ? `?sub=${encodeURIComponent(product.subcategory.name)}` : ""}`;
 
   const handleCompare = () => {
     if (inCompare(product.id)) {
@@ -30,6 +28,46 @@ export function ProductActions({ product }: { product: CatalogProduct }) {
     if (compareCount >= COMPARE_MAX) return;
     startCompare(product.id);
   };
+
+  const isHeader = placement === "header";
+
+  return (
+    <button
+      type="button"
+      onClick={handleCompare}
+      disabled={!inCompare(product.id) && compareCount >= COMPARE_MAX}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border bg-white font-medium transition-colors",
+        isHeader ? "h-9 px-3 text-xs" : "h-10 w-full px-4 text-center text-[13px]",
+        inCompare(product.id)
+          ? "border-foreground/25 bg-foreground/5 text-foreground"
+          : "border-border text-foreground/80 hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
+      )}
+    >
+      <GitCompare className="h-3.5 w-3.5 shrink-0" />
+      {isHeader ? (
+        <span className="hidden min-[420px]:inline">
+          {inCompare(product.id) ? "Ver comparación" : "Comparar"}
+        </span>
+      ) : inCompare(product.id) ? (
+        "Ver selección para comparar"
+      ) : (
+        "Comparar con otro producto"
+      )}
+    </button>
+  );
+}
+
+export function ProductActions({ product }: { product: CatalogProduct }) {
+  const { has, getQuantity, setQuantity } = useQuote();
+  const { has: hasFav, toggle: toggleFav } = useFavorites();
+  const { count: compareCount, has: inCompare } = useCompare();
+  const inQuote = has(product.id);
+  const isFav = hasFav(product.id);
+  const [localQty, setLocalQty] = useState(1);
+  const quantity = inQuote ? getQuantity(product.id) || 1 : localQty;
+
+  const browseHref = `/productos${product.subcategory ? `?sub=${encodeURIComponent(product.subcategory.name)}` : ""}`;
 
   const handleAddToCart = () => {
     setQuantity(product.id, quantity);
@@ -84,21 +122,6 @@ export function ProductActions({ product }: { product: CatalogProduct }) {
           <span className="hidden sm:inline">Favoritos</span>
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={handleCompare}
-        disabled={!inCompare(product.id) && compareCount >= COMPARE_MAX}
-        className={cn(
-          "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border px-4 text-center text-[13px] font-medium transition-colors",
-          inCompare(product.id)
-            ? "border-foreground/25 bg-foreground/5 text-foreground"
-            : "border-border bg-white text-foreground/80 hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
-        )}
-      >
-        <GitCompare className="h-3.5 w-3.5 shrink-0" />
-        {inCompare(product.id) ? "Ver selección para comparar" : "Comparar con otro producto"}
-      </button>
 
       {!inCompare(product.id) && compareCount > 0 && compareCount < COMPARE_MAX && (
         <Link

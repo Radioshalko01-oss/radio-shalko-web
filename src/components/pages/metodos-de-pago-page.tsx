@@ -86,14 +86,17 @@ export function MetodosDePagoPage() {
           </div>
         </TrustSection>
 
-        <TrustSection narrow className="mt-4 md:mt-6">
+        <TrustSection narrow center className="mt-4 md:mt-6">
           <TrustSectionIntro
+            align="center"
             eyebrow="Recuerda"
-            title="El pago confirma lo acordado, no lo inventado"
+            title="Solo paga cuando tu pedido esté confirmado"
             description="Los métodos disponibles dependen de tu pedido, del producto y de la confirmación de nuestro equipo. Si algo cambia, te lo decimos antes de que pagues."
           />
 
           <TrustRelatedLinks
+            center
+            className="w-full max-w-2xl"
             links={[
               { label: "Cómo comprar", href: "/como-comprar" },
               { label: "Compra segura", href: "/compra-segura" },

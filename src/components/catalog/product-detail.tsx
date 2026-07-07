@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 import type { CatalogProduct, CatalogSpec } from "@/lib/catalog/types";
 import { getProductDetailSections, parseDetailLines } from "@/lib/catalog/product-detail-sections";
 import { ProductGallery } from "@/components/catalog/product-gallery";
-import { ProductActions } from "@/components/catalog/product-actions";
+import { ProductActions, ProductCompareButton } from "@/components/catalog/product-actions";
 import { ProductCard } from "@/components/catalog/product-card";
+import { PurchaseTrustNote } from "@/components/trust/purchase-trust-note";
 
 function buildBreadcrumbs(product: CatalogProduct) {
   const base = productDetailBreadcrumbs(product);
@@ -71,11 +72,11 @@ export function ProductDetail({
   const storeNames = SITE_CONTACT.stores.map((s) => s.name).join(" y ");
 
   return (
-    <div className={cn(spacing.pageContainer, spacing.pageX, spacing.pageTop, "pb-24 md:pb-28")}>
+    <div className={cn(spacing.pageContainer, spacing.pageX, "pt-[5.5rem] md:pt-[6.5rem]", "pb-24 md:pb-28")}>
       {/* Breadcrumbs */}
       <nav
         aria-label="Ubicación en el sitio"
-        className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground md:text-xs"
+        className="-mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground md:text-xs"
       >
         {breadcrumbs.map((item, index) => (
           <Fragment key={`${item.label}-${index}`}>
@@ -93,20 +94,28 @@ export function ProductDetail({
         ))}
       </nav>
 
-      {/* Hero producto — 3 columnas en desktop: miniaturas | imagen centrada | info */}
-      <div className="mt-6 grid gap-8 overflow-visible lg:grid-cols-[56px_minmax(0,1fr)_minmax(280px,32rem)] lg:items-center lg:gap-x-8 xl:grid-cols-[56px_minmax(0,1fr)_minmax(300px,34rem)] xl:gap-x-12">
+      {/* Hero producto — desktop: galería | info */}
+      <div className="mt-3 grid gap-6 overflow-visible lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,32rem)] lg:items-start lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,34rem)] xl:gap-x-12">
         <ProductGallery images={product.images} name={product.name} />
 
-        <div className="min-w-0 lg:col-start-3 lg:row-start-1 lg:w-full lg:max-w-[32rem] lg:justify-self-center xl:max-w-[34rem]">
+        <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1 lg:w-full lg:max-w-[32rem] lg:justify-self-center lg:pt-0 xl:max-w-[34rem]">
           {product.isNew && (
             <span className="inline-flex rounded-md bg-[#f0ebe3] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/75">
               Nuevo
             </span>
           )}
 
-          <h1 className="mt-3 text-[1.625rem] font-medium leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[1.875rem] md:text-[2.125rem] lg:text-[2.375rem]">
-            {product.name}
-          </h1>
+          <div
+            className={cn(
+              "flex items-start justify-between gap-3",
+              product.isNew ? "mt-3" : "mt-0",
+            )}
+          >
+            <h1 className="min-w-0 flex-1 text-[1.625rem] font-medium leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[1.875rem] md:text-[2.125rem] lg:text-[2.375rem]">
+              {product.name}
+            </h1>
+            <ProductCompareButton product={product} placement="header" />
+          </div>
 
           {brand && (
             <p className="mt-2 text-sm text-muted-foreground">
@@ -195,6 +204,15 @@ export function ProductDetail({
               </div>
             </div>
           </div>
+
+          <PurchaseTrustNote
+            variant="strip"
+            align="left"
+            className="mt-4"
+            lines={[
+              "Compra asistida y segura. Antes de pagar, confirmamos disponibilidad y datos de tu pedido.",
+            ]}
+          />
         </div>
       </div>
 

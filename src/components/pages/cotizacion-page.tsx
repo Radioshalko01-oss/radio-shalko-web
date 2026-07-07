@@ -7,6 +7,7 @@ import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { SiteEmptyState } from "@/components/site/site-empty-state";
 import { SitePageHero } from "@/components/site/site-page-hero";
+import { PurchaseTrustNote } from "@/components/trust/purchase-trust-note";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { typography } from "@/lib/design/tokens";
@@ -146,6 +147,18 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       ) : (
         <div className="mt-5 flex flex-col gap-10 md:mt-6 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
           <section aria-label="Productos" className="min-w-0 w-full md:flex-1">
+            {!isAdmin && (
+              <PurchaseTrustNote
+                className="mb-5 md:hidden"
+                compact
+                title="Solicitud de compra"
+                lines={[
+                  "Tu solicitud será revisada por Radio Shalko antes de confirmar la compra.",
+                  "No realices pagos hasta recibir confirmación por canales oficiales.",
+                ]}
+                linkKeys={["compraSegura", "metodosPago"]}
+              />
+            )}
             <div className="hidden border-b border-border px-1 pb-4 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
               <span>Producto</span>
               <span className="text-center">Cantidad</span>
@@ -372,6 +385,19 @@ function CartSummaryPanel({
         </p>
       </div>
 
+      {!isAdmin && (
+        <PurchaseTrustNote
+          className="mt-5"
+          compact
+          title="Solicitud de compra"
+          lines={[
+            "Tu solicitud será revisada por Radio Shalko antes de confirmar la compra.",
+            "No realices pagos hasta recibir confirmación por canales oficiales.",
+          ]}
+          linkKeys={["compraSegura", "metodosPago"]}
+        />
+      )}
+
       <div className="mt-6 space-y-2.5">
         {isAdmin ? (
           <>
@@ -410,7 +436,7 @@ function CartSummaryPanel({
               asChild
               className="h-11 w-full rounded-full"
             >
-              <Link href="/checkout">Comprar</Link>
+              <Link href="/checkout">Enviar solicitud</Link>
             </Button>
           </>
         )}

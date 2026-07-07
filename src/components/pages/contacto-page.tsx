@@ -180,53 +180,61 @@ export function ContactoPage() {
 
         {/* Legal */}
         <section className="mx-auto mt-12 max-w-7xl px-5 md:mt-14 md:px-8">
-          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <motion.article
-              id="aviso-privacidad"
-              {...motionProps}
-              className="rounded-2xl border border-border bg-card p-6 md:p-7"
-            >
-              <p className={siteShell.brandEyebrow}>Legal</p>
-              <h2 className="mt-3 font-display text-xl font-semibold tracking-tight md:text-2xl">
-                Aviso de privacidad
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Radio Shalko utiliza tus datos únicamente para responder solicitudes, procesar
-                pedidos y mejorar nuestro servicio. No compartimos tu información con terceros sin
-                tu consentimiento. Puedes solicitar acceso, rectificación o cancelación escribiendo a{" "}
-                <a
-                  href={mailtoHref()}
-                  className="font-medium text-foreground underline-offset-2 hover:text-copper hover:underline"
-                >
-                  {SITE_CONTACT.email}
-                </a>
-                .
-              </p>
-            </motion.article>
-
-            <motion.article
-              id="terminos"
-              {...motionProps}
-              transition={{ ...motionProps.transition, delay: 0.06 }}
-              className="rounded-2xl border border-border bg-card p-6 md:p-7"
-            >
-              <p className={siteShell.brandEyebrow}>Legal</p>
-              <h2 className="mt-3 font-display text-xl font-semibold tracking-tight md:text-2xl">
-                Términos y condiciones
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Las compras, apartados y servicios técnicos se rigen por las políticas publicadas en
-                tienda y en este sitio. Los precios pueden cambiar sin previo aviso. La garantía
-                aplica según las condiciones de cada marca y producto adquirido.
-              </p>
+          <motion.div {...motionProps} className="mx-auto max-w-2xl text-center">
+            <p className={siteShell.brandEyebrow}>Legal</p>
+            <h2 className="mt-3 font-display text-xl font-semibold tracking-tight md:text-2xl">
+              Información legal y de privacidad
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Consulta nuestras políticas completas en las páginas dedicadas. Para dudas sobre
+              compras, pagos o privacidad, también puedes escribirnos a{" "}
               <a
                 href={mailtoHref()}
-                className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-copper"
+                className="font-medium text-foreground underline-offset-2 hover:text-copper hover:underline"
               >
-                Consultar por correo
-                <ArrowUpRight className="h-3.5 w-3.5" />
+                {SITE_CONTACT.email}
               </a>
-            </motion.article>
+              .
+            </p>
+          </motion.div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3 md:mt-8 md:gap-5">
+            {[
+              {
+                href: "/aviso-de-privacidad",
+                title: "Aviso de privacidad",
+                description: "Cómo usamos y protegemos tus datos personales.",
+              },
+              {
+                href: "/terminos-y-condiciones",
+                title: "Términos y condiciones",
+                description: "Condiciones de compra, apartados y servicios.",
+              },
+              {
+                href: "/compra-segura",
+                title: "Compra segura",
+                description: "Cómo funciona la solicitud, confirmación y pago.",
+              },
+            ].map((card, index) => (
+              <motion.article
+                key={card.href}
+                {...motionProps}
+                transition={{ ...motionProps.transition, delay: index * 0.05 }}
+                className="rounded-2xl border border-border bg-card p-5 md:p-6"
+              >
+                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {card.description}
+                </p>
+                <Link
+                  href={card.href}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-copper"
+                >
+                  Ver más
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </motion.article>
+            ))}
           </div>
         </section>
       </div>

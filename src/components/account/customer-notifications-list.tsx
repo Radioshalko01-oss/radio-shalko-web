@@ -10,6 +10,7 @@ import {
 } from "@/lib/notifications/notification-actions";
 import { resolveNotificationHref } from "@/lib/notifications/resolve-notification-href";
 import { SiteEmptyState } from "@/components/site/site-empty-state";
+import { PurchaseTrustLinkRow } from "@/components/trust/purchase-trust-note";
 import type { CustomerNotificationItem } from "@/lib/notifications/customer-notification-queries";
 
 function formatDateTime(iso: string) {
@@ -143,7 +144,8 @@ export function CustomerNotificationsList({
           </>
         ) : (
           <>
-            También puedes revisar tus pedidos en{" "}
+            Las novedades sobre disponibilidad y pago llegan por aquí y por canales oficiales.
+            Revisa también{" "}
             <Link href="/cuenta/pedidos" className="font-medium text-foreground underline-offset-2 hover:underline">
               Mis pedidos
             </Link>
@@ -151,6 +153,13 @@ export function CustomerNotificationsList({
           </>
         )}
       </p>
+
+      {!isAdmin && (
+        <PurchaseTrustLinkRow
+          className="border-t border-border/60 pt-4"
+          linkKeys={["compraSegura", "metodosPago"]}
+        />
+      )}
     </div>
   );
 }

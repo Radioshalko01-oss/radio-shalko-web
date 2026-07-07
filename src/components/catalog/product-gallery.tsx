@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import type { CatalogImage } from "@/lib/catalog/types";
@@ -315,46 +315,69 @@ function GalleryMain({
   );
 }
 
-export function ProductGallery({ images, name }: { images: CatalogImage[]; name: string }) {
+export function ProductGallery({
+  images,
+  name,
+  belowImage,
+}: {
+  images: CatalogImage[];
+  name: string;
+  /** Contenido bajo la imagen principal (p. ej. nota de confianza en PDP) */
+  belowImage?: ReactNode;
+}) {
   const { active, setActive, main, hasMultiple, images: imgs, onTouchStart, onTouchEnd } =
     useGalleryState(images);
 
   return (
     <>
       {/* Mobile / tablet: layout combinado */}
-      <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-start gap-2 md:gap-3 lg:hidden">
-        {hasMultiple && (
+      <div className="lg:hidden">
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-start gap-2 md:gap-3">
+          {hasMultiple && (
+            <GalleryThumbnails
+              images={imgs}
+              active={active}
+              setActive={setActive}
+              className="-ml-1 md:-ml-2"
+            />
+          )}
+          <div className="flex min-w-0 justify-center">
+            <GalleryMain main={main} name={name} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} />
+          </div>
+        </div>
+        {belowImage ? (
+          <div className="mt-4 flex justify-center">
+            <div className="w-full max-w-[min(100%,28rem)]">{belowImage}</div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Desktop: miniaturas centradas respecto a la imagen */}
+      <div className="hidden lg:col-start-1 lg:row-start-1 lg:mt-3 lg:grid lg:w-full lg:grid-cols-[56px_minmax(0,1fr)] lg:gap-x-8 xl:mt-4 xl:gap-x-12">
+        {hasMultiple ? (
           <GalleryThumbnails
             images={imgs}
             active={active}
             setActive={setActive}
-            className="-ml-1 md:-ml-2"
+            className="row-start-1 self-center"
           />
+        ) : (
+          <div className="row-start-1 w-14 shrink-0" aria-hidden />
         )}
-        <div className="flex min-w-0 justify-center">
-          <GalleryMain main={main} name={name} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} />
+        <div className="row-start-1 flex min-w-0 flex-col items-center">
+          <GalleryMain
+            main={main}
+            name={name}
+            enableLensZoom
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          />
         </div>
-      </div>
-
-      {/* Desktop: columnas separadas del grid padre (miniaturas | imagen | info) */}
-      {hasMultiple ? (
-        <GalleryThumbnails
-          images={imgs}
-          active={active}
-          setActive={setActive}
-          className="hidden lg:flex lg:col-start-1 lg:row-start-1"
-        />
-      ) : (
-        <div className="hidden lg:block lg:col-start-1 lg:row-start-1" aria-hidden />
-      )}
-      <div className="relative hidden overflow-visible lg:col-start-2 lg:row-start-1 lg:flex lg:min-w-0 lg:justify-center lg:justify-self-stretch lg:z-20">
-        <GalleryMain
-          main={main}
-          name={name}
-          enableLensZoom
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        />
+        {belowImage ? (
+          <div className="col-start-2 row-start-2 mt-4 w-full max-w-[min(100%,28rem)] justify-self-center lg:max-w-[min(100%,32rem)]">
+            {belowImage}
+          </div>
+        ) : null}
       </div>
     </>
   );

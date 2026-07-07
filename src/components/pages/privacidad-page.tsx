@@ -74,7 +74,7 @@ const SECTIONS = [
     body: [
       `Correo: ${SITE_CONTACT.email}`,
       `WhatsApp: ${SITE_CONTACT.whatsapp.display}`,
-      "También puedes acudir a nuestras tiendas físicas en Valle de Chalco o Amecameca.",
+      "También puedes acudir a nuestras tiendas físicas en Chalco o Amecameca.",
     ],
   },
 ] as const;

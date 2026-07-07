@@ -39,7 +39,7 @@ export const SITE_CONTACT = {
     {
       id: "chalco",
       name: "Chalco",
-      displayName: "Valle de Chalco",
+      displayName: "Chalco",
       address: "Av. Solidaridad 142, Centro, Chalco, Edo. Méx.",
       region: "Estado de México",
       hours: ["Lun – Sáb · 10:00 – 20:00 hrs", "Dom · 11:00 – 20:00 hrs"],
