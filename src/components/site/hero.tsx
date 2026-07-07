@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HERO_SLIDES } from "@/lib/data/hero-slides";
 import { cn } from "@/lib/utils";
 
 const SLIDE_INTERVAL_MS = 8000;
-const FADE_MS = 1400;
 const CROSSFADE_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 export function Hero() {
   const [index, setIndex] = useState(0);
   const [textKey, setTextKey] = useState(0);
+  const [textVisible, setTextVisible] = useState(true);
+  const skipTextFadeRef = useRef(true);
   const slideCount = HERO_SLIDES.length;
 
   const goToSlide = useCallback((next: number) => {
@@ -31,7 +32,24 @@ export function Hero() {
     return () => window.clearInterval(id);
   }, [slideCount]);
 
+  useEffect(() => {
+    if (skipTextFadeRef.current) {
+      skipTextFadeRef.current = false;
+      return;
+    }
+    setTextVisible(false);
+    const id = window.setTimeout(() => setTextVisible(true), 140);
+    return () => window.clearTimeout(id);
+  }, [index]);
+
   const activeSlide = HERO_SLIDES[index];
+
+  const mobileTextMotion = cn(
+    "max-md:transition-all max-md:duration-[650ms] max-md:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-md:transition-none",
+    textVisible
+      ? "max-md:translate-y-0 max-md:opacity-100"
+      : "max-md:translate-y-3 max-md:opacity-0",
+  );
 
   return (
     <section
@@ -49,11 +67,10 @@ export function Hero() {
             <div
               key={slide.id}
               className={cn(
-                "absolute inset-0 transition-opacity motion-reduce:transition-none",
+                "absolute inset-0 transition-opacity motion-reduce:transition-none max-md:duration-[1800ms] md:duration-[1400ms]",
                 isActive ? "opacity-100" : "opacity-0",
               )}
               style={{
-                transitionDuration: `${FADE_MS}ms`,
                 transitionTimingFunction: CROSSFADE_EASING,
                 zIndex: isActive ? 2 : 1,
               }}
@@ -67,7 +84,12 @@ export function Hero() {
                   fetchPriority={isActive && index === 0 ? "high" : "auto"}
                   loading={isActive ? "eager" : "lazy"}
                   decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover brightness-[0.76] motion-safe:animate-hero-ken-burns [backface-visibility:hidden] [transform:translateZ(0)]"
+                  className={cn(
+                    "absolute inset-0 h-full w-full object-cover brightness-[0.76] [backface-visibility:hidden] [transform:translateZ(0)]",
+                    "max-md:object-[center_36%] max-md:transition-transform max-md:duration-[7000ms] max-md:ease-out motion-reduce:max-md:transition-none",
+                    isActive ? "max-md:scale-[1.05]" : "max-md:scale-100",
+                    "md:motion-safe:animate-hero-ken-burns",
+                  )}
                 />
               ) : null}
             </div>
@@ -90,42 +112,54 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex h-full min-h-[100svh] max-w-[820px] flex-col items-center justify-center px-5 pb-20 pt-24 text-center md:px-8 md:pb-24 md:pt-28">
+      <div className="relative z-10 mx-auto flex h-full min-h-[100svh] max-w-[820px] flex-col items-center justify-center px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(3.5rem+2rem)] text-center max-md:justify-center md:px-8 md:pb-24 md:pt-28">
         <div key={textKey} className="flex w-full flex-col items-center">
           <p
-            className="hero-text-in text-[11px] font-semibold uppercase tracking-[0.22em] text-white motion-reduce:animate-none md:text-xs"
+            className={cn(
+              "text-[11px] font-semibold uppercase tracking-[0.22em] text-white md:hero-text-in md:text-xs md:motion-reduce:animate-none",
+              mobileTextMotion,
+            )}
             style={{ animationDelay: "320ms" }}
           >
             {activeSlide.eyebrow}
           </p>
 
           <h1
-            className="hero-text-in mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white motion-reduce:animate-none md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] lg:text-[4rem]"
+            className={cn(
+              "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white md:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] md:motion-reduce:animate-none lg:text-[4rem]",
+              mobileTextMotion,
+            )}
             style={{ animationDelay: "480ms" }}
           >
             {activeSlide.title}
           </h1>
 
           <p
-            className="hero-text-in mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 motion-reduce:animate-none md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7]"
+            className={cn(
+              "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 md:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] md:motion-reduce:animate-none",
+              mobileTextMotion,
+            )}
             style={{ animationDelay: "620ms" }}
           >
             {activeSlide.subtitle}
           </p>
 
           <div
-            className="hero-text-in mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center md:mt-10 motion-reduce:animate-none"
+            className={cn(
+              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center md:hero-text-in md:mt-10 md:items-center md:gap-3 md:motion-reduce:animate-none",
+              mobileTextMotion,
+            )}
             style={{ animationDelay: "760ms" }}
           >
             <Link
               href={activeSlide.primaryCta.href}
-              className="inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#111] transition-colors hover:bg-white/92 motion-reduce:transition-none"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#111] transition-colors hover:bg-white/92 motion-reduce:transition-none sm:min-w-[200px] sm:w-auto"
             >
               {activeSlide.primaryCta.label}
             </Link>
             <Link
               href={activeSlide.secondaryCta.href}
-              className="inline-flex min-w-[200px] items-center justify-center rounded-full border border-white/55 px-7 py-3.5 text-sm font-medium text-white transition-colors duration-300 ease-out hover:border-white hover:bg-white hover:text-[#111] focus-visible:border-white focus-visible:bg-white focus-visible:text-[#111] active:bg-white active:text-[#111] motion-reduce:transition-none"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/55 px-7 py-3.5 text-sm font-medium text-white transition-colors duration-300 ease-out hover:border-white hover:bg-white hover:text-[#111] focus-visible:border-white focus-visible:bg-white focus-visible:text-[#111] active:bg-white active:text-[#111] motion-reduce:transition-none sm:min-w-[200px] sm:w-auto"
             >
               {activeSlide.secondaryCta.label}
             </Link>

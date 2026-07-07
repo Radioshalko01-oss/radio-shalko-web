@@ -30,7 +30,7 @@ export default async function HomePage() {
       <FeaturedProducts novedades={novedades} destacados={destacados} />
       <Categories />
       <SiteClosingCta
-        className="mt-0 pt-3 pb-14 md:pt-4 md:pb-20"
+        className="mt-0 px-5 pb-10 pt-2 md:px-8 md:pb-20 md:pt-4"
         eyebrow="40 años acompañando músicos"
         title="Tu música merece quien la entienda"
         description="En Chalco y Amecameca, músicos y técnicos te orientan con criterio para elegir el instrumento o el equipo que realmente necesitas. Escríbenos o visítanos — sin prisa, sin presión."

@@ -24,7 +24,7 @@ export function FeaturedProducts({ novedades, destacados }: FeaturedProductsProp
   const items = active === "novedades" ? novedades : destacados;
 
   return (
-    <section className="border-b border-border pt-12 pb-8 md:pt-16 md:pb-10">
+    <section className="border-b border-border pt-10 pb-6 md:pt-16 md:pb-10">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="relative flex -translate-y-3 items-end justify-center gap-6 md:-translate-y-4">
           <div className="text-center">
@@ -59,7 +59,7 @@ export function FeaturedProducts({ novedades, destacados }: FeaturedProductsProp
           </Link>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
+        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 md:mt-10 md:grid-cols-4 md:gap-x-6 md:gap-y-8">
           {items.map((p) => (
             <ProductCard key={p.id} product={p} variant="featured" />
           ))}

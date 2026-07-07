@@ -42,17 +42,16 @@ export function SiteClosingCta({
   const motionProps = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 14 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, margin: "-40px" },
+        initial: { opacity: 0, y: 14 } as const,
+        animate: { opacity: 1, y: 0 } as const,
         transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
       };
 
   return (
-    <section className={cn("mx-auto mt-12 max-w-7xl px-5 md:mt-14 md:px-8", className)}>
+    <section className={cn("mx-auto mt-8 max-w-7xl px-5 md:mt-14 md:px-8", className)}>
       <motion.div
         {...motionProps}
-        className="overflow-hidden rounded-2xl bg-[#1a1a1a] px-6 py-10 text-white md:px-10 md:py-12"
+        className="overflow-hidden rounded-2xl bg-[#1a1a1a] px-5 py-8 text-white sm:px-6 md:px-10 md:py-12"
       >
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60">

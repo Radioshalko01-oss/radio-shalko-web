@@ -87,7 +87,7 @@ export function Categories() {
   return (
     <section
       id="categorias"
-      className="scroll-mt-20 border-b border-border bg-background pt-12 pb-8 md:scroll-mt-24 md:pt-16 md:pb-10"
+      className="scroll-mt-20 border-b border-border bg-background pt-10 pb-6 md:scroll-mt-24 md:pt-16 md:pb-10"
     >
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="relative flex -translate-y-3 items-end justify-center gap-6 md:-translate-y-4">
@@ -107,7 +107,7 @@ export function Categories() {
           </Link>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-5">
+        <div className="mt-8 grid grid-cols-2 gap-3.5 md:mt-10 md:grid-cols-3 md:gap-5 lg:grid-cols-5">
           {CATS.map((cat) => (
             <CategoryCard key={cat.href} category={cat} />
           ))}
