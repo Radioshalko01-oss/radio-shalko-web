@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils";
 
 const ZOOM_LEVEL = 1.85;
 const LENS_RATIO = 0.34;
+const MOBILE_ZOOM_TARGET = 2.25;
+const MOBILE_ZOOM_MAX = 3;
+const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_DISTANCE = 24;
 
 type ImageLayout = {
   offsetX: number;
@@ -131,6 +135,7 @@ function GalleryMain({
   name,
   className,
   enableLensZoom = false,
+  enableMobileZoom = false,
   onTouchStart,
   onTouchEnd,
 }: {
@@ -138,6 +143,7 @@ function GalleryMain({
   name: string;
   className?: string;
   enableLensZoom?: boolean;
+  enableMobileZoom?: boolean;
   onTouchStart?: (clientX: number, clientY: number) => void;
   onTouchEnd?: (clientX: number, clientY: number) => void;
 }) {
@@ -148,12 +154,146 @@ function GalleryMain({
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const [lens, setLens] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [zoomOffset, setZoomOffset] = useState({ x: 0, y: 0 });
+  const [mobileScale, setMobileScale] = useState(1);
+  const [mobilePan, setMobilePan] = useState({ x: 0, y: 0 });
+
+  const mobileScaleRef = useRef(1);
+  const pinchRef = useRef<{ dist: number; scale: number } | null>(null);
+  const panStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
+  const swipeBlockedRef = useRef(false);
 
   const zoomActive = enableLensZoom && !reduceMotion && hovering && !!main && naturalSize.w > 0;
+  const mobileZoomActive = enableMobileZoom && !reduceMotion && mobileScale > 1;
+
+  useEffect(() => {
+    mobileScaleRef.current = mobileScale;
+  }, [mobileScale]);
 
   useEffect(() => {
     setNaturalSize({ w: 0, h: 0 });
+    setMobileScale(1);
+    setMobilePan({ x: 0, y: 0 });
+    pinchRef.current = null;
+    panStartRef.current = null;
+    lastTapRef.current = null;
+    swipeBlockedRef.current = false;
   }, [main?.url]);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || !enableMobileZoom || reduceMotion) return;
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length === 2 && pinchRef.current) {
+        event.preventDefault();
+        const [t1, t2] = [event.touches[0]!, event.touches[1]!];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const next = Math.min(
+          MOBILE_ZOOM_MAX,
+          Math.max(1, pinchRef.current.scale * (dist / pinchRef.current.dist)),
+        );
+        setMobileScale(next);
+        if (next <= 1.01) {
+          setMobilePan({ x: 0, y: 0 });
+        }
+        return;
+      }
+
+      if (event.touches.length === 1 && mobileScaleRef.current > 1 && panStartRef.current) {
+        event.preventDefault();
+        const touch = event.touches[0]!;
+        const dx = touch.clientX - panStartRef.current.x;
+        const dy = touch.clientY - panStartRef.current.y;
+        setMobilePan({
+          x: panStartRef.current.panX + dx,
+          y: panStartRef.current.panY + dy,
+        });
+      }
+    };
+
+    node.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => node.removeEventListener("touchmove", handleTouchMove);
+  }, [enableMobileZoom, reduceMotion, main?.url]);
+
+  const handleMobileTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      if (!enableMobileZoom || reduceMotion) {
+        const touch = event.touches[0];
+        if (touch) onTouchStart?.(touch.clientX, touch.clientY);
+        return;
+      }
+
+      swipeBlockedRef.current = false;
+
+      if (event.touches.length === 2) {
+        const [t1, t2] = [event.touches[0]!, event.touches[1]!];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        pinchRef.current = { dist, scale: mobileScaleRef.current };
+        panStartRef.current = null;
+        swipeBlockedRef.current = true;
+        return;
+      }
+
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      if (mobileScaleRef.current > 1) {
+        panStartRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+          panX: mobilePan.x,
+          panY: mobilePan.y,
+        };
+        swipeBlockedRef.current = true;
+        return;
+      }
+
+      onTouchStart?.(touch.clientX, touch.clientY);
+    },
+    [enableMobileZoom, mobilePan.x, mobilePan.y, onTouchStart, reduceMotion],
+  );
+
+  const handleMobileTouchEnd = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      if (!enableMobileZoom || reduceMotion) {
+        const touch = event.changedTouches[0];
+        if (touch) onTouchEnd?.(touch.clientX, touch.clientY);
+        return;
+      }
+
+      pinchRef.current = null;
+      panStartRef.current = null;
+
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      const now = Date.now();
+      const last = lastTapRef.current;
+
+      if (last && now - last.time < DOUBLE_TAP_MS) {
+        const dist = Math.hypot(touch.clientX - last.x, touch.clientY - last.y);
+        if (dist < DOUBLE_TAP_DISTANCE) {
+          if (mobileScaleRef.current > 1) {
+            setMobileScale(1);
+            setMobilePan({ x: 0, y: 0 });
+          } else {
+            setMobileScale(MOBILE_ZOOM_TARGET);
+          }
+          lastTapRef.current = null;
+          swipeBlockedRef.current = true;
+          return;
+        }
+      }
+
+      lastTapRef.current = { time: now, x: touch.clientX, y: touch.clientY };
+
+      if (!swipeBlockedRef.current && mobileScaleRef.current <= 1) {
+        onTouchEnd?.(touch.clientX, touch.clientY);
+      }
+    },
+    [enableMobileZoom, onTouchEnd, reduceMotion],
+  );
 
   useEffect(() => {
     const node = containerRef.current;
@@ -261,36 +401,52 @@ function GalleryMain({
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
         onMouseMove={handleMove}
-        onTouchStart={(e) => {
-          const touch = e.touches[0];
-          if (touch) onTouchStart?.(touch.clientX, touch.clientY);
-        }}
-        onTouchEnd={(e) => {
-          const touch = e.changedTouches[0];
-          if (touch) onTouchEnd?.(touch.clientX, touch.clientY);
-        }}
+        onTouchStart={handleMobileTouchStart}
+        onTouchEnd={handleMobileTouchEnd}
         className={cn(
           "relative h-full w-full overflow-hidden rounded-2xl bg-[#f3f3f3] touch-pan-y",
           enableLensZoom && !reduceMotion && "lg:cursor-crosshair",
+          mobileZoomActive && "touch-none",
         )}
       >
         {main ? (
           <>
-            <img
-              src={main.url}
-              alt={main.alt ?? name}
-              draggable={false}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              onLoad={(e) => {
-                setNaturalSize({
-                  w: e.currentTarget.naturalWidth,
-                  h: e.currentTarget.naturalHeight,
-                });
-              }}
-              className="absolute inset-0 h-full w-full select-none object-contain p-3 sm:p-4 md:p-6"
-            />
+            <div
+              className={cn(
+                "absolute inset-0 transition-transform duration-200 ease-out motion-reduce:transition-none",
+                mobileZoomActive && "duration-0",
+              )}
+              style={
+                enableMobileZoom && mobileScale > 1
+                  ? {
+                      transform: `translate(${mobilePan.x}px, ${mobilePan.y}px) scale(${mobileScale})`,
+                      transformOrigin: "center center",
+                    }
+                  : undefined
+              }
+            >
+              <img
+                src={main.url}
+                alt={main.alt ?? name}
+                draggable={false}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                onLoad={(e) => {
+                  setNaturalSize({
+                    w: e.currentTarget.naturalWidth,
+                    h: e.currentTarget.naturalHeight,
+                  });
+                }}
+                className="absolute inset-0 h-full w-full select-none object-contain p-3 sm:p-4 md:p-6"
+              />
+            </div>
+
+            {enableMobileZoom && mobileScale <= 1 && !reduceMotion && (
+              <p className="pointer-events-none absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/45 px-3 py-1 text-[10px] font-medium text-white/90">
+                Doble toque para ampliar
+              </p>
+            )}
 
             {zoomActive && (
               <div
@@ -342,7 +498,13 @@ export function ProductGallery({
             />
           )}
           <div className="flex min-w-0 justify-center">
-            <GalleryMain main={main} name={name} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} />
+            <GalleryMain
+              main={main}
+              name={name}
+              enableMobileZoom
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            />
           </div>
         </div>
         {belowImage ? (

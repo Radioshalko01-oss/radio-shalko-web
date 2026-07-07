@@ -84,8 +84,8 @@ export default async function LoginLayout({
             brands={brandNames}
           />
           {/* Reserva altura del header fijo para que el footer quede al fondo del viewport */}
-          <div aria-hidden className="h-16 shrink-0 md:h-20" />
-          <div className="flex min-h-[calc(100dvh-4rem)] flex-1 flex-col md:min-h-[calc(100dvh-5rem)]">
+          <div aria-hidden className="h-14 shrink-0 md:h-20" />
+          <div className="flex min-h-[calc(100dvh-3.5rem)] flex-1 flex-col md:min-h-[calc(100dvh-5rem)]">
             {children}
           </div>
           <Footer />

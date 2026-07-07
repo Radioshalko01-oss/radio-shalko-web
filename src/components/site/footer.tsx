@@ -100,8 +100,8 @@ function FooterLink({ label, to }: { label: string; to: string }) {
 export function Footer() {
   return (
     <footer className="bg-[#1a1a1a] text-white selection:bg-white selection:text-[#1a1a1a]">
-      <div className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-16">
-        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+      <div className="mx-auto max-w-7xl px-5 py-10 md:px-8 md:py-16">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
           <div>
             <Link href="/" className="inline-block transition-opacity hover:opacity-90">
               <p className="font-display text-[1.75rem] font-semibold leading-none tracking-tight text-white">
@@ -117,7 +117,7 @@ export function Footer() {
               asesoría especializada.
             </p>
 
-            <ul className="mt-6 space-y-4 text-sm text-white/85">
+            <ul className="mt-5 space-y-3 text-sm text-white/85 md:mt-6 md:space-y-4">
               <li className="flex items-start gap-3">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-white/90" aria-hidden />
                 <div className="space-y-1 leading-relaxed text-white/80">
@@ -149,7 +149,7 @@ export function Footer() {
 
           <div>
             <FooterHeading>¿Necesitas ayuda?</FooterHeading>
-            <ul className="mt-5">
+            <ul className="mt-4 md:mt-5">
               {HELP.map((item) => (
                 <FooterLink key={item.label} {...item} />
               ))}
@@ -158,16 +158,16 @@ export function Footer() {
 
           <div>
             <FooterHeading>Conócenos</FooterHeading>
-            <ul className="mt-5">
+            <ul className="mt-4 md:mt-5">
               {ABOUT.map((item) => (
                 <FooterLink key={item.label} {...item} />
               ))}
             </ul>
           </div>
 
-          <div>
+          <div className="sm:col-span-2 lg:col-span-1">
             <FooterHeading>Contacto</FooterHeading>
-            <p className="mt-5 text-sm leading-relaxed text-white/70">
+            <p className="mt-4 text-sm leading-relaxed text-white/70 md:mt-5">
               Escríbenos por WhatsApp o correo. Te respondemos en horario de tienda.
             </p>
             <a
@@ -179,10 +179,10 @@ export function Footer() {
               Escribir por WhatsApp
             </a>
 
-            <div className="mt-8">
+            <div className="mt-6 md:mt-8">
               <FooterHeading>Síguenos</FooterHeading>
             </div>
-            <ul className="mt-4 flex flex-wrap gap-3">
+            <ul className="mt-3 flex flex-wrap gap-2.5 md:mt-4 md:gap-3">
               {SOCIALS.map(({ label, href, external, Icon }) => (
                 <li key={label}>
                   <a
@@ -200,25 +200,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-white/20 pt-8 lg:mt-12">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.8fr)_1.1fr_1.1fr_minmax(11rem,1fr)] lg:items-start lg:gap-x-[var(--store-gutter)] [--store-gutter:clamp(1.75rem,4vw,3rem)]">
-            <div className="min-w-0">
-              <FooterHeading>Nuestras tiendas</FooterHeading>
-            </div>
-
+        <div className="mt-8 border-t border-white/20 pt-6 md:mt-10 md:pt-8">
+          <FooterHeading>Nuestras tiendas</FooterHeading>
+          <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-5 lg:grid-cols-[minmax(0,0.8fr)_1.1fr_1.1fr_minmax(11rem,1fr)] lg:items-start lg:gap-x-[var(--store-gutter)] [--store-gutter:clamp(1.75rem,4vw,3rem)]">
             {SITE_CONTACT.stores.map((store) => (
-              <div
-                key={store.id}
-                className={
-                  store.id === "amecameca"
-                    ? "flex min-w-0 gap-5 lg:-ml-3"
-                    : "flex min-w-0 gap-5 lg:-ml-3"
-                }
-              >
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5">
+              <div key={store.id} className="flex min-w-0 gap-4 lg:-ml-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5 md:h-11 md:w-11">
                   <MapPin className="h-4 w-4 text-white/90" aria-hidden />
                 </div>
-                <div className="min-w-0 space-y-3">
+                <div className="min-w-0 space-y-2 md:space-y-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                     {store.displayName}
                   </p>
@@ -240,7 +230,7 @@ export function Footer() {
               </div>
             ))}
 
-            <div className="flex min-w-0 lg:justify-end">
+            <div className="hidden min-w-0 lg:flex lg:justify-end">
               <p className="max-w-[12rem] text-sm leading-snug text-white/70">
                 Visítanos en nuestras tiendas físicas.
                 <br />
@@ -250,9 +240,12 @@ export function Footer() {
               </p>
             </div>
           </div>
+          <p className="mt-5 text-sm leading-relaxed text-white/70 lg:hidden">
+            Visítanos en nuestras tiendas físicas. Nuestro equipo estará encantado de ayudarte.
+          </p>
         </div>
 
-        <div className="mt-10 border-t border-white/20 pt-6">
+        <div className="mt-8 border-t border-white/20 pt-5 md:mt-10 md:pt-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-xs text-white/60">
               Radio Shalko © {new Date().getFullYear()} — Todos los derechos reservados.

@@ -58,7 +58,7 @@ export default async function LoginPage({
   const next = safeNextPath(sp.next);
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-background px-4 py-12">
+    <main className="flex flex-1 items-center justify-center bg-background px-4 py-10 md:py-12">
       <LoginEnter>
       <div className="w-full">
         <div className="rounded-2xl border border-border bg-card px-7 py-8 shadow-sm sm:px-8 sm:py-9">
