@@ -4,6 +4,9 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   AUTH_NEXT_COOKIE,
+  AUTH_ORIGIN_COOKIE,
+  isLanIpOrigin,
+  isPrivateOrLocalOrigin,
   oauthCallbackRedirectUrl,
   safeAuthNextPath,
 } from "@/lib/site/site-url";
@@ -15,15 +18,15 @@ type GoogleSignInButtonProps = {
   buttonClassName?: string;
 };
 
-function setAuthNextCookie(next: string) {
+function setAuthCookies(next: string, origin: string) {
   const safeNext = safeAuthNextPath(next);
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  const secure = origin.startsWith("https://") ? "; Secure" : "";
   document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(safeNext)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
+  document.cookie = `${AUTH_ORIGIN_COOKIE}=${encodeURIComponent(origin)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
 }
 
 /**
- * Botón "Continuar con Google". Inicia OAuth (PKCE) con selector de cuenta.
- * redirectTo = mismo origen + /auth/callback (sin query) para uri_allow_list.
+ * localhost: OAuth en cliente. LAN IP: requiere túnel. Producción: /auth/google.
  */
 export function GoogleSignInButton({
   next = "/cuenta",
@@ -36,23 +39,51 @@ export function GoogleSignInButton({
   const signIn = async () => {
     setLoading(true);
     setError(null);
-    setAuthNextCookie(next);
 
-    const supabase = createClient();
-    const redirectTo = oauthCallbackRedirectUrl(window.location.origin);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-        queryParams: {
-          prompt: "select_account",
-        },
-      },
-    });
-    if (error) {
-      setError(error.message);
+    const origin = window.location.origin;
+    const safeNext = safeAuthNextPath(next);
+    setAuthCookies(safeNext, origin);
+
+    if (isLanIpOrigin(origin)) {
+      const tunnel = process.env.NEXT_PUBLIC_OAUTH_PUBLIC_ORIGIN?.trim().replace(/\/+$/, "");
+      if (tunnel) {
+        const login = new URL("/login", tunnel);
+        login.searchParams.set("next", safeNext);
+        window.location.assign(login.toString());
+        return;
+      }
+
+      setError(
+        "Login con Google no funciona por IP local (192.168.x.x). En Mac usa localhost:3002/login; en iPhone ejecuta npm run tunnel:oauth en la Mac.",
+      );
       setLoading(false);
+      return;
     }
+
+    if (isPrivateOrLocalOrigin(origin)) {
+      const supabase = createClient();
+      const redirectTo = oauthCallbackRedirectUrl(origin);
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      });
+      if (oauthError) {
+        setError(oauthError.message);
+        setLoading(false);
+      }
+      return;
+    }
+
+    const params = new URLSearchParams({
+      next: safeNext,
+      origin,
+    });
+    window.location.assign(`/auth/google?${params.toString()}`);
   };
 
   return (

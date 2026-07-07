@@ -38,21 +38,82 @@ export function safeAuthNextPath(next: string | undefined, fallback = "/cuenta")
   return fallback;
 }
 
+/** localhost, 127.0.0.1 o IP privada (LAN) — siempre http en dev. */
+export function isPrivateOrLocalHost(host: string): boolean {
+  const hostname = host.split(":")[0]?.replace(/^\[|\]$/g, "").toLowerCase() ?? "";
+  if (!hostname || hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return true;
+  }
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  return false;
+}
+
+/** Origen http en localhost o LAN (pruebas en iPhone / red local). */
+export function isPrivateOrLocalOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "http:") return false;
+    const host = url.port ? `${url.hostname}:${url.port}` : url.hostname;
+    return isPrivateOrLocalHost(host);
+  } catch {
+    return false;
+  }
+}
+
+/** IP LAN (192.168.x.x, etc.) — Supabase OAuth las rechaza; localhost no cuenta. */
+export function isLanIpOrigin(origin: string): boolean {
+  if (!isPrivateOrLocalOrigin(origin)) return false;
+  try {
+    const hostname = new URL(origin).hostname.toLowerCase();
+    return hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1";
+  } catch {
+    return false;
+  }
+}
+
+/** Origin OAuth: query/cookie del cliente primero, luego headers. */
+export function resolveOAuthOrigin(
+  headers: Headers,
+  originParam?: string | null,
+  originCookie?: string | null,
+): string {
+  for (const candidate of [originParam?.trim(), originCookie?.trim()]) {
+    if (!candidate) continue;
+    try {
+      const normalized = new URL(candidate).origin.replace(/\/+$/, "");
+      if (isPrivateOrLocalOrigin(normalized)) return normalized;
+      if (normalized.startsWith("https://")) return normalized;
+    } catch {
+      // URL inválida
+    }
+  }
+  return requestSiteOrigin(headers);
+}
+
+function resolveRequestProto(headers: Headers, host: string): "http" | "https" {
+  const forwardedProto = headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (forwardedProto === "http" || forwardedProto === "https") {
+    return forwardedProto;
+  }
+  return isPrivateOrLocalHost(host) ? "http" : "https";
+}
+
 /** Origin del request (Server Actions / Route Handlers). */
 export function requestSiteOrigin(headers: Headers): string {
   const origin = headers.get("origin")?.trim();
   if (origin) return origin.replace(/\/+$/, "");
 
   const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const forwardedProto = headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
   if (forwardedHost) {
-    const proto = forwardedProto || (forwardedHost.startsWith("localhost") ? "http" : "https");
+    const proto = resolveRequestProto(headers, forwardedHost);
     return `${proto}://${forwardedHost}`.replace(/\/+$/, "");
   }
 
   const host = headers.get("host")?.trim();
   if (host) {
-    const proto = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+    const proto = resolveRequestProto(headers, host);
     return `${proto}://${host}`.replace(/\/+$/, "");
   }
 
@@ -76,3 +137,4 @@ export function oauthCallbackUrl(next: string, origin?: string): string {
 }
 
 export const AUTH_NEXT_COOKIE = "rs_auth_next";
+export const AUTH_ORIGIN_COOKIE = "rs_auth_origin";

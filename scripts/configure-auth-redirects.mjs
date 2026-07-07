@@ -41,6 +41,9 @@ const REQUIRED_REDIRECTS = [
   "https://radio-shalko-*-radio-shalko.vercel.app/**",
   "https://radio-shalko-web-git-*-radio-shalko.vercel.app/auth/callback",
   "https://radio-shalko-web-git-*-radio-shalko.vercel.app/**",
+  // Túnel temporal (Cloudflare quick tunnel) para OAuth en iPhone
+  "https://*.trycloudflare.com/auth/callback",
+  "https://*.trycloudflare.com/**",
 ];
 
 const SITE_URL = "https://radio-shalko-web.vercel.app";

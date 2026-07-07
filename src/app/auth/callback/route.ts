@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { AUTH_NEXT_COOKIE, requestSiteOrigin, safeAuthNextPath } from "@/lib/site/site-url";
+import { AUTH_NEXT_COOKIE, AUTH_ORIGIN_COOKIE, requestSiteOrigin, safeAuthNextPath } from "@/lib/site/site-url";
 
 /**
  * Callback OAuth (PKCE). Canjea el `code` por sesión y redirige a `next`.
@@ -17,10 +17,12 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
   const nextFromCookie = cookieStore.get(AUTH_NEXT_COOKIE)?.value;
+  const originFromCookie = cookieStore.get(AUTH_ORIGIN_COOKIE)?.value?.trim();
   const next = safeAuthNextPath(
     nextFromCookie ? decodeURIComponent(nextFromCookie) : searchParams.get("next") ?? undefined,
     "/",
   );
+  const redirectOrigin = originFromCookie || origin;
 
   const providerError = searchParams.get("error");
   const providerErrorDescription =
@@ -32,6 +34,7 @@ export async function GET(request: Request) {
     url.searchParams.set("detail", detail);
     const response = NextResponse.redirect(url);
     response.cookies.set(AUTH_NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+    response.cookies.set(AUTH_ORIGIN_COOKIE, "", { path: "/", maxAge: 0 });
     return response;
   };
 
@@ -63,7 +66,8 @@ export async function GET(request: Request) {
     return fail(error.message);
   }
 
-  const response = NextResponse.redirect(`${origin}${next}`);
+  const response = NextResponse.redirect(`${redirectOrigin}${next}`);
   response.cookies.set(AUTH_NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(AUTH_ORIGIN_COOKIE, "", { path: "/", maxAge: 0 });
   return response;
 }

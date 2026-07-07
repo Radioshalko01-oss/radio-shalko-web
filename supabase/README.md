@@ -48,6 +48,8 @@ SUPABASE_ACCESS_TOKEN=sbp_xxx node scripts/apply-supabase-migrations.mjs
    http://localhost:3002/**
    http://localhost:3000/auth/callback
    http://localhost:3003/auth/callback
+   http://192.168.*.*:3002/auth/callback
+   http://10.*.*.*:3002/auth/callback
    https://radio-shalko-web.vercel.app/auth/callback
    ```
 
