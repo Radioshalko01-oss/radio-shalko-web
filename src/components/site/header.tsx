@@ -83,7 +83,6 @@ const NAV: {
 
 const MOBILE_PRODUCT_LINKS = [
   { label: "Instrumentos", href: "/productos?cat=Instrumentos" },
-  { label: "Audio profesional", href: "/productos?cat=Equipos%20de%20Audio" },
   { label: "Accesorios", href: "/productos?cat=Accesorios" },
   { label: "Equipo de audio", href: "/productos?cat=Equipos%20de%20Audio" },
 ] as const;
@@ -427,7 +426,7 @@ export function SiteHeader({
   }, [headerForcedSolid, hasHero]);
 
   const iconBtn =
-    "site-header__icon-btn relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-300 ease-out sm:h-11 sm:w-11";
+    "site-header__icon-btn relative grid h-9 w-9 place-items-center rounded-full transition-colors duration-300 ease-out sm:h-10 sm:w-10 md:h-11 md:w-11";
   const badgeClass =
     "site-header__badge absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold tabular-nums text-copper-foreground ring-2";
 
@@ -446,7 +445,7 @@ export function SiteHeader({
           aria-hidden
         />
       )}
-      <div className="site-header__bar relative flex h-14 w-full items-center justify-between gap-2 px-4 sm:h-16 sm:px-5 md:h-20 md:px-7 lg:px-10">
+      <div className="site-header__bar relative flex h-14 w-full items-center justify-between gap-1 px-3 sm:gap-2 sm:px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
           className="group relative z-10 flex min-w-0 shrink items-center"
@@ -513,7 +512,7 @@ export function SiteHeader({
           </div>
         </nav>
 
-        <div className="relative z-10 flex shrink-0 items-center justify-end gap-0.5 sm:gap-1.5">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 sm:gap-1 md:gap-1.5">
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
@@ -747,30 +746,27 @@ export function SiteHeader({
               isOpen={mobilePanel === "productos"}
               onToggle={() => setMobilePanel((p) => (p === "productos" ? null : "productos"))}
             >
-              <ul className="space-y-0.5 pb-3 pt-1">
+              <div className="grid gap-2 pb-2 pt-1">
                 {MOBILE_PRODUCT_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      onClick={(e) => handleNavClick(e, link.href, closeMobileMenu)}
-                      className="flex items-center justify-between rounded-lg px-2 py-2.5 text-sm text-foreground/85 transition-colors hover:bg-muted/50 hover:text-foreground"
-                    >
-                      {link.label}
-                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-                    </Link>
-                  </li>
-                ))}
-                <li className="pt-1">
                   <Link
-                    href="/productos"
-                    onClick={(e) => handleNavClick(e, "/productos", closeMobileMenu)}
-                    className="inline-flex items-center gap-1.5 px-2 py-2 text-sm font-medium text-copper"
+                    key={link.label}
+                    href={link.href}
+                    onClick={(e) => handleNavClick(e, link.href, closeMobileMenu)}
+                    className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/25 px-3.5 py-3 text-sm font-medium text-foreground/90 transition-colors hover:border-border hover:bg-muted/45 hover:text-foreground"
                   >
-                    Ver catálogo completo
-                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    {link.label}
+                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/55" />
                   </Link>
-                </li>
-              </ul>
+                ))}
+                <Link
+                  href="/productos"
+                  onClick={(e) => handleNavClick(e, "/productos", closeMobileMenu)}
+                  className="inline-flex items-center gap-1.5 px-1 py-2 text-sm font-medium text-copper"
+                >
+                  Ver catálogo completo
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </MobileAccordion>
 
             {/* Marcas accordion */}
@@ -780,22 +776,26 @@ export function SiteHeader({
               isOpen={mobilePanel === "marcas"}
               onToggle={() => setMobilePanel((p) => (p === "marcas" ? null : "marcas"))}
             >
-              <div className="pb-4 pt-2">
+              <div className="pb-3 pt-1">
                 <ul className="flex flex-wrap gap-1.5">
-                  {sortedBrands.map((b) => (
-                    <li key={b}>
-                      <button
-                        onClick={() => goBrand(b)}
-                        className="rounded-full border border-border/70 bg-card px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-foreground/80 transition-colors hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
-                      >
-                        {b}
-                      </button>
-                    </li>
-                  ))}
+                  {FEATURED_BRAND_CANDIDATES.filter((b) => sortedBrands.includes(b))
+                    .slice(0, 8)
+                    .map((b) => (
+                      <li key={b}>
+                        <button
+                          type="button"
+                          onClick={() => goBrand(b)}
+                          className="rounded-full border border-border/70 bg-card px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-foreground/80 transition-colors hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
+                        >
+                          {b}
+                        </button>
+                      </li>
+                    ))}
                 </ul>
                 <button
+                  type="button"
                   onClick={() => navigateOrScrollTop("/marcas", closeMobileMenu)}
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
                 >
                   Ver todas las marcas
                   <ArrowUpRight className="h-3.5 w-3.5" />
