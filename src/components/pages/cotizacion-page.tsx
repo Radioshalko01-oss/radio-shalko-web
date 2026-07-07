@@ -116,7 +116,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
     <div
       className={cn(
         "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
-        hasItems && "pb-32 md:pb-24",
+        hasItems && "pb-44 md:pb-24",
       )}
     >
       <nav className="flex items-center justify-between gap-4 pt-5 md:pt-6">
@@ -153,8 +153,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
                 compact
                 title="Solicitud de compra"
                 lines={[
-                  "Tu solicitud será revisada por Radio Shalko antes de confirmar la compra.",
-                  "No realices pagos hasta recibir confirmación por canales oficiales.",
+                  "Revisaremos disponibilidad antes de confirmar. No pagues hasta recibir instrucciones oficiales.",
                 ]}
                 linkKeys={["compraSegura", "metodosPago"]}
               />
@@ -267,32 +266,66 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       )}
 
       {hasItems && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm md:hidden">
-          <div className="mx-auto flex max-w-7xl items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className={siteShell.labelCaps}>Total estimado</p>
-              <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
-            </div>
-            {isAdmin ? (
-              <div className="shrink-0 [&_button]:h-11 [&_button]:min-w-[148px] [&_button]:px-5">
-                <CartShareActions lines={shareLines} variant="primary" compact />
-              </div>
-            ) : (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-copper px-5 text-sm font-semibold text-copper-foreground hover:bg-copper/90"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Asesoría
-              </a>
-            )}
-          </div>
-        </div>
+        <CartMobileActionBar
+          count={count}
+          total={total}
+          isAdmin={isAdmin}
+          whatsappHref={whatsappHref}
+          shareLines={shareLines}
+        />
       )}
     </div>
     </>
+  );
+}
+
+function CartMobileActionBar({
+  count,
+  total,
+  isAdmin,
+  whatsappHref,
+  shareLines,
+}: {
+  count: number;
+  total: number;
+  isAdmin: boolean;
+  whatsappHref: string;
+  shareLines: { productId: string; quantity: number; unitPrice: number }[];
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm md:hidden">
+      <div className="mx-auto max-w-7xl space-y-2.5">
+        <div className="flex items-baseline justify-between gap-4">
+          <div className="min-w-0">
+            <p className={siteShell.labelCaps}>Total estimado</p>
+            <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
+          </div>
+          <p className="shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+            {count} producto{count === 1 ? "" : "s"}
+          </p>
+        </div>
+        {isAdmin ? (
+          <div className="[&_button]:h-12 [&_button]:w-full [&_button]:rounded-full">
+            <CartShareActions lines={shareLines} variant="primary" compact />
+          </div>
+        ) : (
+          <>
+            <Button asChild className="h-12 w-full rounded-full text-sm font-semibold">
+              <Link href="/checkout">Continuar solicitud</Link>
+            </Button>
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 w-full items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Asesoría por WhatsApp
+            </a>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -389,10 +422,9 @@ function CartSummaryPanel({
         <PurchaseTrustNote
           className="mt-5"
           compact
-          title="Solicitud de compra"
+          title="Antes de pagar"
           lines={[
-            "Tu solicitud será revisada por Radio Shalko antes de confirmar la compra.",
-            "No realices pagos hasta recibir confirmación por canales oficiales.",
+            "Revisaremos disponibilidad antes de confirmar. No realices pagos hasta recibir instrucciones oficiales.",
           ]}
           linkKeys={["compraSegura", "metodosPago"]}
         />
@@ -421,23 +453,18 @@ function CartSummaryPanel({
           </>
         ) : (
           <>
+            <Button asChild className="h-12 w-full rounded-full text-sm font-semibold">
+              <Link href="/checkout">Enviar solicitud</Link>
+            </Button>
             <a
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-copper text-sm font-semibold text-copper-foreground transition-colors hover:bg-copper/90"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-background text-sm font-medium text-foreground transition-colors hover:border-foreground/20 hover:bg-muted/40"
             >
-              <MessageCircle className="h-4 w-4" />
-              Solicitar asesoría
+              <MessageCircle className="h-4 w-4 text-copper" />
+              Asesoría por WhatsApp
             </a>
-            <Button
-              type="button"
-              variant="outline"
-              asChild
-              className="h-11 w-full rounded-full"
-            >
-              <Link href="/checkout">Enviar solicitud</Link>
-            </Button>
           </>
         )}
       </div>

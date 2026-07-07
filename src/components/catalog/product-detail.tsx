@@ -111,7 +111,7 @@ export function ProductDetail({
               product.isNew ? "mt-3" : "mt-0",
             )}
           >
-            <h1 className="min-w-0 flex-1 text-[1.625rem] font-medium leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[1.875rem] md:text-[2.125rem] lg:text-[2.375rem]">
+            <h1 className="min-w-0 flex-1 text-[1.5rem] font-medium leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[1.875rem] md:text-[2.125rem] lg:text-[2.375rem]">
               {product.name}
             </h1>
             <ProductCompareButton product={product} placement="header" />
@@ -288,9 +288,9 @@ export function ProductDetail({
       </section>
 
       {related.length > 0 && (
-        <section className="mt-20">
+        <section className="mt-12 md:mt-16">
           <h2 className={typography.sectionTitle}>También te puede interesar</h2>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
             {related.map((item) => (
               <ProductCard key={item.id} product={item} variant="compact" />
             ))}

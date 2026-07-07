@@ -154,7 +154,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         description="Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago."
       />
 
-    <div className="mx-auto max-w-6xl px-4 pb-40 sm:px-6 md:pb-24 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-44 sm:px-6 md:pb-24 lg:px-8">
 
       <div className="mt-6 md:hidden">
         <CheckoutSummary rows={rows} compact />
@@ -290,7 +290,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
               </p>
             </div>
             <PurchaseTrustNote
-              className="mt-4"
+              className="mt-4 hidden md:block"
               compact
               title="Antes de confirmar tu compra"
               lines={[
@@ -298,6 +298,10 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
                 "El pedido no se considera confirmado hasta validar disponibilidad y pago.",
                 "Nunca compartas comprobantes o pagos fuera de canales oficiales.",
               ]}
+              linkKeys={["compraSegura", "metodosPago"]}
+            />
+            <PurchaseTrustLinkRow
+              className="mt-4 border-t border-border/60 pt-4 md:hidden"
               linkKeys={["compraSegura", "metodosPago"]}
             />
           </CheckoutSection>
@@ -404,22 +408,22 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           siteCrumbs.checkout,
           { label: order.orderNumber },
         ])}
-        title={order.orderNumber}
-        description="Solicitud recibida. Estamos revisando disponibilidad y te contactaremos por canales oficiales."
+        title="Solicitud recibida"
+        description={`${order.orderNumber} · Estamos revisando disponibilidad y te contactaremos por canales oficiales.`}
       />
 
-      <div className="mx-auto max-w-xl px-4 py-10 sm:px-6 md:py-12">
+      <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 md:py-12">
       <div className="text-center">
         <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
           <CheckCircle2 className="h-6 w-6" />
         </div>
-        <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Solicitud recibida
+        <p className="mt-5 font-mono text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+          {order.orderNumber}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">{order.statusLabel}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{order.statusLabel}</p>
       </div>
 
-      <dl className="mt-10 space-y-4 rounded-2xl border border-border bg-card p-6 text-sm">
+      <dl className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-5 text-sm sm:mt-10 sm:p-6">
         <SummaryRow label="Estado" value="Pendiente de revisión" bold />
         <SummaryRow label="Recoger en" value={order.branchDisplayName} />
         <SummaryRow label="Total estimado" value={formatPrice(order.total)} bold />
@@ -431,29 +435,26 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
       </p>
 
       <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button asChild className="h-11 rounded-full">
+        <Button asChild className="h-11 w-full rounded-full sm:w-auto sm:min-w-[200px]">
           <Link href="/cuenta/pedidos">Ver en Mi cuenta</Link>
         </Button>
-        <Button asChild variant="outline" className="h-11 rounded-full">
+        <Button asChild variant="outline" className="h-11 w-full rounded-full sm:w-auto">
           <Link href="/productos">Ver catálogo</Link>
         </Button>
       </div>
 
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button asChild variant="ghost" className="h-10 rounded-full text-sm text-muted-foreground">
+        <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
           <Link href="/">Volver al inicio</Link>
         </Button>
-      </div>
-
-      <div className="mt-4 text-center">
-        <Button asChild variant="ghost" className="h-10 rounded-full text-sm text-muted-foreground">
+        <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
           <a href={whatsappHref(undefined, whatsappMessage)} target="_blank" rel="noopener noreferrer">
             Contactar a Radio Shalko
           </a>
         </Button>
       </div>
 
-      <PurchaseTrustLinkRow className="mt-6" linkKeys={["compraSegura", "metodosPago", "comoComprar"]} />
+      <PurchaseTrustLinkRow className="mt-6 border-t border-border/60 pt-5" linkKeys={["compraSegura", "metodosPago", "comoComprar"]} />
       </div>
     </>
   );

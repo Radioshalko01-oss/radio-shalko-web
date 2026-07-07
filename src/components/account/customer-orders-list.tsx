@@ -18,6 +18,29 @@ function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
+function OrderStatusLegend() {
+  return (
+    <dl className="space-y-2 text-[11px] leading-snug text-muted-foreground">
+      <div>
+        <dt className="font-medium text-foreground/85">Solicitud recibida</dt>
+        <dd>Estamos revisando disponibilidad y datos de tu pedido.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">Aprobado · esperando pago</dt>
+        <dd>Tu solicitud fue confirmada; te enviaremos instrucciones de pago.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">Pago confirmado</dt>
+        <dd>Recibimos tu pago y preparamos tu pedido para recolección.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">No disponible</dt>
+        <dd>Por el momento no fue posible continuar con esta solicitud.</dd>
+      </div>
+    </dl>
+  );
+}
+
 export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[] }) {
   if (orders.length === 0) {
     return (
@@ -42,26 +65,23 @@ export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[]
         linkKeys={["metodosPago", "compraSegura", "comoComprar"]}
       />
 
-      <div className="rounded-xl border border-border/80 bg-muted/20 px-4 py-3.5">
+      <details className="rounded-xl border border-border/80 bg-muted/20 md:hidden">
+        <summary className="cursor-pointer list-none px-4 py-3.5 text-xs font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center justify-between gap-2">
+            Estados de tu solicitud
+            <span className="text-[11px] font-normal text-muted-foreground">Ver leyenda</span>
+          </span>
+        </summary>
+        <div className="border-t border-border/60 px-4 pb-3.5 pt-2.5">
+          <OrderStatusLegend />
+        </div>
+      </details>
+
+      <div className="hidden rounded-xl border border-border/80 bg-muted/20 px-4 py-3.5 md:block">
         <p className="text-xs font-medium text-foreground">Estados de tu solicitud</p>
-        <dl className="mt-2.5 space-y-2 text-[11px] leading-snug text-muted-foreground">
-          <div>
-            <dt className="font-medium text-foreground/85">Solicitud recibida</dt>
-            <dd>Estamos revisando disponibilidad y datos de tu pedido.</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-foreground/85">Aprobado · esperando pago</dt>
-            <dd>Tu solicitud fue confirmada; te enviaremos instrucciones de pago.</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-foreground/85">Pago confirmado</dt>
-            <dd>Recibimos tu pago y preparamos tu pedido para recolección.</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-foreground/85">No disponible</dt>
-            <dd>Por el momento no fue posible continuar con esta solicitud.</dd>
-          </div>
-        </dl>
+        <div className="mt-2.5">
+          <OrderStatusLegend />
+        </div>
       </div>
 
     <ul className="grid gap-4">
@@ -112,7 +132,10 @@ export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[]
       })}
     </ul>
 
-      <PurchaseTrustLinkRow className="pt-1" linkKeys={["compraSegura", "metodosPago"]} />
+      <PurchaseTrustLinkRow
+        className="justify-start gap-x-3 gap-y-2 pt-1 sm:justify-center"
+        linkKeys={["compraSegura", "metodosPago"]}
+      />
     </div>
   );
 }

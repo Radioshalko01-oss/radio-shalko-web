@@ -227,7 +227,7 @@ function GalleryMain({
   return (
     <div
       className={cn(
-        "relative aspect-square w-full max-w-[min(100%,28rem)] lg:max-w-[min(100%,32rem)]",
+        "relative aspect-square w-full max-w-[min(100%,24rem)] sm:max-w-[min(100%,28rem)] lg:max-w-[min(100%,32rem)]",
         enableLensZoom && "lg:overflow-visible",
         className,
       )}
