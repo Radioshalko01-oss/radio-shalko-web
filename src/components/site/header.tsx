@@ -366,14 +366,16 @@ export function SiteHeader({
     }));
   })();
 
+  const mobileAccountOpen = accountOpen && isBelowLg;
+
   useEffect(() => {
-    if (!open) return;
+    if (!open && !mobileAccountOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, mobileAccountOpen]);
 
   // Cierra overlays al cambiar de ruta (evita capas fantasma que bloquean toques en móvil).
   useEffect(() => {
@@ -389,9 +391,9 @@ export function SiteHeader({
     document.documentElement.style.overflow = "";
   }, [pathname]);
 
-  // Cerrar el menú de cuenta al hacer clic fuera.
+  // Cerrar el menú de cuenta al hacer clic fuera (solo desktop; móvil usa backdrop).
   useEffect(() => {
-    if (!accountOpen) return;
+    if (!accountOpen || isBelowLg) return;
     const onDown = (e: MouseEvent) => {
       if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
         setAccountOpen(false);
@@ -399,7 +401,7 @@ export function SiteHeader({
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [accountOpen]);
+  }, [accountOpen, isBelowLg]);
 
   // Cerrar overlays de navegación con Escape (mega panel, cuenta, menú móvil).
   // Los Sheet de búsqueda/favoritos/carrito manejan Escape por su cuenta.
@@ -450,13 +452,22 @@ export function SiteHeader({
   };
 
   const toggleMobileMenu = () => {
+    setAccountOpen(false);
     setOpen((current) => {
       if (current) setMobilePanel(null);
       return !current;
     });
   };
 
-  const headerForcedSolid = !hasHero || megaPanel !== null || open;
+  const toggleMobileAccount = () => {
+    setOpen(false);
+    setMobilePanel(null);
+    setAccountOpen((current) => !current);
+  };
+
+  const closeMobileAccount = () => setAccountOpen(false);
+
+  const headerForcedSolid = !hasHero || megaPanel !== null || open || mobileAccountOpen;
   const heroBlend = hasHero && !headerForcedSolid;
 
   useLayoutEffect(() => {
@@ -602,8 +613,7 @@ export function SiteHeader({
                   aria-expanded={accountOpen}
                   onClick={() => {
                     if (isBelowLg) {
-                      setAccountOpen(false);
-                      setOpen(true);
+                      toggleMobileAccount();
                       return;
                     }
                     setAccountOpen((v) => !v);
@@ -880,115 +890,6 @@ export function SiteHeader({
               </ul>
             </div>
 
-            {/* Cuenta (móvil) */}
-            <div className="mt-4 border-t border-border/60 pt-4">
-              {account ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3 px-1 pb-2">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-sm font-semibold text-background">
-                      {(account.email?.[0] ?? "U").toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium capitalize text-foreground">
-                        {account.email?.split("@")[0] ?? "Mi cuenta"}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {account.email}
-                      </p>
-                    </div>
-                  </div>
-                  <Link href="/cuenta" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    Mi cuenta
-                  </Link>
-                  {account.isAdmin ? (
-                    <>
-                      <Link href="/admin" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                        Panel admin
-                      </Link>
-                      <Link href="/admin/pedidos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        Pedidos de clientes
-                        {account.hasOrderAttention && (
-                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
-                        )}
-                      </Link>
-                      <Link href="/carrito" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        Carrito tienda
-                        {(account.cartItemCount ?? 0) > 0 && (
-                          <span className="ml-auto text-[11px] font-medium text-muted-foreground">
-                            {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
-                          </span>
-                        )}
-                      </Link>
-                      <Link href="/cuenta/notificaciones" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Bell className="h-4 w-4 text-muted-foreground" />
-                        Notificaciones
-                        {(account.unreadNotifications ?? 0) > 0 && (
-                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
-                            {account.unreadNotifications}
-                          </span>
-                        )}
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/cuenta/notificaciones" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Bell className="h-4 w-4 text-muted-foreground" />
-                        Notificaciones
-                        {(account.unreadNotifications ?? 0) > 0 && (
-                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
-                            {account.unreadNotifications}
-                          </span>
-                        )}
-                      </Link>
-                      <Link href="/cuenta/pedidos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        Mis pedidos
-                        {account.hasOrderAttention && (
-                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
-                        )}
-                      </Link>
-                      <Link href="/favoritos" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <Heart className="h-4 w-4 text-muted-foreground" />
-                        Favoritos
-                      </Link>
-                      <Link href="/carrito" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        Mi carrito
-                        {(account.cartItemCount ?? 0) > 0 && (
-                          <span className="ml-auto text-[11px] font-medium text-muted-foreground">
-                            {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
-                          </span>
-                        )}
-                      </Link>
-                    </>
-                  )}
-                  <Link href="/cuenta#seguridad" onClick={closeMobileMenu} className={ACCOUNT_ITEM}>
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                    Seguridad
-                  </Link>
-                  <form action={signOut}>
-                    <button type="submit" className={ACCOUNT_ITEM}>
-                      <LogOut className="h-4 w-4 text-muted-foreground" />
-                      Cerrar sesión
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={closeMobileMenu}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-copper/60 hover:text-copper"
-                >
-                  <User className="h-4 w-4" />
-                  Iniciar sesión
-                </Link>
-              )}
-            </div>
-
             <div className="mt-6 border-t border-border/60 pt-4">
               <a
                 href={whatsappHref()}
@@ -1001,6 +902,22 @@ export function SiteHeader({
               </a>
             </div>
           </nav>
+          </div>
+        </>
+      )}
+
+      {mobileAccountOpen && account && (
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar cuenta"
+            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
+            onClick={closeMobileAccount}
+          />
+          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
+            <nav className="mx-auto flex max-w-7xl flex-col px-5 py-5 sm:py-6">
+              <MobileAccountMenu account={account} onNavigate={closeMobileAccount} />
+            </nav>
           </div>
         </>
       )}
@@ -1282,6 +1199,109 @@ export function SiteHeader({
         </SheetContent>
       </Sheet>
     </header>
+  );
+}
+
+function MobileAccountMenu({
+  account,
+  onNavigate,
+}: {
+  account: HeaderAccount;
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-3 px-1 pb-2">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-sm font-semibold text-background">
+          {(account.email?.[0] ?? "U").toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium capitalize text-foreground">
+            {account.email?.split("@")[0] ?? "Mi cuenta"}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">{account.email}</p>
+        </div>
+      </div>
+      <Link href="/cuenta" onClick={onNavigate} className={ACCOUNT_ITEM}>
+        <User className="h-4 w-4 text-muted-foreground" />
+        Mi cuenta
+      </Link>
+      {account.isAdmin ? (
+        <>
+          <Link href="/admin" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+            Panel admin
+          </Link>
+          <Link href="/admin/pedidos" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Package className="h-4 w-4 text-muted-foreground" />
+            Pedidos de clientes
+            {account.hasOrderAttention && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+            )}
+          </Link>
+          <Link href="/carrito" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            Carrito tienda
+            {(account.cartItemCount ?? 0) > 0 && (
+              <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+              </span>
+            )}
+          </Link>
+          <Link href="/cuenta/notificaciones" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            Notificaciones
+            {(account.unreadNotifications ?? 0) > 0 && (
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                {account.unreadNotifications}
+              </span>
+            )}
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link href="/cuenta/notificaciones" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            Notificaciones
+            {(account.unreadNotifications ?? 0) > 0 && (
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                {account.unreadNotifications}
+              </span>
+            )}
+          </Link>
+          <Link href="/cuenta/pedidos" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Package className="h-4 w-4 text-muted-foreground" />
+            Mis pedidos
+            {account.hasOrderAttention && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" aria-hidden />
+            )}
+          </Link>
+          <Link href="/favoritos" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+            Favoritos
+          </Link>
+          <Link href="/carrito" onClick={onNavigate} className={ACCOUNT_ITEM}>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            Mi carrito
+            {(account.cartItemCount ?? 0) > 0 && (
+              <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                {account.cartItemCount} producto{account.cartItemCount === 1 ? "" : "s"}
+              </span>
+            )}
+          </Link>
+        </>
+      )}
+      <Link href="/cuenta#seguridad" onClick={onNavigate} className={ACCOUNT_ITEM}>
+        <Lock className="h-4 w-4 text-muted-foreground" />
+        Seguridad
+      </Link>
+      <form action={signOut}>
+        <button type="submit" className={ACCOUNT_ITEM}>
+          <LogOut className="h-4 w-4 text-muted-foreground" />
+          Cerrar sesión
+        </button>
+      </form>
+    </div>
   );
 }
 
