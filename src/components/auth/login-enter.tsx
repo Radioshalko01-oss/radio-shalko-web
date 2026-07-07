@@ -8,7 +8,7 @@ export function LoginEnter({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
 
   if (reduceMotion) {
-    return <div className="w-full max-w-[400px]">{children}</div>;
+    return <div className="w-full max-md:max-w-none md:max-w-[400px]">{children}</div>;
   }
 
   return (
@@ -16,7 +16,7 @@ export function LoginEnter({ children }: { children: React.ReactNode }) {
       initial={{ opacity: 0, scale: 0.988 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.38, ease: EASE }}
-      className="w-full max-w-[400px]"
+      className="w-full max-md:max-w-none md:max-w-[400px]"
     >
       {children}
     </motion.div>
@@ -27,7 +27,11 @@ export function LoginFooterLink({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
 
   if (reduceMotion) {
-    return <p className="mt-5 text-center">{children}</p>;
+    return (
+      <p className="shrink-0 bg-background px-6 pb-8 pt-4 text-center max-md:pb-10 md:mt-5 md:bg-transparent md:px-0 md:pb-0 md:pt-0">
+        {children}
+      </p>
+    );
   }
 
   return (
@@ -35,7 +39,7 @@ export function LoginFooterLink({ children }: { children: React.ReactNode }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.32, delay: 0.12, ease: EASE }}
-      className="mt-5 text-center"
+      className="shrink-0 bg-background px-6 pb-8 pt-4 text-center max-md:pb-10 md:mt-5 md:bg-transparent md:px-0 md:pb-0 md:pt-0"
     >
       {children}
     </motion.p>

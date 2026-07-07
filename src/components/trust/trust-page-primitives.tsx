@@ -200,7 +200,7 @@ export function TrustRelatedLinks({
     <nav
       aria-label="Páginas relacionadas"
       className={cn(
-        "mt-8 flex flex-wrap gap-3 border-t border-border pt-6",
+        "mt-8 flex flex-wrap gap-3 border-t border-border pt-6 max-md:justify-center",
         center && "justify-center",
         className,
       )}

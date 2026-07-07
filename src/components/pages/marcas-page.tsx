@@ -65,22 +65,13 @@ export function MarcasPage({
   const displaySections = useMemo(() => {
     if (!selectedBrand) return brandSections;
     const selectedProducts = productsByBrand.get(selectedBrand) ?? [];
-    const rest = brandSections.filter((s) => s.brand !== selectedBrand);
-    return [{ brand: selectedBrand, products: selectedProducts }, ...rest];
+    return [{ brand: selectedBrand, products: selectedProducts }];
   }, [brandSections, selectedBrand, productsByBrand]);
 
   const scrollToBrandContent = () => {
     const content = contentRef.current;
-    const brandIndex = brandIndexRef.current;
-    if (!content || !brandIndex) return;
-
-    const headerOffset = window.matchMedia("(min-width: 768px)").matches ? 80 : 64;
-    const targetTop = content.offsetTop - headerOffset - brandIndex.offsetHeight;
-
-    window.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: "smooth",
-    });
+    if (!content) return;
+    content.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const scheduleScrollToContent = () => {
@@ -127,34 +118,57 @@ export function MarcasPage({
         description="Marcas líderes en instrumentos y audio profesional. Explora cada fabricante y encuentra el equipo que tu proyecto necesita."
       />
 
-      <section
-        ref={brandIndexRef}
-        className="sticky top-16 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20"
-      >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-2.5 px-5 py-4 md:gap-3 md:px-8 md:py-5">
-          {activeBrands.map((brand) => {
-            const isActive = selectedBrand === brand;
-            return (
+      {!selectedBrand ? (
+        <section ref={brandIndexRef} className="border-b border-border/60 bg-background">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-2 px-5 py-3 max-md:flex-nowrap max-md:justify-start max-md:gap-2 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-3 md:px-8 md:py-4 [&::-webkit-scrollbar]:hidden">
+            {activeBrands.map((brand) => (
               <button
                 key={brand}
                 type="button"
                 onClick={() => selectBrand(brand)}
-                aria-pressed={isActive}
-                className={cn(
-                  "inline-flex h-10 shrink-0 items-center rounded-full border px-4 text-[13px] font-semibold tracking-[0.01em] transition-all duration-150 motion-reduce:transition-none",
-                  isActive
-                    ? "border-foreground bg-foreground text-background shadow-[0_8px_20px_-12px_rgba(0,0,0,0.45)]"
-                    : "border-border/80 bg-card text-foreground/75 hover:border-copper/45 hover:bg-copper/[0.06] hover:text-copper",
-                )}
+                aria-pressed={false}
+                className="inline-flex h-9 shrink-0 items-center rounded-full border border-border/80 bg-card px-3.5 text-[13px] font-semibold tracking-[0.01em] text-foreground/75 transition-all duration-150 hover:border-copper/45 hover:bg-copper/[0.06] hover:text-copper motion-reduce:transition-none md:h-10 md:px-4"
               >
                 {brand}
               </button>
-            );
-          })}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
-      <section ref={contentRef} className="mx-auto max-w-7xl px-5 pb-6 pt-5 md:px-8 md:pb-8 md:pt-6">
+      {selectedBrand ? (
+        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
+          <div className="mx-auto max-w-7xl px-5 md:px-8">
+            <div className="flex items-center justify-between gap-3 py-2.5 max-md:py-2">
+              <button
+                type="button"
+                onClick={() => selectBrand(selectedBrand)}
+                aria-pressed
+                className="inline-flex h-9 shrink-0 items-center rounded-full border border-foreground bg-foreground px-4 text-[13px] font-semibold tracking-[0.01em] text-background shadow-[0_8px_20px_-12px_rgba(0,0,0,0.45)] transition-all duration-150 motion-reduce:transition-none"
+              >
+                {selectedBrand}
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBrand(selectedBrand)}
+                className="shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+              >
+                Ver todas las marcas
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section
+        ref={contentRef}
+        className={cn(
+          "mx-auto max-w-7xl px-5 pb-6 pt-5 md:px-8 md:pb-8 md:pt-6",
+          selectedBrand
+            ? "scroll-mt-[calc(3.5rem+2.75rem+env(safe-area-inset-top,0px))] md:scroll-mt-28"
+            : "scroll-mt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:scroll-mt-20",
+        )}
+      >
         <div className="space-y-5 md:space-y-7">
           {displaySections.map(({ brand, products }, idx) => {
             const id = `brand-${brand.toLowerCase().replace(/\s+/g, "-")}`;
@@ -166,39 +180,39 @@ export function MarcasPage({
                 id={id}
                 className={cn(idx > 0 && "border-t border-border/60 pt-4 md:pt-5")}
               >
-                <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-                  <div>
-                    <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                <header className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="min-w-0 font-display text-2xl font-semibold tracking-tight md:text-3xl">
                       {brand}
                     </h2>
-                    <p className="mt-1.5 text-sm text-muted-foreground">
-                      {products.length > 0
-                        ? `${products.length} productos disponibles`
-                        : "Próximamente en tienda"}
-                    </p>
+                    {products.length > 0 ? (
+                      <Link
+                        href={`/productos?brand=${encodeURIComponent(brand)}`}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-copper hover:text-copper sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                      >
+                        Ver todo {brand}
+                        <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </Link>
+                    ) : (
+                      <a
+                        href={whatsappHref(
+                          SITE_CONTACT.whatsapp.e164,
+                          `Hola, ¿tienen productos de la marca ${brand}?`,
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-copper hover:text-copper sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                      >
+                        Consultar
+                        <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </a>
+                    )}
                   </div>
-                  {products.length > 0 ? (
-                    <Link
-                      href={`/productos?brand=${encodeURIComponent(brand)}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-copper hover:text-copper"
-                    >
-                      Ver todo {brand}
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Link>
-                  ) : (
-                    <a
-                      href={whatsappHref(
-                        SITE_CONTACT.whatsapp.e164,
-                        `Hola, ¿tienen productos de la marca ${brand}?`,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-copper hover:text-copper"
-                    >
-                      Consultar disponibilidad
-                      <ArrowUpRight className="h-4 w-4" />
-                    </a>
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {products.length > 0
+                      ? `${products.length} productos disponibles`
+                      : "Próximamente en tienda"}
+                  </p>
                 </header>
 
                 {products.length === 0 ? (

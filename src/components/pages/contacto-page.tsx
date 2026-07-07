@@ -198,7 +198,7 @@ export function ContactoPage() {
             </p>
           </motion.div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-3 md:mt-8 md:gap-5">
+          <div className="mt-6 grid gap-4 max-md:mx-auto max-md:max-w-md sm:grid-cols-3 md:mt-8 md:max-w-none md:gap-5">
             {[
               {
                 href: "/aviso-de-privacidad",
@@ -220,7 +220,7 @@ export function ContactoPage() {
                 key={card.href}
                 {...motionProps}
                 transition={{ ...motionProps.transition, delay: index * 0.05 }}
-                className="rounded-2xl border border-border bg-card p-5 md:p-6"
+                className="rounded-2xl border border-border bg-card p-5 max-md:w-full md:p-6"
               >
                 <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

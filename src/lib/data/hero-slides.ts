@@ -9,6 +9,8 @@ export type HeroSlide = {
   secondaryCta: { label: string; href: string };
   image: string;
   alt: string;
+  /** Encuadre mobile (`object-position`). */
+  mobileObjectPosition?: string;
 };
 
 export const HERO_SLIDES: HeroSlide[] = [
@@ -22,6 +24,7 @@ export const HERO_SLIDES: HeroSlide[] = [
     secondaryCta: { label: "Conocer la tienda", href: "/contacto" },
     image: "/images/hero/hero-radio-shalko-premium.webp",
     alt: "Instrumentos musicales premium en estudio editorial",
+    mobileObjectPosition: "center 42%",
   },
   {
     id: "instrumentos",
@@ -36,6 +39,7 @@ export const HERO_SLIDES: HeroSlide[] = [
     secondaryCta: { label: "Explorar categorías", href: "/#categorias" },
     image: "/images/hero/hero-instrumentos-premium.webp",
     alt: "Guitarras, teclados y baterías profesionales",
+    mobileObjectPosition: "34% 36%",
   },
   {
     id: "audio-accesorios",
@@ -53,5 +57,6 @@ export const HERO_SLIDES: HeroSlide[] = [
     },
     image: "/images/hero/hero-audio-accesorios-premium.webp",
     alt: "Accesorios y equipo de audio profesional",
+    mobileObjectPosition: "30% 30%",
   },
 ];

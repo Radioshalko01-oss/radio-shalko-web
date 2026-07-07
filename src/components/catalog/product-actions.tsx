@@ -14,9 +14,11 @@ import { cn } from "@/lib/utils";
 export function ProductCompareButton({
   product,
   placement = "default",
+  className,
 }: {
   product: CatalogProduct;
   placement?: "default" | "header";
+  className?: string;
 }) {
   const { startCompare, has: inCompare, count: compareCount, openDrawer } = useCompare();
 
@@ -42,6 +44,7 @@ export function ProductCompareButton({
         inCompare(product.id)
           ? "border-foreground/25 bg-foreground/5 text-foreground"
           : "border-border text-foreground/80 hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        className,
       )}
     >
       <GitCompare className="h-3.5 w-3.5 shrink-0" />

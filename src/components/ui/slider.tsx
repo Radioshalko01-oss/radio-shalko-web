@@ -16,7 +16,7 @@ const Slider = React.forwardRef<
   return (
     <SliderPrimitive.Root
       ref={ref}
-      className={cn("relative flex w-full touch-none select-none items-center", className)}
+      className={cn("relative flex w-full touch-none select-none items-center py-2", className)}
       defaultValue={defaultValue}
       value={value}
       {...props}
@@ -27,7 +27,7 @@ const Slider = React.forwardRef<
       {Array.from({ length: thumbCount }).map((_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          className="block h-4 w-4 rounded-full border-2 border-foreground/35 bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 max-md:h-6 max-md:w-6 max-md:border-foreground/50"
         />
       ))}
     </SliderPrimitive.Root>

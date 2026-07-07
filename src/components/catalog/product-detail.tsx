@@ -76,7 +76,7 @@ export function ProductDetail({
       {/* Breadcrumbs */}
       <nav
         aria-label="Ubicación en el sitio"
-        className="-mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground md:text-xs"
+        className="-mt-2 hidden flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground md:flex md:text-xs"
       >
         {breadcrumbs.map((item, index) => (
           <Fragment key={`${item.label}-${index}`}>
@@ -95,7 +95,7 @@ export function ProductDetail({
       </nav>
 
       {/* Hero producto — desktop: galería | info */}
-      <div className="mt-3 grid gap-6 overflow-visible lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,32rem)] lg:items-start lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,34rem)] xl:gap-x-12">
+      <div className="mt-3 grid gap-6 overflow-visible max-md:mt-1 lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,32rem)] lg:items-start lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,34rem)] xl:gap-x-12">
         <ProductGallery images={product.images} name={product.name} />
 
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1 lg:w-full lg:max-w-[32rem] lg:justify-self-center lg:pt-0 xl:max-w-[34rem]">
@@ -107,14 +107,18 @@ export function ProductDetail({
 
           <div
             className={cn(
-              "flex items-start justify-between gap-3",
+              "flex items-center justify-between gap-3 max-md:items-center",
               product.isNew ? "mt-3" : "mt-0",
             )}
           >
             <h1 className="min-w-0 flex-1 text-[1.5rem] font-medium leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[1.875rem] md:text-[2.125rem] lg:text-[2.375rem]">
               {product.name}
             </h1>
-            <ProductCompareButton product={product} placement="header" />
+            <ProductCompareButton
+              product={product}
+              placement="header"
+              className="max-md:-mt-1 max-md:mr-1"
+            />
           </div>
 
           {brand && (
@@ -125,21 +129,19 @@ export function ProductDetail({
           )}
 
           <div className="mt-5 border-b border-border/60 pb-5">
-            <div className="flex flex-col items-start gap-3 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:gap-y-2 lg:gap-x-6">
-              <p className="text-[1.75rem] font-semibold tabular-nums leading-none tracking-tight text-foreground sm:text-[2rem] md:text-[2.125rem]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 max-md:gap-x-2 md:gap-x-4 lg:gap-x-6">
+              <p className="shrink-0 text-[1.75rem] font-semibold tabular-nums leading-none tracking-tight text-foreground sm:text-[2rem] md:text-[2.125rem]">
                 {formatPrice(product.price)}
               </p>
-              <div className="flex w-full max-w-full flex-col gap-2 rounded-xl border border-border/70 bg-[#fafafa] px-3 py-2.5 sm:flex-row sm:items-center sm:gap-2 md:ml-1 md:w-auto lg:ml-3 xl:ml-5">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-foreground/70" strokeWidth={1.75} />
-                  <p className="text-sm font-medium text-foreground">
-                    Garantía {warranty.duration}
-                    {brand ? ` · ${brand.name}` : ""}
-                  </p>
-                </div>
+              <div className="inline-flex min-w-0 max-w-full flex-1 items-center gap-2 rounded-lg border border-border/60 bg-[#fafafa] px-2.5 py-1.5 max-md:text-[13px] sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2.5 md:ml-1 md:w-auto md:flex-initial lg:ml-3 xl:ml-5">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-foreground/70 max-md:h-3.5 max-md:w-3.5 md:h-4 md:w-4" strokeWidth={1.75} />
+                <p className="min-w-0 truncate font-medium leading-tight text-foreground max-md:text-[13px] md:text-sm">
+                  Garantía {warranty.duration}
+                  {brand ? ` · ${brand.name}` : ""}
+                </p>
                 <Link
                   href="/garantia"
-                  className="shrink-0 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:ml-auto md:ml-0"
+                  className="shrink-0 text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:text-sm md:ml-0"
                 >
                   Ver política
                 </Link>
@@ -207,7 +209,7 @@ export function ProductDetail({
 
           <PurchaseTrustNote
             variant="strip"
-            align="left"
+            align="center"
             className="mt-4"
             lines={[
               "Compra asistida y segura. Antes de pagar, confirmamos disponibilidad y datos de tu pedido.",

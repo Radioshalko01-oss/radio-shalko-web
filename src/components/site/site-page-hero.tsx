@@ -32,7 +32,10 @@ export function SitePageHero({
   return (
     <section
       id={id}
-      className={cn("bg-[#1a1a1a] pt-28 text-white md:pt-32", className)}
+      className={cn(
+        "bg-[#1a1a1a] pt-[calc(3.5rem+1.25rem+env(safe-area-inset-top,0px))] text-white max-md:pt-[calc(3.5rem+0.75rem+env(safe-area-inset-top,0px))] md:pt-32",
+        className,
+      )}
     >
       <div
         className={cn(
@@ -46,14 +49,14 @@ export function SitePageHero({
             centered
               ? "flex min-h-[7.5rem] flex-col items-center justify-center pb-5 text-center md:min-h-[8.5rem] md:pb-6"
               : compact
-                ? "pb-5 pt-1 md:pb-6 md:pt-2"
-                : "pb-10 pt-1 md:pb-12 md:pt-2",
+                ? "pb-5 pt-1 max-md:pb-4 md:pb-6 md:pt-2"
+                : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
           )}
         >
           {showBreadcrumbs ? (
             <nav
               aria-label="Ubicación en el sitio"
-              className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80"
+              className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 md:block"
             >
               {breadcrumbs.map((item, index) => (
                 <Fragment key={`${item.label}-${index}`}>
@@ -79,7 +82,7 @@ export function SitePageHero({
                 ? "flex flex-col items-center text-center"
                 : compact
                   ? "mt-4 md:mt-5"
-                  : "mx-auto mt-6 flex max-w-2xl flex-col items-center text-center md:mt-8",
+                  : "mx-auto flex max-w-2xl flex-col items-center text-center max-md:mt-0 md:mt-8",
             )}
           >
             <h1

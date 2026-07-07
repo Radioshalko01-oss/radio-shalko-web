@@ -85,10 +85,12 @@ export default async function LoginLayout({
           />
           {/* Reserva altura del header fijo para que el footer quede al fondo del viewport */}
           <div aria-hidden className="h-14 shrink-0 md:h-20" />
-          <div className="flex min-h-[calc(100dvh-3.5rem)] flex-1 flex-col md:min-h-[calc(100dvh-5rem)]">
+          <div className="flex flex-1 flex-col">
             {children}
           </div>
-          <Footer />
+          <div className="max-md:block md:hidden">
+            <Footer />
+          </div>
         </div>
       </QuoteProvider>
     </FavoritesProvider>

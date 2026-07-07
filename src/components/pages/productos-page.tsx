@@ -287,96 +287,102 @@ export function ProductosPage({
 
 
         {/* Toolbar */}
-        <section className="sticky top-16 z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
+        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 sm:grid-cols-[1fr_auto_1fr]">
-            <div className="flex items-center gap-2 justify-self-start">
-              {/* Filters trigger — always visible (sheet on mobile, button still useful on desktop) */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <button
-                    aria-label="Filtros"
-                    className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold uppercase tracking-wider hover:border-copper/60 hover:text-copper lg:hidden"
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Filtros
-                    {activeFilterChips.length > 0 && (
-                      <span className="grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
-                        {activeFilterChips.length}
-                      </span>
-                    )}
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background">
-                  <SheetHeader className="text-left">
-                    <SheetTitle className="font-display text-lg font-semibold tracking-tight">Filtros</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FiltersPanel
-                      openCat={openCat}
-                      setOpenCat={setOpenCat}
-                      activeCats={activeCats}
-                      setActiveCats={setActiveCats}
-                      activeSubs={activeSubs}
-                      setActiveSubs={setActiveSubs}
-                      activeBrands={activeBrands}
-                      setActiveBrands={setActiveBrands}
-                      price={price}
-                      setPrice={setPrice}
-                      allBrands={allBrands}
-                      allCategories={allCategories}
-                      categoryTree={categoryTree}
-                      toggle={toggle}
-                      clearFilters={clearFilters}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
+            <div className="grid gap-2 py-2.5 max-md:grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-3 md:py-3">
+              <div className="flex min-w-0 items-center justify-between gap-2 max-md:gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button
+                      aria-label="Filtros"
+                      className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold uppercase tracking-wider hover:border-copper/60 hover:text-copper lg:hidden"
+                    >
+                      <SlidersHorizontal className="h-3.5 w-3.5" />
+                      Filtros
+                      {activeFilterChips.length > 0 && (
+                        <span className="grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
+                          {activeFilterChips.length}
+                        </span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background">
+                    <SheetHeader className="text-left">
+                      <SheetTitle className="font-display text-lg font-semibold tracking-tight">Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FiltersPanel
+                        openCat={openCat}
+                        setOpenCat={setOpenCat}
+                        activeCats={activeCats}
+                        setActiveCats={setActiveCats}
+                        activeSubs={activeSubs}
+                        setActiveSubs={setActiveSubs}
+                        activeBrands={activeBrands}
+                        setActiveBrands={setActiveBrands}
+                        price={price}
+                        setPrice={setPrice}
+                        allBrands={allBrands}
+                        allCategories={allCategories}
+                        categoryTree={categoryTree}
+                        toggle={toggle}
+                        clearFilters={clearFilters}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
 
-              <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
-                {[
-                  { k: "lg", I: LayoutGrid },
-                  { k: "md", I: Grid2x2 },
-                  { k: "list", I: List },
-                ].map(({ k, I }) => (
-                  <button
-                    key={k}
-                    onClick={() => setSize(k as typeof size)}
-                    aria-label={`Vista ${k}`}
-                    className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${
-                      size === k
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <I className="h-4 w-4" />
-                  </button>
-                ))}
+                <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+                  {[
+                    { k: "lg", I: LayoutGrid },
+                    { k: "md", I: Grid2x2 },
+                    { k: "list", I: List },
+                  ].map(({ k, I }) => (
+                    <button
+                      key={k}
+                      onClick={() => setSize(k as typeof size)}
+                      aria-label={`Vista ${k}`}
+                      className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${
+                        size === k
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <I className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+
+                </div>
+
+                <p className="shrink-0 text-xs text-muted-foreground md:hidden">
+                  {filtered.length} productos
+                </p>
               </div>
-            </div>
 
-            <p className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-1 sm:text-sm lg:block">
-              <span className="sm:hidden">{filtered.length} productos</span>
-              <span className="hidden sm:inline">
-                Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {products.length} productos
-              </span>
-            </p>
+              <p className="hidden text-center text-xs text-muted-foreground sm:text-sm md:block">
+                <span className="sm:hidden">{filtered.length} productos</span>
+                <span className="hidden sm:inline">
+                  Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {products.length} productos
+                </span>
+              </p>
 
-            <div className="justify-self-end">
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="h-9 w-[150px] rounded-full border-border bg-card text-xs sm:h-10 sm:w-[210px] sm:text-sm">
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Por categorías</SelectItem>
-                <SelectItem value="price-asc">Precio: menor a mayor</SelectItem>
-                <SelectItem value="price-desc">Precio: mayor a menor</SelectItem>
-                <SelectItem value="az">Alfabéticamente A-Z</SelectItem>
-                <SelectItem value="za">Alfabéticamente Z-A</SelectItem>
-                <SelectItem value="new">Nuevos productos</SelectItem>
-              </SelectContent>
-            </Select>
-            </div>
+              <div className="max-md:w-full max-md:justify-self-stretch md:justify-self-end">
+                <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+                  <SelectTrigger className="h-9 w-full rounded-full border-border bg-card text-xs sm:h-10 sm:text-sm md:w-[150px] max-md:max-w-none sm:w-[210px]">
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Por categorías</SelectItem>
+                    <SelectItem value="price-asc">Precio: menor a mayor</SelectItem>
+                    <SelectItem value="price-desc">Precio: mayor a menor</SelectItem>
+                    <SelectItem value="az">Alfabéticamente A-Z</SelectItem>
+                    <SelectItem value="za">Alfabéticamente Z-A</SelectItem>
+                    <SelectItem value="new">Nuevos productos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </section>
@@ -405,7 +411,7 @@ export function ProductosPage({
           </aside>
 
           {/* Grid */}
-          <div>
+          <div className="min-w-0 w-full max-w-full">
 
             {filtered.length === 0 ? (
               <div className={siteShell.emptyState}>
@@ -535,7 +541,7 @@ function FiltersPanel({
 
       <div className="mt-7 border-t border-border pb-10 pt-6">
         <p className="font-display text-base font-medium">Precio</p>
-        <div className="mt-4 px-1 py-2">
+        <div className="mt-4 px-1 py-2 touch-pan-x" onPointerDown={(e) => e.stopPropagation()}>
           <Slider
             min={PRICE_MIN}
             max={PRICE_MAX}
@@ -545,6 +551,7 @@ function FiltersPanel({
             onValueChange={(v) =>
               setPrice([snapPrice(v[0]), snapPrice(v[1])] as [number, number])
             }
+            className="max-md:py-2"
           />
         </div>
         <PriceRangeFields price={price} setPrice={setPrice} />

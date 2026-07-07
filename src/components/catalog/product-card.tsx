@@ -385,7 +385,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
   return (
     <article
       className={cn(
-        "group flex items-center gap-4 rounded-2xl border border-border bg-card p-3 transition-colors hover:border-copper/40 md:p-4",
+        "group flex w-full min-w-0 max-w-full items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-colors hover:border-copper/40 md:gap-4 md:p-4",
         className,
       )}
     >
@@ -418,15 +418,15 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
           )}
         </p>
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <p className={cn(typography.priceInline, "md:text-lg")}>
+      <div className="flex min-w-0 shrink flex-col items-end gap-1.5 max-md:max-w-[42%] md:gap-2">
+        <p className={cn(typography.priceInline, "text-sm md:text-lg")}>
           {formatPrice(product.price)}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           <button
             onClick={toggleFav}
             aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="grid h-8 w-8 place-items-center rounded-full border border-border text-foreground/80 hover:border-foreground hover:text-foreground"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-foreground/80 hover:border-foreground hover:text-foreground"
           >
             <Heart className={cn("h-3.5 w-3.5", isFav && "fill-current")} />
           </button>
@@ -435,14 +435,15 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
             onClick={toggleQuote}
             aria-label={isQuoted ? "Quitar del carrito" : "Agregar al carrito"}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+              "inline-flex max-w-full items-center gap-1 rounded-full px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors md:gap-1.5 md:px-4 md:text-[11px]",
               isQuoted
                 ? "bg-secondary text-foreground ring-1 ring-foreground/20"
                 : "bg-foreground text-background hover:bg-copper hover:text-copper-foreground",
             )}
           >
-            <Plus className="h-3 w-3" /> {isQuoted ? "En carrito" : "Agregar"}
-            <ArrowUpRight className="h-3 w-3" />
+            <Plus className="h-3 w-3 shrink-0" />{" "}
+            <span className="truncate">{isQuoted ? "En carrito" : "Agregar"}</span>
+            <ArrowUpRight className="hidden h-3 w-3 shrink-0 min-[380px]:inline" />
           </button>
         </div>
       </div>

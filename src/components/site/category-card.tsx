@@ -30,7 +30,7 @@ export function CategoryCard({ category, className }: { category: CategoryItem; 
       onMouseEnter={loadHover}
       onFocus={loadHover}
       className={cn(
-        "group flex flex-col items-center rounded-2xl p-3 text-center outline-none transition-transform duration-300 motion-safe:hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-4 md:p-4",
+        "group flex flex-col items-center rounded-2xl p-3 text-center outline-none transition-transform duration-300 [-webkit-tap-highlight-color:transparent] motion-safe:hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-4 active:bg-transparent md:p-4",
         className,
       )}
     >
@@ -48,7 +48,7 @@ export function CategoryCard({ category, className }: { category: CategoryItem; 
           loading="lazy"
           className={cn(
             "object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.14)] transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover:scale-[1.03]",
-            category.hover && "motion-safe:group-hover:opacity-0",
+            category.hover && "max-md:opacity-100 motion-safe:md:group-hover:opacity-0",
           )}
         />
         {category.hover && hoverReady ? (
@@ -59,7 +59,7 @@ export function CategoryCard({ category, className }: { category: CategoryItem; 
             sizes={CATEGORY_IMAGE_SIZES}
             loading="lazy"
             aria-hidden
-            className="object-contain opacity-0 drop-shadow-[0_18px_28px_rgba(0,0,0,0.14)] transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover:opacity-100 motion-safe:group-hover:scale-[1.03]"
+            className="pointer-events-none object-contain opacity-0 drop-shadow-[0_18px_28px_rgba(0,0,0,0.14)] transition-[opacity,transform] duration-500 ease-out max-md:hidden motion-safe:group-hover:opacity-100 motion-safe:group-hover:scale-[1.03]"
           />
         ) : null}
       </div>

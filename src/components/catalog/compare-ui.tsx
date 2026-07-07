@@ -17,6 +17,10 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
+const PANEL_SHEET_WIDTH = "w-[88vw] max-w-sm";
+const PANEL_SHEET_CLOSE =
+  "[&>button]:right-5 [&>button]:top-5 [&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-full [&>button]:border [&>button]:border-border/70 [&>button]:bg-background [&>button]:opacity-100 [&>button]:shadow-none [&>button]:transition-colors [&>button]:hover:bg-muted [&>button]:focus:ring-0";
+
 export function CompareUi() {
   const {
     ids,
@@ -65,8 +69,9 @@ export function CompareUi() {
         <SheetContent
           side="right"
           className={cn(
-            "flex h-full w-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0 sm:max-w-[400px]",
-            "[&>button]:right-5 [&>button]:top-5 [&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-full [&>button]:border [&>button]:border-border/70 [&>button]:bg-background [&>button]:opacity-100 [&>button]:shadow-none [&>button]:transition-colors [&>button]:hover:bg-muted [&>button]:focus:ring-0",
+            "flex h-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0",
+            PANEL_SHEET_WIDTH,
+            PANEL_SHEET_CLOSE,
           )}
         >
           <div className="shrink-0 border-b border-border/80 px-5 pb-5 pt-6 pr-14">

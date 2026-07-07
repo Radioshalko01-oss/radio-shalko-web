@@ -35,6 +35,8 @@ import {
   type CatalogMenuItem,
 } from "@/lib/navigation/catalog-taxonomy";
 
+const PANEL_SHEET_WIDTH = "w-[88vw] max-w-sm";
+
 const PANEL_SHEET_CLOSE =
   "[&>button]:right-5 [&>button]:top-5 [&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-full [&>button]:border [&>button]:border-border/70 [&>button]:bg-background [&>button]:opacity-100 [&>button]:shadow-none [&>button]:transition-colors [&>button]:hover:bg-muted [&>button]:focus:ring-0";
 
@@ -102,11 +104,40 @@ const QUICK_SEARCHES = [
 ];
 
 const HEADER_SCROLL_RANGE = 64;
+const MOBILE_THEME_WHITE = "#ffffff";
+const MOBILE_THEME_SOLID = "#fafafa";
+
+function syncMobileThemeColor(el: HTMLElement) {
+  if (typeof window === "undefined") return;
+  if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const onHero =
+    el.dataset.hasHero === "true" &&
+    el.dataset.state === "hero" &&
+    el.dataset.forcedSolid !== "true";
+
+  if (themeMeta) {
+    themeMeta.setAttribute("content", onHero ? MOBILE_THEME_WHITE : MOBILE_THEME_SOLID);
+  }
+
+  let statusMeta = document.querySelector(
+    'meta[name="apple-mobile-web-app-status-bar-style"]',
+  ) as HTMLMetaElement | null;
+
+  if (!statusMeta) {
+    statusMeta = document.createElement("meta");
+    statusMeta.name = "apple-mobile-web-app-status-bar-style";
+    document.head.appendChild(statusMeta);
+  }
+  statusMeta.content = "default";
+}
 
 function applyHeaderReveal(el: HTMLElement, scrollY: number) {
   const reveal = Math.min(1, Math.max(0, scrollY / HEADER_SCROLL_RANGE));
   el.style.setProperty("--header-reveal", reveal.toFixed(3));
   el.dataset.state = reveal > 0.3 ? "solid" : "hero";
+  syncMobileThemeColor(el);
 }
 
 /** Taxonomía del mega menú: `src/lib/navigation/catalog-taxonomy.ts` */
@@ -225,10 +256,12 @@ export function SiteHeader({
     if (!hasHero) {
       el.style.setProperty("--header-reveal", "1");
       el.dataset.state = "solid";
+      syncMobileThemeColor(el);
       return;
     }
     applyHeaderReveal(el, window.scrollY);
     if (window.scrollY <= 0) el.dataset.state = "hero";
+    syncMobileThemeColor(el);
   }, [hasHero]);
 
   useEffect(() => {
@@ -342,6 +375,20 @@ export function SiteHeader({
     };
   }, [open]);
 
+  // Cierra overlays al cambiar de ruta (evita capas fantasma que bloquean toques en móvil).
+  useEffect(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setMegaPanel(null);
+    setAccountOpen(false);
+    setOpen(false);
+    setMobilePanel(null);
+    setSearchOpen(false);
+    setQuoteOpen(false);
+    setFavOpen(false);
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  }, [pathname]);
+
   // Cerrar el menú de cuenta al hacer clic fuera.
   useEffect(() => {
     if (!accountOpen) return;
@@ -418,10 +465,12 @@ export function SiteHeader({
     if (headerForcedSolid) {
       el.style.setProperty("--header-reveal", "1");
       el.dataset.state = "solid";
+      syncMobileThemeColor(el);
       return;
     }
     if (hasHero) {
       applyHeaderReveal(el, window.scrollY);
+      syncMobileThemeColor(el);
     }
   }, [headerForcedSolid, hasHero]);
 
@@ -433,7 +482,7 @@ export function SiteHeader({
   return (
     <header
       ref={headerRef}
-      className="site-header fixed inset-x-0 top-0 z-50"
+      className="site-header fixed inset-x-0 top-0 z-50 max-lg:pt-[env(safe-area-inset-top,0px)]"
       data-has-hero={hasHero ? "true" : "false"}
       data-forced-solid={headerForcedSolid ? "true" : "false"}
       onMouseLeave={scheduleClose}
@@ -441,25 +490,23 @@ export function SiteHeader({
       <div className="site-header__bg pointer-events-none absolute inset-0 bg-background" aria-hidden />
       {heroBlend && (
         <div
-          className="site-header__scrim pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-black/45 via-black/12 to-transparent md:h-32"
+          className="site-header__scrim pointer-events-none absolute inset-x-0 top-0 -z-10 hidden h-32 bg-gradient-to-b from-black/45 via-black/12 to-transparent md:block"
           aria-hidden
         />
       )}
       <div className="site-header__bar relative flex h-14 w-full items-center justify-between gap-1 px-3 sm:gap-2 sm:px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
-          className="group relative z-10 flex min-w-0 shrink items-center"
+          className="group relative z-10 flex h-14 min-w-0 shrink items-center lg:h-auto"
           aria-label={BRAND_ARIA_LABEL}
         >
-          <div className="relative lg:hidden">
-            {heroBlend && (
-              <div className="site-header__logo-light">
-                <SiteLogo context="mobileHeader" tone="on-dark" interactive />
-              </div>
-            )}
-            <div className={cn(heroBlend && "site-header__logo-dark absolute inset-0")}>
-              <SiteLogo context="mobileHeader" tone="default" interactive />
-            </div>
+          <div className="relative flex h-full items-center lg:hidden">
+            <SiteLogo
+              context="mobileHeader"
+              tone={heroBlend ? "on-dark" : "default"}
+              interactive
+              className="site-header__mobile-logo"
+            />
           </div>
           <div className="relative hidden lg:block">
             {heroBlend && (
@@ -512,7 +559,7 @@ export function SiteHeader({
           </div>
         </nav>
 
-        <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 sm:gap-1 md:gap-1.5">
+        <div className="site-header__actions relative z-10 flex shrink-0 items-center justify-end gap-0 sm:gap-1 md:gap-1.5">
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
@@ -523,7 +570,7 @@ export function SiteHeader({
           <button
             aria-label={favCount > 0 ? `Favoritos (${favCount})` : "Favoritos"}
             onClick={() => setFavOpen(true)}
-            className={cn(iconBtn, "hidden sm:grid")}
+            className={iconBtn}
           >
             <Heart className="h-[18px] w-[18px]" />
             {favCount > 0 && (
@@ -727,10 +774,10 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="fixed inset-0 top-14 z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 sm:top-16 lg:hidden"
+            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
             onClick={closeMobileMenu}
           />
-          <div className="relative z-50 max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:max-h-[calc(100dvh-4rem)] lg:hidden">
+          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col px-5 py-5 sm:py-6">
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
@@ -741,7 +788,6 @@ export function SiteHeader({
 
             {/* Productos accordion */}
             <MobileAccordion
-              index="01"
               label="Productos"
               isOpen={mobilePanel === "productos"}
               onToggle={() => setMobilePanel((p) => (p === "productos" ? null : "productos"))}
@@ -761,7 +807,7 @@ export function SiteHeader({
                 <Link
                   href="/productos"
                   onClick={(e) => handleNavClick(e, "/productos", closeMobileMenu)}
-                  className="inline-flex items-center gap-1.5 px-1 py-2 text-sm font-medium text-copper"
+                  className="mt-2 inline-flex items-center gap-1.5 px-1 py-2.5 text-sm font-medium text-copper"
                 >
                   Ver catálogo completo
                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -771,31 +817,28 @@ export function SiteHeader({
 
             {/* Marcas accordion */}
             <MobileAccordion
-              index="02"
               label="Marcas"
               isOpen={mobilePanel === "marcas"}
               onToggle={() => setMobilePanel((p) => (p === "marcas" ? null : "marcas"))}
             >
               <div className="pb-3 pt-1">
                 <ul className="flex flex-wrap gap-1.5">
-                  {FEATURED_BRAND_CANDIDATES.filter((b) => sortedBrands.includes(b))
-                    .slice(0, 8)
-                    .map((b) => (
-                      <li key={b}>
-                        <button
-                          type="button"
-                          onClick={() => goBrand(b)}
-                          className="rounded-full border border-border/70 bg-card px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-foreground/80 transition-colors hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
-                        >
-                          {b}
-                        </button>
-                      </li>
-                    ))}
+                  {sortedBrands.map((b) => (
+                    <li key={b}>
+                      <button
+                        type="button"
+                        onClick={() => goBrand(b)}
+                        className="rounded-full border border-border/70 bg-card px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-foreground/80 transition-colors hover:border-copper/60 hover:bg-copper/10 hover:text-copper"
+                      >
+                        {b}
+                      </button>
+                    </li>
+                  ))}
                 </ul>
                 <button
                   type="button"
                   onClick={() => navigateOrScrollTop("/marcas", closeMobileMenu)}
-                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
                 >
                   Ver todas las marcas
                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -803,20 +846,15 @@ export function SiteHeader({
               </div>
             </MobileAccordion>
 
-            {NAV.filter((n) => !n.panel).map((item, i) => (
+            {NAV.filter((n) => !n.panel).map((item) => (
               <Link
                 key={item.label}
                 href={item.to}
                 onClick={(e) => handleNavClick(e, item.to, closeMobileMenu)}
                 className="group flex items-center justify-between border-t border-border/60 px-1 py-4 transition-[color,transform] duration-300 hover:translate-x-0.5 hover:text-copper"
               >
-                <span className="flex items-baseline gap-3">
-                  <span className="text-[10px] font-mono text-muted-foreground/70 transition-colors group-hover:text-copper/70">
-                    {String(i + 3).padStart(2, "0")}
-                  </span>
-                  <span className="font-display text-base font-medium text-foreground/90 transition-colors group-hover:text-copper">
-                    {item.label}
-                  </span>
+                <span className="font-display text-base font-medium text-foreground/90 transition-colors group-hover:text-copper">
+                  {item.label}
                 </span>
                 <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-copper" />
               </Link>
@@ -951,21 +989,15 @@ export function SiteHeader({
               )}
             </div>
 
-            <div className="mt-6 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/40 via-background to-transparent p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                ¿Necesitas ayuda?
-              </p>
-              <p className="mt-1.5 font-display text-base font-light leading-snug">
-                Asesoría personalizada por WhatsApp.
-              </p>
+            <div className="mt-6 border-t border-border/60 pt-4">
               <a
                 href={whatsappHref()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-copper"
+                className="flex items-center justify-between px-1 py-2 text-sm text-foreground/85 transition-colors hover:text-copper"
               >
-                Escribir ahora
-                <ArrowUpRight className="h-3.5 w-3.5" />
+                <span>Asesoría por WhatsApp</span>
+                <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
               </a>
             </div>
           </nav>
@@ -981,7 +1013,7 @@ export function SiteHeader({
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Buscar en Radio Shalko</SheetTitle>
-            <SheetDescription>Encuentra instrumentos, marcas y accesorios.</SheetDescription>
+            <SheetDescription>Encuentra instrumentos y marcas.</SheetDescription>
           </SheetHeader>
 
           <SearchPanel
@@ -1016,7 +1048,8 @@ export function SiteHeader({
         <SheetContent
           side="right"
           className={cn(
-            "flex h-full w-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0 sm:max-w-[400px]",
+            "flex h-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0",
+            PANEL_SHEET_WIDTH,
             PANEL_SHEET_CLOSE,
           )}
         >
@@ -1161,7 +1194,8 @@ export function SiteHeader({
         <SheetContent
           side="right"
           className={cn(
-            "flex h-full w-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0 sm:max-w-[400px]",
+            "flex h-full flex-col gap-0 overflow-hidden border-l border-border/80 bg-background p-0",
+            PANEL_SHEET_WIDTH,
             PANEL_SHEET_CLOSE,
           )}
         >
@@ -1252,13 +1286,11 @@ export function SiteHeader({
 }
 
 function MobileAccordion({
-  index,
   label,
   isOpen,
   onToggle,
   children,
 }: {
-  index?: string;
   label: string;
   isOpen: boolean;
   onToggle: () => void;
@@ -1273,14 +1305,7 @@ function MobileAccordion({
         }`}
         aria-expanded={isOpen}
       >
-        <span className="flex items-baseline gap-3">
-          {index && (
-            <span className="text-[10px] font-mono text-muted-foreground/70 transition-colors group-hover:text-copper/70">
-              {index}
-            </span>
-          )}
-          <span className="font-display text-base font-medium">{label}</span>
-        </span>
+        <span className="font-display text-base font-medium">{label}</span>
         <span
           className={`grid h-7 w-7 place-items-center rounded-full border transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             isOpen
@@ -1370,7 +1395,7 @@ function SearchPanel({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Busca instrumentos, marcas, accesorios…"
+            placeholder="Busca instrumentos, marcas…"
             className="w-full bg-transparent text-lg font-medium tracking-normal text-foreground placeholder:text-muted-foreground/45 focus:outline-none md:text-[1.35rem]"
           />
           {query && (

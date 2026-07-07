@@ -1,5 +1,6 @@
 import { Footer } from "@/components/site/footer";
 import { HashScroll } from "@/components/site/hash-scroll";
+import { BodyScrollGuard } from "@/components/site/body-scroll-guard";
 import { SiteHeader, type HeaderProduct } from "@/components/site/header";
 import { FavoritesProvider } from "@/components/providers/favorites-provider";
 import { QuoteProvider } from "@/components/providers/quote-provider";
@@ -81,6 +82,7 @@ export default async function SiteLayout({
               brands={brandNames}
             />
             <HashScroll />
+            <BodyScrollGuard />
             <main>{children}</main>
             <Footer />
             <CompareUi />
