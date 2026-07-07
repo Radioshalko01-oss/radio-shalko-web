@@ -188,7 +188,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
               type="button"
               onClick={goPrev}
               aria-label="Imagen anterior"
-              className="absolute left-2.5 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-100 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:opacity-0 md:group-hover/card:opacity-100"
+              className="absolute left-2.5 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:grid md:group-hover/card:opacity-100"
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={1.25} />
             </button>
@@ -196,7 +196,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
               type="button"
               onClick={goNext}
               aria-label="Imagen siguiente"
-              className="absolute right-2.5 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-100 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:opacity-0 md:group-hover/card:opacity-100"
+              className="absolute right-2.5 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:border-border hover:bg-background hover:text-foreground md:grid md:group-hover/card:opacity-100"
             >
               <ChevronRight className="h-4 w-4" strokeWidth={1.25} />
             </button>

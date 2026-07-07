@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const behringer = "/images/brands/behringer.png";
 const yamaha = "/images/brands/yamaha.png";
@@ -72,6 +72,7 @@ export function Brands() {
   const lastTimeRef = useRef(0);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduceMotionRef = useRef(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   const applyTransform = useCallback(() => {
     const track = trackRef.current;
@@ -112,6 +113,14 @@ export function Brands() {
     setPaused(true);
   }, [setPaused]);
 
+  const handlePointerEnter = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (event.pointerType !== "mouse") return;
+      pauseMarquee();
+    },
+    [pauseMarquee],
+  );
+
   const scheduleResume = useCallback(() => {
     if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
     resumeTimerRef.current = setTimeout(() => {
@@ -134,7 +143,9 @@ export function Brands() {
   );
 
   useLayoutEffect(() => {
-    reduceMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reduceMotionRef.current = reduced;
+    setPrefersReducedMotion(reduced);
     measure();
 
     const segment = segmentRef.current;
@@ -189,10 +200,14 @@ export function Brands() {
   return (
     <section
       ref={sectionRef}
-      className="overflow-hidden border-b border-border bg-muted/30 pt-10 pb-8 md:pt-12 md:pb-9"
-      onPointerEnter={pauseMarquee}
+      className="overflow-hidden border-b border-border bg-muted/30 pt-8 pb-6 md:pt-12 md:pb-9"
+      onPointerEnter={handlePointerEnter}
       onPointerLeave={handleSectionPointerLeave}
-      onFocusCapture={pauseMarquee}
+      onFocusCapture={(event) => {
+        if (event.target instanceof HTMLElement && event.target.matches(":focus-visible")) {
+          pauseMarquee();
+        }
+      }}
       onBlurCapture={(event) => {
         if (!sectionRef.current?.contains(event.relatedTarget as Node | null)) {
           pointerInsideRef.current = false;
@@ -218,6 +233,13 @@ export function Brands() {
         className="relative isolate h-14 w-full overflow-hidden md:h-16"
         aria-label="Carrusel de marcas oficiales"
       >
+        {prefersReducedMotion ? (
+          <div className="flex h-full items-center gap-10 overflow-x-auto overscroll-x-contain px-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-16 md:px-8">
+            {BRANDS.map((brand) => (
+              <BrandLogo key={brand.name} brand={brand} copyIndex={0} />
+            ))}
+          </div>
+        ) : (
         <div
           ref={trackRef}
           className="flex w-max items-center will-change-transform motion-reduce:transform-none"
@@ -235,6 +257,7 @@ export function Brands() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );
