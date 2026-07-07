@@ -1,0 +1,115 @@
+"use client";
+
+import { Banknote, CreditCard, Lock, Store } from "lucide-react";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { SiteClosingCta } from "@/components/site/site-closing-cta";
+import {
+  TrustBulletList,
+  TrustCard,
+  TrustPageBody,
+  TrustRelatedLinks,
+  TrustSection,
+  TrustSectionIntro,
+} from "@/components/trust/trust-page-primitives";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
+
+const IN_STORE = [
+  "Paga directamente en nuestras tiendas de Chalco o Amecameca.",
+  "Recibe asesoría y comprobante al momento de tu compra.",
+  "Ideal si prefieres ver el producto antes de pagar.",
+] as const;
+
+const SPEI = [
+  "La transferencia o SPEI solo aplica cuando Radio Shalko te confirme los datos oficiales.",
+  "No deposites hasta recibir instrucciones vinculadas a tu pedido o solicitud.",
+  "Verifica nombre del beneficiario, CLABE o cuenta y monto antes de transferir.",
+  "Envía tu comprobante únicamente por los canales oficiales que te indiquemos.",
+] as const;
+
+const CARD = [
+  "En algunos pedidos podemos enviarte un link de pago seguro con tarjeta.",
+  "La disponibilidad de este método depende de tu pedido y de la confirmación previa.",
+  "El link te lo comparte Radio Shalko por correo o canal oficial; no lo solicites a terceros.",
+  "Si no recibes link, puedes usar pago en tienda o transferencia según lo acordado.",
+] as const;
+
+const SECURITY = [
+  "No compartas datos bancarios sensibles por mensajes no oficiales.",
+  "No envíes comprobantes a números o correos que no reconozcas como Radio Shalko.",
+  "Desconfía de presiones para pagar sin confirmación de pedido.",
+  "Ante cualquier duda, contacta primero por WhatsApp o correo oficial.",
+] as const;
+
+export function MetodosDePagoPage() {
+  return (
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.metodosDePago])}
+        title="Métodos de pago"
+        description="Opciones claras y seguras, siempre con confirmación previa de Radio Shalko. Nunca pagues sin validar tu pedido."
+      />
+
+      <TrustPageBody>
+        <TrustSection>
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+            <TrustCard icon={Store} eyebrow="Presencial" title="Pago en tienda" delay={0}>
+              <p>
+                Puedes concretar tu compra y pagar en nuestras sucursales una vez confirmada la
+                disponibilidad del producto.
+              </p>
+              <TrustBulletList items={IN_STORE} />
+            </TrustCard>
+
+            <TrustCard icon={Banknote} eyebrow="Transferencia" title="SPEI / transferencia bancaria" delay={0.06}>
+              <p>
+                Cuando aplique, te compartimos los datos oficiales para transferir. Este método
+                requiere confirmación explícita de Radio Shalko; no está automatizado en el sitio.
+              </p>
+              <TrustBulletList items={SPEI} />
+            </TrustCard>
+          </div>
+        </TrustSection>
+
+        <TrustSection className="mt-4 md:mt-6">
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+            <TrustCard icon={CreditCard} eyebrow="Tarjeta" title="Link de pago seguro" delay={0}>
+              <p>
+                Para pedidos seleccionados, podemos generar un enlace de pago con tarjeta. Su
+                disponibilidad no está garantizada en todos los casos.
+              </p>
+              <TrustBulletList items={CARD} />
+            </TrustCard>
+
+            <TrustCard icon={Lock} eyebrow="Seguridad" title="Recomendaciones importantes" delay={0.06}>
+              <TrustBulletList items={SECURITY} />
+            </TrustCard>
+          </div>
+        </TrustSection>
+
+        <TrustSection narrow className="mt-4 md:mt-6">
+          <TrustSectionIntro
+            eyebrow="Recuerda"
+            title="El pago confirma lo acordado, no lo inventado"
+            description="Los métodos disponibles dependen de tu pedido, del producto y de la confirmación de nuestro equipo. Si algo cambia, te lo decimos antes de que pagues."
+          />
+
+          <TrustRelatedLinks
+            links={[
+              { label: "Cómo comprar", href: "/como-comprar" },
+              { label: "Compra segura", href: "/compra-segura" },
+              { label: "Términos y condiciones", href: "/terminos-y-condiciones" },
+            ]}
+          />
+        </TrustSection>
+
+        <SiteClosingCta
+          eyebrow="Antes de transferir"
+          title="¿Ya tienes instrucciones de pago?"
+          description="Si aún no has recibido confirmación oficial de Radio Shalko, escríbenos antes de pagar. Preferimos aclarar todo contigo."
+          primary={{ label: "Cómo comprar", href: "/como-comprar" }}
+          secondary={{ label: "Compra segura", href: "/compra-segura" }}
+        />
+      </TrustPageBody>
+    </>
+  );
+}

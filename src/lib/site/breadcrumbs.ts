@@ -17,6 +17,11 @@ export const siteCrumbs = {
   cuenta: { label: "Mi cuenta", href: "/cuenta" },
   pedidos: { label: "Mis pedidos", href: "/cuenta/pedidos" },
   notificaciones: { label: "Notificaciones", href: "/cuenta/notificaciones" },
+  compraSegura: { label: "Compra segura", href: "/compra-segura" },
+  comoComprar: { label: "Cómo comprar", href: "/como-comprar" },
+  metodosDePago: { label: "Métodos de pago", href: "/metodos-de-pago" },
+  terminos: { label: "Términos y condiciones", href: "/terminos-y-condiciones" },
+  privacidad: { label: "Aviso de privacidad", href: "/aviso-de-privacidad" },
 } as const satisfies Record<string, SiteBreadcrumbItem>;
 
 /** El último segmento representa la página actual y no lleva enlace. */

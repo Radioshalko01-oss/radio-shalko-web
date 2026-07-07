@@ -11,11 +11,12 @@ import {
 } from "@/lib/site-contact";
 
 const HELP = [
+  { label: "Compra segura", to: "/compra-segura" },
+  { label: "Cómo comprar", to: "/como-comprar" },
+  { label: "Métodos de pago", to: "/metodos-de-pago" },
   { label: "Preguntas frecuentes", to: "/servicios#preguntas-frecuentes" },
   { label: "Contacto y atención", to: "/contacto#formulario" },
   { label: "Garantía y servicios", to: "/garantia#servicio-tecnico" },
-  { label: "Formas de pago", to: "/servicios#formas-pago" },
-  { label: "Recolección en tienda", to: "/servicios#recoleccion-tienda" },
 ];
 
 const ABOUT = [
@@ -27,8 +28,8 @@ const ABOUT = [
 ];
 
 const LEGAL = [
-  { label: "Aviso de privacidad", to: "/contacto#aviso-privacidad" },
-  { label: "Términos y condiciones", to: "/contacto#terminos" },
+  { label: "Aviso de privacidad", to: "/aviso-de-privacidad" },
+  { label: "Términos y condiciones", to: "/terminos-y-condiciones" },
 ];
 
 function IconWhatsApp({ className }: { className?: string }) {
