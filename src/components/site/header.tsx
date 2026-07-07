@@ -27,11 +27,9 @@ import { SiteLogo } from "@/components/brand/site-logo";
 import { BRAND_ARIA_LABEL } from "@/lib/brand/assets";
 import {
   BrandsMegaMenu,
-  MobileCatalogFamily,
   ProductsMegaMenu,
 } from "@/components/site/mega-menus";
 import {
-  CATALOG_FAMILIES,
   FEATURED_BRAND_CANDIDATES,
   OFFICIAL_BRANDS,
   type CatalogMenuItem,
@@ -82,6 +80,19 @@ const NAV: {
   { label: "Contacto", to: "/contacto", panel: null },
   { label: "Garantía", to: "/garantia", panel: null },
 ];
+
+const MOBILE_PRODUCT_LINKS = [
+  { label: "Instrumentos", href: "/productos?cat=Instrumentos" },
+  { label: "Audio profesional", href: "/productos?cat=Equipos%20de%20Audio" },
+  { label: "Accesorios", href: "/productos?cat=Accesorios" },
+  { label: "Equipo de audio", href: "/productos?cat=Equipos%20de%20Audio" },
+] as const;
+
+const MOBILE_TRUST_LINKS = [
+  { label: "Compra segura", href: "/compra-segura" },
+  { label: "Cómo comprar", href: "/como-comprar" },
+  { label: "Métodos de pago", href: "/metodos-de-pago" },
+] as const;
 
 const QUICK_SEARCHES = [
   "Guitarras eléctricas",
@@ -416,7 +427,7 @@ export function SiteHeader({
   }, [headerForcedSolid, hasHero]);
 
   const iconBtn =
-    "site-header__icon-btn relative grid h-11 w-11 place-items-center rounded-full transition-colors duration-300 ease-out";
+    "site-header__icon-btn relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-300 ease-out sm:h-11 sm:w-11";
   const badgeClass =
     "site-header__badge absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold tabular-nums text-copper-foreground ring-2";
 
@@ -435,13 +446,23 @@ export function SiteHeader({
           aria-hidden
         />
       )}
-      <div className="site-header__bar relative flex h-16 w-full items-center justify-between px-5 md:h-20 md:px-7 lg:px-10">
+      <div className="site-header__bar relative flex h-14 w-full items-center justify-between gap-2 px-4 sm:h-16 sm:px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
-          className="group relative z-10 flex shrink-0 items-center"
+          className="group relative z-10 flex min-w-0 shrink items-center"
           aria-label={BRAND_ARIA_LABEL}
         >
-          <div className="relative">
+          <div className="relative lg:hidden">
+            {heroBlend && (
+              <div className="site-header__logo-light">
+                <SiteLogo context="mobileHeader" tone="on-dark" interactive />
+              </div>
+            )}
+            <div className={cn(heroBlend && "site-header__logo-dark absolute inset-0")}>
+              <SiteLogo context="mobileHeader" tone="default" interactive />
+            </div>
+          </div>
+          <div className="relative hidden lg:block">
             {heroBlend && (
               <div className="site-header__logo-light">
                 <SiteLogo
@@ -492,7 +513,7 @@ export function SiteHeader({
           </div>
         </nav>
 
-        <div className="relative z-10 flex shrink-0 items-center justify-end gap-1 sm:gap-1.5">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-0.5 sm:gap-1.5">
           <button
             aria-label="Buscar"
             onClick={() => setSearchOpen(true)}
@@ -707,11 +728,11 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="fixed inset-0 top-16 z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
+            className="fixed inset-0 top-14 z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 sm:top-16 lg:hidden"
             onClick={closeMobileMenu}
           />
-          <div className="relative z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
-          <nav className="mx-auto flex max-w-7xl flex-col px-5 py-6">
+          <div className="relative z-50 max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:max-h-[calc(100dvh-4rem)] lg:hidden">
+          <nav className="mx-auto flex max-w-7xl flex-col px-5 py-5 sm:py-6">
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
                 Menú
@@ -726,24 +747,30 @@ export function SiteHeader({
               isOpen={mobilePanel === "productos"}
               onToggle={() => setMobilePanel((p) => (p === "productos" ? null : "productos"))}
             >
-              <div className="space-y-4 pb-4 pt-2">
-                {CATALOG_FAMILIES.map((family) => (
-                  <MobileCatalogFamily
-                    key={family.key}
-                    family={family}
-                    isActiveItem={isActiveCatalogItem}
-                    onCategory={goCategoryGroup}
-                    onItem={goCatalogItem}
-                  />
+              <ul className="space-y-0.5 pb-3 pt-1">
+                {MOBILE_PRODUCT_LINKS.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      onClick={(e) => handleNavClick(e, link.href, closeMobileMenu)}
+                      className="flex items-center justify-between rounded-lg px-2 py-2.5 text-sm text-foreground/85 transition-colors hover:bg-muted/50 hover:text-foreground"
+                    >
+                      {link.label}
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    </Link>
+                  </li>
                 ))}
-                <button
-                  onClick={() => navigateOrScrollTop("/productos", closeMobileMenu)}
-                  className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-copper transition-[gap,transform] duration-300 hover:gap-2"
-                >
-                  Ver catálogo completo
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
+                <li className="pt-1">
+                  <Link
+                    href="/productos"
+                    onClick={(e) => handleNavClick(e, "/productos", closeMobileMenu)}
+                    className="inline-flex items-center gap-1.5 px-2 py-2 text-sm font-medium text-copper"
+                  >
+                    Ver catálogo completo
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </li>
+              </ul>
             </MobileAccordion>
 
             {/* Marcas accordion */}
@@ -794,6 +821,26 @@ export function SiteHeader({
                 <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-copper" />
               </Link>
             ))}
+
+            <div className="mt-2 border-t border-border/60 pt-3">
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Compra asistida
+              </p>
+              <ul className="mt-2 space-y-0.5">
+                {MOBILE_TRUST_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={(e) => handleNavClick(e, link.href, closeMobileMenu)}
+                      className="flex items-center justify-between rounded-lg px-2 py-2.5 text-sm text-foreground/85 transition-colors hover:bg-muted/50 hover:text-foreground"
+                    >
+                      {link.label}
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             {/* Cuenta (móvil) */}
             <div className="mt-4 border-t border-border/60 pt-4">
