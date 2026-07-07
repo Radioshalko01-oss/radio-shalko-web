@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  BRANDS_MARQUEE_SECONDS,
+  nodeContains,
+} from "@/lib/site/home-motion";
 
 const behringer = "/images/brands/behringer.png";
 const yamaha = "/images/brands/yamaha.png";
@@ -36,7 +40,7 @@ const BRANDS: Brand[] = [
 ];
 
 const MARQUEE_COPIES = 2;
-const LOOP_SECONDS = 45;
+const LOOP_SECONDS = BRANDS_MARQUEE_SECONDS;
 const RESUME_DELAY_MS = 180;
 
 function BrandLogo({ brand, copyIndex }: { brand: Brand; copyIndex: number }) {
@@ -62,6 +66,7 @@ function BrandLogo({ brand, copyIndex }: { brand: Brand; copyIndex: number }) {
 
 export function Brands() {
   const sectionRef = useRef<HTMLElement>(null);
+  const mobileTrackRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const segmentRef = useRef<HTMLDivElement>(null);
   const segmentWidthRef = useRef(0);
@@ -133,8 +138,10 @@ export function Brands() {
 
   const handleSectionPointerLeave = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
+      if (event.pointerType !== "mouse") return;
+
       const next = event.relatedTarget;
-      if (next && sectionRef.current?.contains(next as Node)) return;
+      if (nodeContains(sectionRef.current, next)) return;
 
       pointerInsideRef.current = false;
       scheduleResume();
@@ -157,8 +164,69 @@ export function Brands() {
     return () => observer.disconnect();
   }, [measure]);
 
+  /** Marquee mobile con Web Animations API (Safari iOS no anima bien % en CSS). */
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const track = mobileTrackRef.current;
+    const segment = track?.firstElementChild as HTMLElement | null;
+    if (!track || !segment) return;
+
+    const mq = window.matchMedia("(max-width: 767px)");
+    if (!mq.matches) return;
+
+    let animation: Animation | null = null;
+
+    const start = () => {
+      animation?.cancel();
+      const width = Math.round(segment.getBoundingClientRect().width);
+      if (width <= 0) return;
+
+      track.style.setProperty("--marquee-distance", `-${width}px`);
+      animation = track.animate(
+        [
+          { transform: "translate3d(0, 0, 0)" },
+          { transform: `translate3d(-${width}px, 0, 0)` },
+        ],
+        {
+          duration: LOOP_SECONDS * 1000,
+          iterations: Infinity,
+          easing: "linear",
+        },
+      );
+    };
+
+    start();
+
+    const observer = new ResizeObserver(start);
+    observer.observe(segment);
+    window.addEventListener("load", start);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        animation?.play();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      animation?.cancel();
+      observer.disconnect();
+      window.removeEventListener("load", start);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [prefersReducedMotion]);
+
   useEffect(() => {
     window.addEventListener("load", measure);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        lastTimeRef.current = 0;
+        measure();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     const tick = (time: number) => {
       const track = trackRef.current;
@@ -192,6 +260,7 @@ export function Brands() {
 
     return () => {
       window.removeEventListener("load", measure);
+      document.removeEventListener("visibilitychange", onVisible);
       cancelAnimationFrame(rafRef.current);
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
     };
@@ -209,10 +278,9 @@ export function Brands() {
         }
       }}
       onBlurCapture={(event) => {
-        if (!sectionRef.current?.contains(event.relatedTarget as Node | null)) {
-          pointerInsideRef.current = false;
-          scheduleResume();
-        }
+        if (nodeContains(sectionRef.current, event.relatedTarget)) return;
+        pointerInsideRef.current = false;
+        scheduleResume();
       }}
     >
       <div className="mx-auto max-w-7xl px-5 md:px-8">
@@ -240,23 +308,45 @@ export function Brands() {
             ))}
           </div>
         ) : (
-        <div
-          ref={trackRef}
-          className="flex w-max items-center will-change-transform motion-reduce:transform-none"
-        >
-          {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
+          <>
             <div
-              key={copyIndex}
-              ref={copyIndex === 0 ? segmentRef : undefined}
-              className="flex shrink-0 items-center gap-12 pr-12 md:gap-16 md:pr-16"
-              aria-hidden={copyIndex === 1}
+              ref={mobileTrackRef}
+              className="brands-marquee-track flex w-max items-center md:hidden [transform:translateZ(0)]"
             >
-              {BRANDS.map((brand) => (
-                <BrandLogo key={`${brand.name}-${copyIndex}`} brand={brand} copyIndex={copyIndex} />
+              {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
+                <div
+                  key={copyIndex}
+                  className="flex shrink-0 items-center gap-12 pr-12"
+                  aria-hidden={copyIndex === 1}
+                >
+                  {BRANDS.map((brand) => (
+                    <BrandLogo
+                      key={`${brand.name}-mobile-${copyIndex}`}
+                      brand={brand}
+                      copyIndex={copyIndex}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
-        </div>
+            <div
+              ref={trackRef}
+              className="hidden w-max items-center will-change-transform motion-reduce:transform-none md:flex"
+            >
+              {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
+                <div
+                  key={copyIndex}
+                  ref={copyIndex === 0 ? segmentRef : undefined}
+                  className="flex shrink-0 items-center gap-12 pr-12 md:gap-16 md:pr-16"
+                  aria-hidden={copyIndex === 1}
+                >
+                  {BRANDS.map((brand) => (
+                    <BrandLogo key={`${brand.name}-${copyIndex}`} brand={brand} copyIndex={copyIndex} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </section>

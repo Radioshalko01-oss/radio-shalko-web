@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { HERO_SLIDES } from "@/lib/data/hero-slides";
+import {
+  HOME_CAROUSEL_INTERVAL_MS,
+  HOME_EASING,
+  HOME_IMAGE_CROSSFADE_MS,
+  HOME_MOBILE_FADE_TRANSITION,
+} from "@/lib/site/home-motion";
 import { cn } from "@/lib/utils";
 
-const SLIDE_INTERVAL_MS = 8000;
-const CROSSFADE_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+const CROSSFADE_EASING = HOME_EASING;
 
 export function Hero() {
   const [index, setIndex] = useState(0);
   const [textKey, setTextKey] = useState(0);
   const [textVisible, setTextVisible] = useState(true);
-  const skipTextFadeRef = useRef(true);
   const slideCount = HERO_SLIDES.length;
 
   const goToSlide = useCallback((next: number) => {
@@ -27,97 +31,97 @@ export function Hero() {
         setTextKey((key) => key + 1);
         return next;
       });
-    }, SLIDE_INTERVAL_MS);
+    }, HOME_CAROUSEL_INTERVAL_MS);
 
     return () => window.clearInterval(id);
   }, [slideCount]);
 
   useEffect(() => {
-    if (skipTextFadeRef.current) {
-      skipTextFadeRef.current = false;
-      return;
-    }
     setTextVisible(false);
-    const id = window.setTimeout(() => setTextVisible(true), 140);
-    return () => window.clearTimeout(id);
-  }, [index]);
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        setTextVisible(true);
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+    };
+  }, [textKey]);
 
   const activeSlide = HERO_SLIDES[index];
 
-  const mobileTextMotion = cn(
-    "max-md:transition-all max-md:duration-[650ms] max-md:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-md:transition-none",
+  const mobileTextClass = cn(
+    HOME_MOBILE_FADE_TRANSITION,
     textVisible
       ? "max-md:translate-y-0 max-md:opacity-100"
-      : "max-md:translate-y-3 max-md:opacity-0",
+      : "max-md:translate-y-3 max-md:opacity-[0.001]",
   );
 
   return (
     <section
       aria-roledescription="carousel"
       aria-label="Presentación principal de Radio Shalko"
-      className="relative h-[100svh] min-h-[100svh] w-full overflow-hidden bg-[#111]"
+      className="hero-mobile-full relative max-md:h-[100svh] max-md:max-h-[100svh] max-md:min-h-[100svh] max-md:shrink-0 md:h-[100svh] md:min-h-[100svh] w-full overflow-hidden bg-[#111]"
     >
-      <div className="absolute inset-0" aria-hidden="true">
+      <div className="absolute inset-0 max-md:h-[100svh] pointer-events-none" aria-hidden="true">
         {HERO_SLIDES.map((slide, i) => {
           const isActive = i === index;
-          const isNext = i === (index + 1) % slideCount;
-          const shouldRender = isActive || isNext;
 
           return (
             <div
               key={slide.id}
               className={cn(
-                "absolute inset-0 transition-opacity motion-reduce:transition-none max-md:duration-[1800ms] md:duration-[1400ms]",
-                isActive ? "opacity-100" : "opacity-0",
+                "absolute inset-0 max-md:h-[100svh] bg-[#111] transition-opacity motion-reduce:transition-none max-md:[-webkit-transition:opacity_var(--hero-crossfade)_cubic-bezier(0.22,1,0.36,1)]",
+                isActive ? "opacity-100" : "pointer-events-none opacity-0",
               )}
               style={{
+                transitionDuration: `${HOME_IMAGE_CROSSFADE_MS}ms`,
+                ["--hero-crossfade" as string]: `${HOME_IMAGE_CROSSFADE_MS}ms`,
                 transitionTimingFunction: CROSSFADE_EASING,
                 zIndex: isActive ? 2 : 1,
+                willChange: "opacity",
               }}
             >
-              {shouldRender ? (
+              <div
+                className="absolute inset-0 max-md:h-[100svh] max-md:overflow-hidden hero-ken-burns-wrap md:motion-safe:animate-hero-ken-burns [transform:translateZ(0)]"
+                style={
+                  slide.mobileObjectPosition
+                    ? ({ "--hero-object-position": slide.mobileObjectPosition } as CSSProperties)
+                    : undefined
+                }
+              >
                 <img
                   src={slide.image}
                   alt=""
                   width={1920}
                   height={1080}
-                  fetchPriority={isActive && index === 0 ? "high" : "auto"}
-                  loading={isActive ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : "auto"}
+                  loading={i === 0 ? "eager" : "lazy"}
                   decoding="async"
-                  className={cn(
-                    "absolute inset-0 h-full w-full object-cover brightness-[0.76] [backface-visibility:hidden] [transform:translateZ(0)]",
-                    "max-md:object-[center_36%] max-md:transition-transform max-md:duration-[7000ms] max-md:ease-out motion-reduce:max-md:transition-none",
-                    isActive ? "max-md:scale-[1.05]" : "max-md:scale-100",
-                    "md:motion-safe:animate-hero-ken-burns",
-                  )}
+                  className="absolute inset-0 h-full w-full min-h-full min-w-full object-cover object-center brightness-[0.76] [backface-visibility:hidden] max-md:[object-position:var(--hero-object-position,center_center)] md:scale-100 md:animate-none"
                 />
-              ) : null}
+              </div>
             </div>
           );
         })}
 
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 max-md:h-[100svh] bg-[#111]"
           style={{
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.28) 48%, rgba(0,0,0,0.52) 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 42%, rgba(0,0,0,0.26) 0%, transparent 72%)",
+              "linear-gradient(180deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.22) 45%, rgba(0,0,0,0.5) 100%)",
           }}
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex h-full min-h-[100svh] max-w-[820px] flex-col items-center justify-center px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(3.5rem+2rem)] text-center max-md:justify-center md:px-8 md:pb-24 md:pt-28">
+      <div className="relative z-10 mx-auto flex h-full max-md:h-[100svh] max-md:max-h-[100svh] max-w-[820px] flex-col items-center justify-center px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-[calc(3.5rem+1rem+env(safe-area-inset-top,0px))] text-center max-md:pointer-events-auto max-md:justify-center md:min-h-[100svh] md:px-8 md:pb-24 md:pt-28">
         <div key={textKey} className="flex w-full flex-col items-center">
           <p
             className={cn(
               "text-[11px] font-semibold uppercase tracking-[0.22em] text-white md:hero-text-in md:text-xs md:motion-reduce:animate-none",
-              mobileTextMotion,
+              mobileTextClass,
             )}
             style={{ animationDelay: "320ms" }}
           >
@@ -127,7 +131,7 @@ export function Hero() {
           <h1
             className={cn(
               "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white md:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] md:motion-reduce:animate-none lg:text-[4rem]",
-              mobileTextMotion,
+              mobileTextClass,
             )}
             style={{ animationDelay: "480ms" }}
           >
@@ -137,7 +141,7 @@ export function Hero() {
           <p
             className={cn(
               "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 md:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] md:motion-reduce:animate-none",
-              mobileTextMotion,
+              mobileTextClass,
             )}
             style={{ animationDelay: "620ms" }}
           >
@@ -146,8 +150,8 @@ export function Hero() {
 
           <div
             className={cn(
-              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center md:hero-text-in md:mt-10 md:items-center md:gap-3 md:motion-reduce:animate-none",
-              mobileTextMotion,
+              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 md:hero-text-in md:mt-10 md:items-center md:gap-3 md:motion-reduce:animate-none sm:max-w-none sm:flex-row sm:items-center sm:justify-center",
+              mobileTextClass,
             )}
             style={{ animationDelay: "760ms" }}
           >
@@ -168,7 +172,7 @@ export function Hero() {
       </div>
 
       <div
-        className="absolute inset-x-0 bottom-8 z-20 flex justify-center gap-1 pb-[env(safe-area-inset-bottom)] md:bottom-10"
+        className="absolute inset-x-0 bottom-6 z-20 flex justify-center gap-1 pb-[env(safe-area-inset-bottom)] md:bottom-10"
         role="tablist"
         aria-label="Seleccionar slide del hero"
       >
