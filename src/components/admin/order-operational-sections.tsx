@@ -18,7 +18,7 @@ import {
   type WarrantyCustomUnit,
   type WarrantyOption,
 } from "@/lib/orders/operational-metadata";
-import { branchDisplayName, customerPaymentPreferenceLabel } from "@/lib/orders/status-labels";
+import { branchDisplayName } from "@/lib/orders/status-labels";
 import { AdminButton } from "@/components/admin/admin-button";
 import { adminShell } from "@/lib/design/admin-shell";
 import { formatPrice } from "@/lib/catalog/format";
@@ -96,31 +96,7 @@ export function OrderFinalPriceSection({ order }: { order: AdminOrderDetail }) {
       </div>
 
       {confirmed ? (
-        <dl className="mt-3 space-y-2 text-sm">
-          <div>
-            <dt className={adminShell.fieldLabel}>Precio final confirmado con el cliente</dt>
-            <dd className="font-medium text-foreground">
-              {formatPrice(order.confirmedFinalPrice ?? Number(amount))}
-            </dd>
-          </div>
-          {order.confirmedFinalPriceNote && (
-            <div>
-              <dt className={adminShell.fieldLabel}>Nota de ajuste</dt>
-              <dd className="text-foreground/90">{order.confirmedFinalPriceNote}</dd>
-              <dd className="mt-1 text-xs text-muted-foreground">
-                El cliente debe aceptar el precio final antes de continuar con el pago.
-              </dd>
-            </div>
-          )}
-          {order.confirmedFinalPriceAt && (
-            <div>
-              <dt className={adminShell.fieldLabel}>Confirmado</dt>
-              <dd className="text-muted-foreground">
-                {formatDateTime(order.confirmedFinalPriceAt)}
-              </dd>
-            </div>
-          )}
-        </dl>
+        <p className="mt-3 text-sm text-emerald-700">Precio confirmado</p>
       ) : (
         <div className="mt-3 space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -220,7 +196,7 @@ export function OrderWarrantySection({ order }: { order: AdminOrderDetail }) {
       </div>
 
       {defined && order.warrantyLabel ? (
-        <p className="mt-3 text-sm font-medium text-foreground">{order.warrantyLabel}</p>
+        <p className="mt-3 text-sm text-emerald-700">Garantía registrada</p>
       ) : (
         <div className="mt-3 space-y-4">
           <div className="space-y-2">
@@ -392,33 +368,12 @@ export function OrderPaymentInstructionsSection({ order }: { order: AdminOrderDe
   return (
     <section className={adminShell.cardSection}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className={adminShell.sectionTitleSm}>5. Confirmar forma de pago</h3>
+        <h3 className={adminShell.sectionTitleSm}>5. Forma de pago</h3>
         <StepBadge done={confirmed} label={confirmed ? "Completado" : "Pendiente"} />
       </div>
 
-      <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-        <div className={adminShell.mutedBox}>
-          <dt className={adminShell.fieldLabel}>Preferencia del cliente</dt>
-          <dd className="mt-1 text-sm font-medium text-foreground">
-            {customerPaymentPreferenceLabel(order.paymentMethod)}
-          </dd>
-        </div>
-        <div className={adminShell.mutedBox}>
-          <dt className={adminShell.fieldLabel}>Tienda de recolección</dt>
-          <dd className="mt-1 text-sm font-medium text-foreground">
-            {branchDisplayName(order.branchSlug, order.branchLabel)}
-          </dd>
-        </div>
-      </dl>
-
       {confirmed ? (
-        <p className="mt-3 text-sm text-emerald-700">
-          Forma de pago confirmada
-          {order.paymentInstructionsSent && isTransfer
-            ? " · Instrucciones enviadas al cliente"
-            : ""}
-          .
-        </p>
+        <p className="mt-3 text-sm text-emerald-700">Confirmado</p>
       ) : isTransfer ? (
         <div className="mt-4 space-y-4">
           <div className={adminShell.mutedBox}>

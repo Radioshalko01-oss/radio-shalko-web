@@ -233,3 +233,22 @@ export function bankTransferWhatsAppMessage(
 
 ${bankTransferDetailsText(orderNumber, amount)}`;
 }
+
+/** Datos bancarios para vista cliente (sin tarjeta). */
+export function customerBankTransferLines(): Array<{ label: string; value: string }> {
+  return [
+    { label: "Banco", value: BANK_TRANSFER_DETAILS.bank },
+    { label: "Titular", value: BANK_TRANSFER_DETAILS.holder },
+    { label: "Cuenta", value: BANK_TRANSFER_DETAILS.account },
+    { label: "CLABE", value: BANK_TRANSFER_DETAILS.clabe },
+  ];
+}
+
+export function customerBankTransferDetailsText(orderNumber: string): string {
+  const lines = customerBankTransferLines().map((row) => `${row.label}: ${row.value}`);
+  return [`Datos para transferencia · ${orderNumber}`, "", ...lines].join("\n");
+}
+
+export function customerTransferReceiptWhatsAppMessage(orderNumber: string): string {
+  return `Hola, envío comprobante de transferencia para mi solicitud ${orderNumber}.`;
+}

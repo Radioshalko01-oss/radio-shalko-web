@@ -2,27 +2,25 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Package, Tag } from "lucide-react";
 import { formatPrice } from "@/lib/catalog/format";
 import {
-  ADMIN_BRANCH_REVIEW_HINTS,
   branchDisplayName,
+  customerPaymentPreferenceLabel,
   historyStatusLabel,
   isOrderPendingReview,
   orderStatusUi,
-  paymentStatusUi,
-  pickupAvailabilityHint,
 } from "@/lib/orders/status-labels";
 import type { AdminOrderDetail } from "@/lib/orders/admin-queries";
 import { AdminOrderStatusBadge } from "@/components/admin/admin-status-badge";
 import { OrderDetailActions } from "@/components/admin/order-detail-actions";
 import { OrderAvailabilityReview } from "@/components/admin/order-availability-review";
 import { OrderPaymentSection } from "@/components/admin/order-payment-section";
-import { OrderRequestFlow } from "@/components/admin/order-request-flow";
 import {
   OrderFinalPriceSection,
   OrderPaymentInstructionsSection,
   OrderWarrantySection,
 } from "@/components/admin/order-operational-sections";
 import { OrderFulfillmentSection } from "@/components/admin/order-fulfillment-section";
-import { customerPaymentPreferenceLabel } from "@/lib/orders/status-labels";
+import { OrderNextStepCard } from "@/components/admin/order-next-step-card";
+import { OrderProgressSummary } from "@/components/admin/order-progress-summary";
 import { adminShell } from "@/lib/design/admin-shell";
 import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
@@ -49,16 +47,11 @@ function StatusBadge({
   return <AdminOrderStatusBadge tone={ui.tone}>{ui.label}</AdminOrderStatusBadge>;
 }
 
-function historyLabel(toStatus: string, fromStatus: string | null): string {
-  return historyStatusLabel(toStatus, fromStatus);
+function displayOrderTotal(order: AdminOrderDetail): number {
+  return order.confirmedFinalPrice ?? order.total;
 }
 
 export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
-  const branchHint =
-    order.branchSlug === "chalco" || order.branchSlug === "amecameca"
-      ? ADMIN_BRANCH_REVIEW_HINTS[order.branchSlug]
-      : "Revisa disponibilidad antes de confirmar al cliente.";
-
   const historyEntries =
     order.history.length > 0
       ? order.history
@@ -79,10 +72,10 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
         Volver a pedidos
       </Link>
 
-      <div className={adminShell.cardSection}>
+      <section className={adminShell.cardSection}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className={typography.labelCaps}>Solicitud de compra</p>
+            <p className={typography.labelCaps}>Solicitud</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h2 className="font-mono text-xl font-semibold tracking-tight text-foreground md:text-2xl">
                 {order.orderNumber}
@@ -95,83 +88,77 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
               />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{formatDateTime(order.createdAt)}</p>
-            {pickupAvailabilityHint(order.availabilityDecision, order.pickupAvailableDate) && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                {pickupAvailabilityHint(order.availabilityDecision, order.pickupAvailableDate)}
-              </p>
-            )}
           </div>
           <div className="text-right">
-            <p className={adminShell.fieldLabel}>Total estimado</p>
-            <p className={typography.priceTotal}>{formatPrice(order.total)}</p>
+            <p className={adminShell.fieldLabel}>
+              {order.confirmedFinalPriceAt ? "Total confirmado" : "Total estimado"}
+            </p>
+            <p className={typography.priceTotal}>{formatPrice(displayOrderTotal(order))}</p>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className={adminShell.cardSection}>
-          <h3 className={adminShell.sectionTitleSm}>Cliente</h3>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div>
-              <dt className={adminShell.fieldLabel}>Nombre</dt>
-              <dd className="font-medium text-foreground">{order.customerName}</dd>
-            </div>
-            <div>
-              <dt className={adminShell.fieldLabel}>Correo</dt>
-              <dd className="text-foreground/90">{order.customerEmail || "—"}</dd>
-            </div>
-            <div>
-              <dt className={adminShell.fieldLabel}>Teléfono</dt>
-              <dd className="text-foreground/90">{order.customerPhone || "—"}</dd>
-            </div>
-          </dl>
-          <div className="mt-4">
-            <OrderDetailActions
-              orderNumber={order.orderNumber}
-              phone={order.customerPhone}
-              showPendingWhatsApp={isOrderPendingReview(order.status, order.paymentStatus)}
-            />
+        <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={adminShell.mutedBox}>
+            <dt className={adminShell.fieldLabel}>Estado actual</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">
+              {orderStatusUi(order.status, order.paymentStatus, {
+                fulfillmentStatus: order.fulfillmentStatus,
+              }).label}
+            </dd>
           </div>
-        </section>
+          <div className={adminShell.mutedBox}>
+            <dt className={adminShell.fieldLabel}>Cliente</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">{order.customerName}</dd>
+            <dd className="text-xs text-muted-foreground">{order.customerEmail || "—"}</dd>
+          </div>
+          <div className={adminShell.mutedBox}>
+            <dt className={adminShell.fieldLabel}>Pago preferido</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">
+              {customerPaymentPreferenceLabel(order.paymentMethod)}
+            </dd>
+          </div>
+          <div className={adminShell.mutedBox}>
+            <dt className={adminShell.fieldLabel}>Tienda de recolección</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">
+              {branchDisplayName(order.branchSlug, order.branchLabel)}
+            </dd>
+          </div>
+        </dl>
 
-        <section className={adminShell.cardSection}>
-          <h3 className={adminShell.sectionTitleSm}>Tienda de recolección</h3>
-          <p className="mt-2 text-sm font-medium text-foreground">
-            {branchDisplayName(order.branchSlug, order.branchLabel)}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{branchHint}</p>
-        </section>
+        <div className="mt-4">
+          <OrderDetailActions
+            orderNumber={order.orderNumber}
+            phone={order.customerPhone}
+            showPendingWhatsApp={isOrderPendingReview(order.status, order.paymentStatus)}
+          />
+        </div>
+      </section>
 
-        <section className={adminShell.cardSection}>
-          <h3 className={adminShell.sectionTitleSm}>Preferencia del cliente</h3>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div>
-              <dt className={adminShell.fieldLabel}>Forma de pago preferida</dt>
-              <dd className="font-medium text-foreground">
-                {customerPaymentPreferenceLabel(order.paymentMethod)}
-              </dd>
-            </div>
-            <div>
-              <dt className={adminShell.fieldLabel}>Tienda de recolección</dt>
-              <dd className="text-foreground/90">
-                {branchDisplayName(order.branchSlug, order.branchLabel)}
-              </dd>
-            </div>
-          </dl>
-        </section>
+      <OrderNextStepCard order={order} />
+
+      <OrderProgressSummary order={order} />
+
+      <div id="order-review">
+        <OrderAvailabilityReview order={order} />
       </div>
 
-      <OrderRequestFlow order={order} />
+      <div id="order-price">
+        <OrderFinalPriceSection order={order} />
+      </div>
+      <div id="order-warranty">
+        <OrderWarrantySection order={order} />
+      </div>
+      <div id="order-payment-method">
+        <OrderPaymentInstructionsSection order={order} />
+      </div>
 
-      <OrderAvailabilityReview order={order} />
+      <div id="order-validate-payment">
+        <OrderPaymentSection order={order} />
+      </div>
 
-      <OrderFinalPriceSection order={order} />
-      <OrderWarrantySection order={order} />
-      <OrderPaymentInstructionsSection order={order} />
-
-      <OrderPaymentSection order={order} />
-
-      <OrderFulfillmentSection order={order} />
+      <div id="order-fulfillment">
+        <OrderFulfillmentSection order={order} />
+      </div>
 
       <section className={cn(adminShell.card, "overflow-hidden")}>
         <div className={cn("border-b px-4 py-3", adminShell.dividerSoft)}>
@@ -218,47 +205,14 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
         )}
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      {order.notes && (
         <section className={adminShell.cardSection}>
-          <h3 className={adminShell.sectionTitleSm}>Resumen</h3>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Subtotal estimado</dt>
-              <dd className="font-medium text-foreground">{formatPrice(order.subtotal)}</dd>
-            </div>
-            {order.shippingCost > 0 && (
-              <div className="flex justify-between">
-                <dt className="text-muted-foreground">Envío</dt>
-                <dd className="font-medium text-foreground">{formatPrice(order.shippingCost)}</dd>
-              </div>
-            )}
-            <div className={cn("flex justify-between border-t pt-2", adminShell.dividerSoft)}>
-              <dt className="font-medium text-foreground">Total estimado</dt>
-              <dd className="font-semibold text-foreground">{formatPrice(order.total)}</dd>
-            </div>
-          </dl>
-          <p className={cn("mt-3 text-xs text-muted-foreground", adminShell.mutedBox)}>
-            {paymentStatusUi(order.paymentStatus, order.status, {
-              hasPaymentUrl: order.hasPaymentUrl,
-              fulfillmentStatus: order.fulfillmentStatus,
-            })}
-            {order.status === "confirmed" && order.paymentStatus === "unpaid"
-              ? " · Esperando validación de pago manual."
-              : order.status === "pending"
-                ? " · Esperando revisión de disponibilidad."
-                : ""}
+          <h3 className={adminShell.sectionTitleSm}>Notas del cliente</h3>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
+            {order.notes}
           </p>
         </section>
-
-        {order.notes && (
-          <section className={adminShell.cardSection}>
-            <h3 className={adminShell.sectionTitleSm}>Notas del cliente</h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-              {order.notes}
-            </p>
-          </section>
-        )}
-      </div>
+      )}
 
       <section className={adminShell.cardSection}>
         <h3 className={adminShell.sectionTitleSm}>Historial</h3>
@@ -270,7 +224,7 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
               </div>
               <div>
                 <p className="font-medium text-foreground">
-                  {historyLabel(entry.toStatus, entry.fromStatus)}
+                  {historyStatusLabel(entry.toStatus, entry.fromStatus)}
                 </p>
                 <p className="text-xs text-muted-foreground">{formatDateTime(entry.createdAt)}</p>
                 {entry.note && (

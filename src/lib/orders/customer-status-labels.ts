@@ -1,5 +1,5 @@
 /**
- * Etiquetas y copy para el cliente · SALES-5.2 / SALES-7 (sin datos internos).
+ * Etiquetas y copy para el cliente · lenguaje claro, sin términos técnicos.
  */
 import { branchDisplayName } from "@/lib/orders/status-labels";
 
@@ -14,6 +14,8 @@ export type CustomerOrderStatusOpts = {
   fulfillmentStatus?: string;
   pickupReadyMessage?: string | null;
   pickupReadyEstimate?: string | null;
+  paymentInstructionsSent?: boolean;
+  paymentMethod?: string;
 };
 
 export function customerOrderStatusUi(
@@ -26,15 +28,13 @@ export function customerOrderStatusUi(
     if (fs === "delivered") {
       return {
         label: "Entregado",
-        description:
-          "Este pedido fue marcado como entregado. Gracias por comprar en Radio Shalko.",
+        description: "Tu pedido ya fue entregado. Gracias por comprar en Radio Shalko.",
         tone: "paid",
       };
     }
     if (fs === "ready_for_pickup") {
       const base =
-        opts?.pickupReadyMessage?.trim() ||
-        "Tu pedido ya está listo para recoger en tienda.";
+        opts?.pickupReadyMessage?.trim() || "Tu producto ya está listo para recoger.";
       const withEstimate = opts?.pickupReadyEstimate?.trim()
         ? `${base} ${opts.pickupReadyEstimate.trim()}`
         : base;
@@ -46,16 +46,14 @@ export function customerOrderStatusUi(
     }
     if (fs === "preparing") {
       return {
-        label: "Preparando pedido",
-        description:
-          "Estamos preparando tu pedido. Te avisaremos cuando esté listo para recoger.",
+        label: "En preparación",
+        description: "Estamos preparando tu producto. Te avisaremos cuando puedas recogerlo.",
         tone: "approved",
       };
     }
     return {
       label: "Pago confirmado",
-      description:
-        "Pago confirmado. Prepararemos tu producto para entrega o recolección según corresponda.",
+      description: "Recibimos tu pago. Pronto comenzaremos a preparar tu pedido.",
       tone: "paid",
     };
   }
@@ -67,18 +65,24 @@ export function customerOrderStatusUi(
     };
   }
   if (status === "confirmed" && paymentStatus === "unpaid") {
+    if (opts?.paymentMethod === "bank_transfer" && opts?.paymentInstructionsSent) {
+      return {
+        label: "Esperando pago",
+        description: "Ya puedes realizar tu transferencia con los datos indicados abajo.",
+        tone: "approved",
+      };
+    }
     return {
-      label: "Aprobado · esperando pago",
+      label: "Solicitud aprobada",
       description:
-        "Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones de pago por transferencia o pago presencial en tienda.",
+        "Radio Shalko confirmará contigo cualquier detalle pendiente antes del pago.",
       tone: "approved",
     };
   }
   if (status === "pending" && paymentStatus === "unpaid") {
     return {
       label: "Solicitud recibida",
-      description:
-        "Tu solicitud fue recibida. No realices pagos fuera de los canales oficiales. Nuestro equipo te confirmará disponibilidad, garantía y forma de pago.",
+      description: "Estamos revisando tu solicitud. Te contactaremos por canales oficiales.",
       tone: "pending",
     };
   }
@@ -109,18 +113,48 @@ export function customerOrderStatusBadgeClass(tone: CustomerOrderStatusUi["tone"
   return `inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${CUSTOMER_BADGE_STYLES[tone]}`;
 }
 
-export function customerPickupHint(fulfillmentStatus?: string): string {
+export function customerPaymentSummary(
+  status: string,
+  paymentStatus: string,
+  paymentMethod: string,
+  paymentInstructionsSent: boolean,
+): string {
+  if (paymentStatus === "paid") return "Pago confirmado";
+  if (status === "pending") {
+    return "Aún no solicitamos el pago. Espera nuestra confirmación.";
+  }
+  if (status === "confirmed" && paymentMethod === "bank_transfer") {
+    if (paymentInstructionsSent) {
+      return "Realiza tu transferencia y envía tu comprobante por WhatsApp.";
+    }
+    return "Te compartiremos los datos bancarios cuando estén listos.";
+  }
+  if (status === "confirmed" && paymentMethod === "pay_in_store") {
+    return "Podrás pagar en tienda cuando te indiquemos continuar.";
+  }
+  return "Radio Shalko confirmará contigo cualquier detalle pendiente.";
+}
+
+export function customerPickupSummary(
+  branchSlug: string | null,
+  branchLabel: string,
+  fulfillmentStatus?: string,
+): string {
+  const store = branchDisplayName(branchSlug, branchLabel);
   if (fulfillmentStatus === "ready_for_pickup") {
-    return "Puedes pasar a recoger tu pedido en la sucursal indicada.";
+    return `Tu producto se recogerá en ${store}. Ya puedes pasar por él.`;
   }
   if (fulfillmentStatus === "delivered") {
-    return "Este pedido ya fue entregado.";
+    return `Recogiste tu producto en ${store}.`;
   }
-  return "Te avisaremos cuando el pedido esté listo para continuar.";
+  if (fulfillmentStatus === "preparing") {
+    return `Tu producto se recogerá en ${store}. Te avisaremos cuando esté listo.`;
+  }
+  return `Tu producto se recogerá en ${store}. No realizamos envíos a domicilio.`;
 }
 
 export function buildCustomerOrderWhatsAppMessage(orderNumber: string): string {
-  return `Hola, quiero consultar el estado de mi pedido ${orderNumber}.`;
+  return `Hola, quiero consultar el estado de mi solicitud ${orderNumber}.`;
 }
 
 export { branchDisplayName };
