@@ -137,7 +137,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="relative aspect-[5/6] overflow-hidden rounded-2xl bg-muted/50">
+      <div className="relative aspect-[5/6] max-lg:overflow-hidden overflow-hidden rounded-2xl bg-muted/50">
         <Link href={href} className="absolute inset-0 z-0" aria-label={product.name}>
           {images.map((img, i) =>
             loadedIndices.has(i) ? (
@@ -148,8 +148,8 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
                 loading="lazy"
                 decoding="async"
                 className={cn(
-                  "absolute inset-0 h-full w-full object-cover max-lg:transition-opacity max-lg:duration-200 lg:transition-all lg:duration-500 lg:ease-out",
-                  i === imageIndex ? "opacity-100" : "opacity-0",
+                  "absolute inset-0 h-full w-full object-cover max-lg:transition-none lg:transition-all lg:duration-500 lg:ease-out",
+                  i === imageIndex ? "opacity-100" : "max-lg:hidden opacity-0",
                   i === imageIndex && "max-lg:transform-none lg:group-hover/card:scale-[1.02]",
                 )}
               />
@@ -219,7 +219,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
         )}
       </div>
 
-      <div className="grid max-lg:grid-rows-[1fr] grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within/card:grid-rows-[1fr] lg:group-hover/card:grid-rows-[1fr]">
+      <div className="grid max-lg:grid-rows-[1fr] max-lg:transition-none grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within/card:grid-rows-[1fr] lg:group-hover/card:grid-rows-[1fr]">
         <div className="min-h-0 overflow-hidden">
           <button
             type="button"
@@ -284,7 +284,7 @@ function BoxVariant({
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all lg:hover:-translate-y-0.5 lg:hover:border-copper/40 lg:hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.25)]",
+        "group relative flex flex-col max-lg:overflow-visible rounded-2xl border border-border bg-card max-lg:transition-none lg:transition-all lg:hover:-translate-y-0.5 lg:hover:border-copper/40 lg:hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.25)]",
         className,
       )}
     >
@@ -301,7 +301,7 @@ function BoxVariant({
             alt={mainImage.alt ?? product.name}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition-transform duration-700 lg:group-hover:scale-105"
+            className="h-full w-full object-cover max-lg:transition-none lg:transition-transform lg:duration-700 lg:group-hover:scale-105"
           />
         )}
         {product.isNew && (
@@ -318,10 +318,10 @@ function BoxVariant({
         aria-label={isCompared ? "Ver comparación" : "Agregar a comparación"}
         aria-pressed={isCompared}
         className={cn(
-          "absolute left-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-background shadow-sm transition-colors max-lg:backdrop-blur-none lg:backdrop-blur",
+          "absolute left-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-background shadow-sm max-lg:shadow-none lg:backdrop-blur",
           isCompared
             ? "bg-foreground text-background"
-            : "bg-background/90 text-foreground hover:bg-foreground hover:text-background",
+            : "bg-background text-foreground hover:bg-foreground hover:text-background",
         )}
       >
         <GitCompare className="h-4 w-4" />
@@ -332,7 +332,7 @@ function BoxVariant({
           toggleFav();
         }}
         aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-        className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-background text-foreground shadow-sm transition-colors max-lg:backdrop-blur-none lg:bg-background/90 lg:backdrop-blur lg:hover:bg-foreground lg:hover:text-background"
+        className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-background text-foreground max-lg:shadow-none lg:bg-background/90 lg:shadow-sm lg:backdrop-blur lg:transition-colors lg:hover:bg-foreground lg:hover:text-background"
       >
         <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
       </button>
@@ -385,7 +385,7 @@ function RowVariant({ product, className }: { product: CatalogProduct; className
   return (
     <article
       className={cn(
-        "group flex w-full min-w-0 max-w-full items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-colors hover:border-copper/40 md:gap-4 md:p-4",
+        "group flex w-full min-w-0 max-w-full items-center gap-3 max-lg:overflow-visible rounded-2xl border border-border bg-card p-3 max-lg:transition-none md:gap-4 md:p-4 lg:transition-colors lg:hover:border-copper/40",
         className,
       )}
     >

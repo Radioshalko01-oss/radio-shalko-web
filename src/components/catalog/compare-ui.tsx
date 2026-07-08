@@ -50,7 +50,7 @@ export function CompareUi() {
     <>
       {count > 0 && !drawerOpen && !modalOpen && (
         <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-5 z-40 md:right-8">
-          <div className="flex items-center gap-2 rounded-full border border-border bg-foreground px-2 py-2 pl-4 text-background shadow-[0_16px_40px_-16px_rgba(0,0,0,0.45)]">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-foreground px-2 py-2 pl-4 text-background max-lg:shadow-none lg:shadow-[0_16px_40px_-16px_rgba(0,0,0,0.45)]">
             <span className="text-sm font-medium tabular-nums">
               Comparar {count}/{COMPARE_MAX}
             </span>

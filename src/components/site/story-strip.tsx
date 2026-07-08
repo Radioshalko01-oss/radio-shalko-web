@@ -99,7 +99,7 @@ export function StoryStrip() {
                 <div
                   key={item.title}
                   className={cn(
-                    "absolute inset-x-0 top-0 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none [transform:translateZ(0)]",
+                    "absolute inset-x-0 top-0 max-lg:transition-none lg:transition-[opacity,transform] lg:duration-700 lg:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:[transform:translateZ(0)]",
                     isActive
                       ? "z-10 translate-y-0 opacity-100"
                       : "pointer-events-none invisible z-0 translate-y-2 opacity-0",

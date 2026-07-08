@@ -85,7 +85,7 @@ export function Hero() {
               }}
             >
               <div
-                className="absolute inset-0 max-md:h-[100svh] max-md:overflow-hidden hero-ken-burns-wrap md:motion-safe:animate-hero-ken-burns [transform:translateZ(0)]"
+                className="absolute inset-0 max-md:h-[100svh] max-md:overflow-hidden hero-ken-burns-wrap lg:motion-safe:animate-hero-ken-burns lg:[transform:translateZ(0)]"
                 style={
                   slide.mobileObjectPosition
                     ? ({ "--hero-object-position": slide.mobileObjectPosition } as CSSProperties)

@@ -304,12 +304,71 @@
   }
 }
 
-/* Tablet / Android: solo pausar ken-burns (provoca rayas); no tocar marquesinas ni transforms JS */
+/* Tablet / Android WebKit: evita rayas, parpadeos y capas rotas de composición */
 @media (max-width: 1023px) {
   .hero-ken-burns-wrap,
   .animate-hero-ken-burns {
     animation: none !important;
     transform: none !important;
+    will-change: auto !important;
+  }
+
+  /* Sin backdrop-filter en tablet (principal causa de glitches en Android) */
+  *,
+  *::before,
+  *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Sin animaciones de entrada tw-animate */
+  .animate-in,
+  .animate-out {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Header siempre sólido: evita crossfade con --header-reveal */
+  .site-header {
+    --header-reveal: 1 !important;
+    isolation: auto;
+  }
+
+  .site-header__bg {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .site-header__scrim {
+    display: none !important;
+  }
+
+  .site-header__logo-light {
+    opacity: 0 !important;
+  }
+
+  .site-header__logo-dark {
+    opacity: 1 !important;
+  }
+
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__bar,
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__actions,
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-logo {
+    background: var(--background) !important;
+  }
+
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__icon-btn {
+    background-color: transparent;
+  }
+
+  /* Toolbars sticky opacos */
+  section.sticky {
+    background-color: var(--background) !important;
+    box-shadow: none !important;
+  }
+
+  .will-change-transform {
     will-change: auto !important;
   }
 }

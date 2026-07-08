@@ -6,6 +6,7 @@ import { FavoritesProvider } from "@/components/providers/favorites-provider";
 import { QuoteProvider } from "@/components/providers/quote-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
 import { CompareUi } from "@/components/catalog/compare-ui";
+import { StableMotionProvider } from "@/components/providers/stable-motion-provider";
 import { getHeaderCatalogProducts, getActiveTaxonomyNames, getBrands } from "@/lib/catalog/queries";
 import { getCurrentAccount } from "@/lib/auth/account";
 import { getFavoriteIds } from "@/lib/favorites/actions";
@@ -63,6 +64,7 @@ export default async function SiteLayout({
     <FavoritesProvider isAuthed={account !== null} initialIds={favoriteIds}>
       <QuoteProvider isAuthed={account !== null} initialItems={quoteItems}>
         <CompareProvider>
+          <StableMotionProvider>
           <div className="min-h-dvh bg-background text-foreground">
             <SiteHeader
               products={headerProducts}
@@ -87,6 +89,7 @@ export default async function SiteLayout({
             <Footer />
             <CompareUi />
           </div>
+          </StableMotionProvider>
         </CompareProvider>
       </QuoteProvider>
     </FavoritesProvider>

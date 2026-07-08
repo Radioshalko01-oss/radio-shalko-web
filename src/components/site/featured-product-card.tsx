@@ -77,7 +77,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
         </Link>
 
         {product.isNew && (
-          <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-sm border border-border/50 bg-background/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground shadow-sm backdrop-blur-sm">
+          <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-sm border border-border/50 bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground shadow-sm max-lg:shadow-none lg:bg-background/95 lg:backdrop-blur-sm">
             Nuevo
           </span>
         )}
@@ -91,7 +91,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
           }}
           aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
           className={cn(
-            "absolute right-2.5 top-2.5 z-20 grid h-9 w-9 place-items-center rounded-full border border-border/50 bg-background/95 text-foreground/65 shadow-sm backdrop-blur-sm transition-all hover:border-border hover:text-foreground",
+            "absolute right-2.5 top-2.5 z-20 grid h-9 w-9 place-items-center rounded-full border border-border/50 bg-background text-foreground/65 max-lg:shadow-none lg:bg-background/95 lg:shadow-sm lg:backdrop-blur-sm lg:transition-all lg:hover:border-border lg:hover:text-foreground",
             isFav && "border-foreground/25 text-foreground",
           )}
         >
@@ -107,7 +107,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
               type="button"
               onClick={goPrev}
               aria-label="Imagen anterior"
-              className="absolute left-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 shadow-sm backdrop-blur-sm transition-colors hover:border-border hover:bg-background hover:text-foreground"
+              className="absolute left-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background text-foreground/80 max-lg:shadow-none lg:bg-background/90 lg:shadow-sm lg:backdrop-blur-sm lg:transition-colors lg:hover:border-border lg:hover:bg-background lg:hover:text-foreground"
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={1.25} />
             </button>
@@ -115,7 +115,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
               type="button"
               onClick={goNext}
               aria-label="Imagen siguiente"
-              className="absolute right-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background/90 text-foreground/80 shadow-sm backdrop-blur-sm transition-colors hover:border-border hover:bg-background hover:text-foreground"
+              className="absolute right-2.5 top-1/2 z-20 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border/40 bg-background text-foreground/80 max-lg:shadow-none lg:bg-background/90 lg:shadow-sm lg:backdrop-blur-sm lg:transition-colors lg:hover:border-border lg:hover:bg-background lg:hover:text-foreground"
             >
               <ChevronRight className="h-4 w-4" strokeWidth={1.25} />
             </button>
