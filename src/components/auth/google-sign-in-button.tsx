@@ -27,6 +27,25 @@ function setAuthCookies(next: string, origin: string) {
   document.cookie = `${AUTH_ORIGIN_COOKIE}=${encodeURIComponent(origin)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
 }
 
+function resolveClientOAuthOrigin(): string {
+  const origin = window.location.origin.replace(/\/+$/, "");
+  if (!origin.endsWith(".vercel.app")) return origin;
+
+  const branchHost = process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL?.trim();
+  if (!branchHost) return origin;
+
+  try {
+    const host = new URL(origin).hostname;
+    if (host !== branchHost && host.endsWith("-radio-shalko.vercel.app")) {
+      return `https://${branchHost}`;
+    }
+  } catch {
+    return origin;
+  }
+
+  return origin;
+}
+
 /**
  * localhost: OAuth en cliente. LAN IP: requiere túnel. Producción: /auth/google.
  */
@@ -42,7 +61,7 @@ export function GoogleSignInButton({
     setLoading(true);
     setError(null);
 
-    const origin = window.location.origin;
+    const origin = resolveClientOAuthOrigin();
     const safeNext = safeAuthNextPath(next);
     setAuthCookies(safeNext, origin);
 

@@ -14,6 +14,9 @@ const allowedDevOrigins = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins,
+  env: {
+    NEXT_PUBLIC_VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL ?? "",
+  },
   images: {
     formats: ["image/webp", "image/avif"],
     deviceSizes: [384, 640, 750, 828, 1080, 1200, 1920],

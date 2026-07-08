@@ -84,12 +84,33 @@ export function resolveOAuthOrigin(
     try {
       const normalized = new URL(candidate).origin.replace(/\/+$/, "");
       if (isPrivateOrLocalOrigin(normalized)) return normalized;
-      if (normalized.startsWith("https://")) return normalized;
+      if (normalized.startsWith("https://")) {
+        return normalizePreviewOAuthOrigin(normalized);
+      }
     } catch {
       // URL inválida
     }
   }
   return requestSiteOrigin(headers);
+}
+
+/** En preview de Vercel, OAuth debe usar el host estable de la rama. */
+function normalizePreviewOAuthOrigin(origin: string): string {
+  if (process.env.VERCEL_ENV !== "preview") return origin;
+
+  const branchHost = process.env.VERCEL_BRANCH_URL?.trim();
+  if (!branchHost) return origin;
+
+  try {
+    const host = new URL(origin).hostname;
+    if (host.endsWith(".vercel.app") && host !== branchHost) {
+      return `https://${branchHost}`;
+    }
+  } catch {
+    return origin;
+  }
+
+  return origin;
 }
 
 function resolveRequestProto(headers: Headers, host: string): "http" | "https" {
@@ -102,16 +123,26 @@ function resolveRequestProto(headers: Headers, host: string): "http" | "https" {
 
 /** Origin del request (Server Actions / Route Handlers). */
 export function requestSiteOrigin(headers: Headers): string {
+  const vercelEnv = process.env.VERCEL_ENV;
+  const branchHost = process.env.VERCEL_BRANCH_URL?.trim();
+
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = headers.get("host")?.trim();
+  const requestHost = forwardedHost || host;
+
+  // Preview: si el request llegó a un deploy efímero, normalizar al host de la rama.
+  if (vercelEnv === "preview" && branchHost && requestHost && requestHost !== branchHost) {
+    return `https://${branchHost}`;
+  }
+
   const origin = headers.get("origin")?.trim();
   if (origin) return origin.replace(/\/+$/, "");
 
-  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   if (forwardedHost) {
     const proto = resolveRequestProto(headers, forwardedHost);
     return `${proto}://${forwardedHost}`.replace(/\/+$/, "");
   }
 
-  const host = headers.get("host")?.trim();
   if (host) {
     const proto = resolveRequestProto(headers, host);
     return `${proto}://${host}`.replace(/\/+$/, "");
