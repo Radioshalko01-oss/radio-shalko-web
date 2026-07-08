@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SiteLogo } from "@/components/brand/site-logo";
-import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { adminShell } from "@/lib/design/admin-shell";
 import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
@@ -65,6 +64,29 @@ const GROUPS: Group[] = [
   },
 ];
 
+/** Ocultos en nav (rutas intactas). */
+const HIDDEN_NAV_HREFS = new Set([
+  "/admin/clientes",
+  "/admin/analiticas",
+  "/admin/ajustes",
+  "/carrito",
+]);
+
+function isNavVisible(item: Item) {
+  if (item.soon) return false;
+  if (HIDDEN_NAV_HREFS.has(item.href)) return false;
+  return true;
+}
+
+function visibleGroups() {
+  return GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter(isNavVisible),
+  })).filter((group) => group.items.length > 0);
+}
+
+const NAV_GROUPS = visibleGroups();
+
 export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: number }) {
   const pathname = usePathname();
 
@@ -83,7 +105,7 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
         className="flex-1 overflow-y-auto px-3 py-3 lg:space-y-9 lg:py-4"
         aria-label="Administración"
       >
-        {GROUPS.map((group, i) => (
+        {NAV_GROUPS.map((group, i) => (
           <div
             key={group.title ?? `g-${i}`}
             className={cn("mb-4 last:mb-0 lg:mb-0", group.title && i > 0 && "lg:mt-2")}
@@ -104,22 +126,6 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item);
-
-                if (item.soon) {
-                  return (
-                    <div
-                      key={item.href}
-                      className="flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground/70"
-                      title="Disponible en una fase futura"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Icon className="h-4 w-4 opacity-60" />
-                        {item.label}
-                      </span>
-                      <AdminStatusBadge tone="soon">Pronto</AdminStatusBadge>
-                    </div>
-                  );
-                }
 
                 return (
                   <Link
