@@ -5,12 +5,9 @@ export const HOME_IMAGE_CROSSFADE_MS = 1400;
 export const HOME_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const BRANDS_MARQUEE_SECONDS = 45;
 
-/** Clases de fade táctil (móvil + tablet): solo opacidad para evitar glitches en WebKit. */
-export const HOME_TOUCH_FADE_TRANSITION =
-  "max-lg:transition-opacity max-lg:duration-[700ms] max-lg:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-lg:transition-none";
-
-/** @deprecated Usar HOME_TOUCH_FADE_TRANSITION */
-export const HOME_MOBILE_FADE_TRANSITION = HOME_TOUCH_FADE_TRANSITION;
+/** Clases de fade mobile (misma curva/duración que el texto del Hero). */
+export const HOME_MOBILE_FADE_TRANSITION =
+  "max-md:transition-[opacity,transform] max-md:duration-[700ms] max-md:ease-[cubic-bezier(0.22,1,0.36,1)] max-md:[-webkit-transition:opacity_700ms_cubic-bezier(0.22,1,0.36,1),transform_700ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-md:transition-none [transform:translateZ(0)]";
 
 function isNode(value: unknown): value is Node {
   return typeof Node !== "undefined" && value instanceof Node;

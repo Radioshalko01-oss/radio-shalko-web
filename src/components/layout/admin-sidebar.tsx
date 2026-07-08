@@ -65,71 +65,6 @@ const GROUPS: Group[] = [
   },
 ];
 
-const FLAT_ITEMS = GROUPS.flatMap((group) => group.items);
-
-function NavItem({
-  item,
-  active,
-  pendingOrderCount,
-  compact = false,
-}: {
-  item: Item;
-  active: boolean;
-  pendingOrderCount: number;
-  compact?: boolean;
-}) {
-  const Icon = item.icon;
-
-  if (item.soon) {
-    return (
-      <div
-        className={cn(
-          "flex shrink-0 cursor-default items-center justify-between rounded-lg text-muted-foreground/70",
-          compact ? "gap-2 px-2.5 py-2 text-xs" : "px-3 py-2 text-sm",
-        )}
-        title="Disponible en una fase futura"
-      >
-        <span className="flex items-center gap-2">
-          <Icon className={cn("shrink-0 opacity-60", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
-          <span className="whitespace-nowrap">{item.label}</span>
-        </span>
-        <AdminStatusBadge tone="soon">Pronto</AdminStatusBadge>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "flex shrink-0 items-center rounded-lg transition-colors",
-        compact ? "gap-1.5 px-2.5 py-2 text-xs" : "gap-2.5 px-3 py-2 text-sm",
-        active
-          ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/80"
-          : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
-      )}
-    >
-      <Icon
-        className={cn(
-          "shrink-0",
-          compact ? "h-3.5 w-3.5" : "h-4 w-4",
-          active ? "text-copper" : "text-muted-foreground/70",
-        )}
-      />
-      <span className="whitespace-nowrap">{item.label}</span>
-      {item.href === "/admin/pedidos" && pendingOrderCount > 0 && (
-        <span
-          className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-copper px-1.5 text-[10px] font-semibold tabular-nums text-copper-foreground"
-          aria-label={`${pendingOrderCount} pendientes de revisión`}
-        >
-          {pendingOrderCount}
-        </span>
-      )}
-    </Link>
-  );
-}
-
 export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: number }) {
   const pathname = usePathname();
 
@@ -138,77 +73,90 @@ export function AdminSidebar({ pendingOrderCount = 0 }: { pendingOrderCount?: nu
 
   return (
     <aside className={adminShell.sidebar}>
-      <div className="border-b border-border/60 px-4 py-3 lg:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/admin" className="flex min-w-0 shrink items-center">
-            <SiteLogo variant="horizontal" context="admin" size="sm" />
-          </Link>
-          <Link
-            href="/"
-            className={cn(
-              adminShell.backLink,
-              "inline-flex shrink-0 items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs hover:bg-card/70",
-            )}
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Sitio
-          </Link>
-        </div>
-      </div>
-
-      <div className="hidden border-b border-border/60 px-5 py-6 lg:block">
+      <div className="border-b border-border/60 px-4 py-5 lg:px-5 lg:py-6">
         <Link href="/" className="flex min-w-0 items-center justify-center">
           <SiteLogo variant="horizontal" context="admin" size="sm" />
         </Link>
       </div>
 
       <nav
-        className="border-b border-border/60 px-3 py-2 lg:flex-1 lg:overflow-y-auto lg:border-b-0 lg:px-3 lg:py-4"
+        className="flex-1 overflow-y-auto px-3 py-3 lg:space-y-9 lg:py-4"
         aria-label="Administración"
       >
-        <div className="flex snap-x snap-mandatory gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          {FLAT_ITEMS.map((item) => (
-            <NavItem
-              key={item.href}
-              item={item}
-              active={isActive(item)}
-              pendingOrderCount={pendingOrderCount}
-              compact
-            />
-          ))}
-        </div>
+        {GROUPS.map((group, i) => (
+          <div
+            key={group.title ?? `g-${i}`}
+            className={cn("mb-4 last:mb-0 lg:mb-0", group.title && i > 0 && "lg:mt-2")}
+          >
+            {group.title && (
+              <p
+                className={cn(
+                  "px-3 pb-2",
+                  typography.eyebrow,
+                  "hidden text-[10px] tracking-[0.16em] lg:block",
+                  i === 1 && "lg:pt-5",
+                )}
+              >
+                {group.title}
+              </p>
+            )}
+            <div className="flex snap-x snap-mandatory gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:snap-none lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item);
 
-        <div className="hidden lg:block lg:space-y-9">
-          {GROUPS.map((group, i) => (
-            <div key={group.title ?? `g-${i}`} className={cn(group.title && i > 0 && "mt-2")}>
-              {group.title && (
-                <p
-                  className={cn(
-                    "px-3 pb-2",
-                    typography.eyebrow,
-                    "text-[10px] tracking-[0.16em]",
-                    i === 1 && "pt-5",
-                  )}
-                >
-                  {group.title}
-                </p>
-              )}
-              <div className="flex flex-col gap-0.5">
-                {group.items.map((item) => (
-                  <NavItem
+                if (item.soon) {
+                  return (
+                    <div
+                      key={item.href}
+                      className="flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground/70"
+                      title="Disponible en una fase futura"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Icon className="h-4 w-4 opacity-60" />
+                        {item.label}
+                      </span>
+                      <AdminStatusBadge tone="soon">Pronto</AdminStatusBadge>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
                     key={item.href}
-                    item={item}
-                    active={isActive(item)}
-                    pendingOrderCount={pendingOrderCount}
-                  />
-                ))}
-              </div>
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex shrink-0 snap-start items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors lg:shrink lg:snap-align-none lg:gap-2.5",
+                      active
+                        ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/80"
+                        : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        active ? "text-copper" : "text-muted-foreground/70",
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">{item.label}</span>
+                    {item.href === "/admin/pedidos" && pendingOrderCount > 0 && (
+                      <span
+                        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-copper px-1.5 text-[10px] font-semibold tabular-nums text-copper-foreground"
+                        aria-label={`${pendingOrderCount} pendientes de revisión`}
+                      >
+                        {pendingOrderCount}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="hidden border-t border-border/60 p-3 lg:block">
+      <div className="border-t border-border/60 p-3">
         <Link href="/" className={cn(adminShell.backLink, "w-full rounded-lg px-3 py-2 hover:bg-card/70")}>
           <ArrowLeft className="h-4 w-4" />
           Volver al sitio

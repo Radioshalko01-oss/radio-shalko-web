@@ -7,7 +7,7 @@ import {
   HOME_CAROUSEL_INTERVAL_MS,
   HOME_EASING,
   HOME_IMAGE_CROSSFADE_MS,
-  HOME_TOUCH_FADE_TRANSITION,
+  HOME_MOBILE_FADE_TRANSITION,
 } from "@/lib/site/home-motion";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +52,11 @@ export function Hero() {
 
   const activeSlide = HERO_SLIDES[index];
 
-  const touchTextClass = cn(
-    HOME_TOUCH_FADE_TRANSITION,
-    textVisible ? "max-lg:opacity-100" : "max-lg:opacity-0",
+  const mobileTextClass = cn(
+    HOME_MOBILE_FADE_TRANSITION,
+    textVisible
+      ? "max-md:translate-y-0 max-md:opacity-100"
+      : "max-md:translate-y-3 max-md:opacity-[0.001]",
   );
 
   return (
@@ -71,13 +73,15 @@ export function Hero() {
             <div
               key={slide.id}
               className={cn(
-                "absolute inset-0 max-md:h-[100svh] bg-[#111] transition-opacity motion-reduce:transition-none",
+                "absolute inset-0 max-md:h-[100svh] bg-[#111] transition-opacity motion-reduce:transition-none max-md:[-webkit-transition:opacity_var(--hero-crossfade)_cubic-bezier(0.22,1,0.36,1)]",
                 isActive ? "opacity-100" : "pointer-events-none opacity-0",
               )}
               style={{
                 transitionDuration: `${HOME_IMAGE_CROSSFADE_MS}ms`,
+                ["--hero-crossfade" as string]: `${HOME_IMAGE_CROSSFADE_MS}ms`,
                 transitionTimingFunction: CROSSFADE_EASING,
                 zIndex: isActive ? 2 : 1,
+                willChange: "opacity",
               }}
             >
               <div
@@ -116,8 +120,8 @@ export function Hero() {
         <div key={textKey} className="flex w-full flex-col items-center">
           <p
             className={cn(
-              "text-[11px] font-semibold uppercase tracking-[0.22em] text-white lg:hero-text-in md:text-xs lg:motion-reduce:animate-none",
-              touchTextClass,
+              "text-[11px] font-semibold uppercase tracking-[0.22em] text-white md:hero-text-in md:text-xs md:motion-reduce:animate-none",
+              mobileTextClass,
             )}
             style={{ animationDelay: "320ms" }}
           >
@@ -126,8 +130,8 @@ export function Hero() {
 
           <h1
             className={cn(
-              "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white lg:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] lg:motion-reduce:animate-none lg:text-[4rem]",
-              touchTextClass,
+              "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white md:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] md:motion-reduce:animate-none lg:text-[4rem]",
+              mobileTextClass,
             )}
             style={{ animationDelay: "480ms" }}
           >
@@ -136,8 +140,8 @@ export function Hero() {
 
           <p
             className={cn(
-              "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 lg:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] lg:motion-reduce:animate-none",
-              touchTextClass,
+              "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 md:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] md:motion-reduce:animate-none",
+              mobileTextClass,
             )}
             style={{ animationDelay: "620ms" }}
           >
@@ -146,8 +150,8 @@ export function Hero() {
 
           <div
             className={cn(
-              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 lg:hero-text-in md:mt-10 md:items-center md:gap-3 lg:motion-reduce:animate-none sm:max-w-none sm:flex-row sm:items-center sm:justify-center",
-              touchTextClass,
+              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 md:hero-text-in md:mt-10 md:items-center md:gap-3 md:motion-reduce:animate-none sm:max-w-none sm:flex-row sm:items-center sm:justify-center",
+              mobileTextClass,
             )}
             style={{ animationDelay: "760ms" }}
           >

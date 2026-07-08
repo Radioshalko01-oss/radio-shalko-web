@@ -7,7 +7,7 @@ export const adminShell = {
   sidebar:
     "shrink-0 border-b border-border/80 bg-card max-lg:backdrop-blur-none lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r lg:bg-card/40 lg:backdrop-blur-sm",
   main: "min-w-0 flex-1 bg-background",
-  mainPadding: "px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-7 lg:py-8",
+  mainPadding: "px-4 py-6 sm:px-6 sm:py-7 md:px-8 md:py-8",
 
   card: cn(radius.cardAdmin, "border border-border bg-card"),
   cardInteractive: cn(
