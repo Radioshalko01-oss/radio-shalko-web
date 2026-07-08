@@ -155,7 +155,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         description="Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago."
       />
 
-    <div className="mx-auto max-w-6xl isolate bg-background px-4 pb-44 sm:px-6 md:pb-24 lg:px-8">
+    <div className="mx-auto max-w-6xl bg-background px-4 pb-44 sm:px-6 md:pb-24 lg:px-8">
 
       <div className="mt-6 md:hidden">
         <CheckoutSummary rows={rows} compact />
@@ -166,7 +166,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         onSubmit={handleSubmit}
         className="mt-5 grid gap-6 md:mt-6 md:grid-cols-[minmax(0,1fr)_300px] md:items-start lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]"
       >
-        <div className="space-y-5 max-lg:[transform:translateZ(0)]">
+        <div className="space-y-5">
           <CheckoutSection title="¿Cómo te contactamos?">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -249,7 +249,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
           </CheckoutSection>
 
           <CheckoutSection title="¿Cómo prefieres pagar?">
-            <div className="isolate grid gap-2.5 sm:grid-cols-2" data-field="paymentMethod">
+            <div className="grid gap-2.5 sm:grid-cols-2" data-field="paymentMethod">
               <PaymentOptionCard
                 selected={form.paymentMethod === "pay_in_store"}
                 onSelect={() =>
@@ -303,7 +303,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
               Radio Shalko no realiza envíos. Debes recoger tu producto en una de nuestras tiendas
               físicas.
             </p>
-            <div className="isolate grid gap-2.5 sm:grid-cols-2" data-field="branchSlug">
+            <div className="grid gap-2.5 sm:grid-cols-2" data-field="branchSlug">
               {(["chalco", "amecameca"] as const).map((slug) => (
                 <button
                   key={slug}
@@ -374,7 +374,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         </aside>
       </form>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 isolate border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.12)] md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.12)] md:hidden">
         <div className="mx-auto max-w-6xl space-y-2.5">
           <div className="flex items-baseline justify-between gap-4">
             <div>

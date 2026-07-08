@@ -148,9 +148,9 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
                 loading="lazy"
                 decoding="async"
                 className={cn(
-                  "absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out",
+                  "absolute inset-0 h-full w-full object-cover max-lg:transition-opacity max-lg:duration-200 lg:transition-all lg:duration-500 lg:ease-out",
                   i === imageIndex ? "opacity-100" : "opacity-0",
-                  i === imageIndex && "group-hover/card:scale-[1.02]",
+                  i === imageIndex && "max-lg:transform-none lg:group-hover/card:scale-[1.02]",
                 )}
               />
             ) : null,
@@ -219,7 +219,7 @@ function FeaturedVariant({ product, className }: { product: CatalogProduct; clas
         )}
       </div>
 
-      <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within/card:grid-rows-[1fr] group-hover/card:grid-rows-[1fr]">
+      <div className="grid max-lg:grid-rows-[1fr] grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within/card:grid-rows-[1fr] lg:group-hover/card:grid-rows-[1fr]">
         <div className="min-h-0 overflow-hidden">
           <button
             type="button"
