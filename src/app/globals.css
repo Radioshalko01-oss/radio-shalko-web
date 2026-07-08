@@ -313,6 +313,12 @@
     will-change: auto !important;
   }
 
+  .hero-text-in {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
   /* Sin backdrop-filter en tablet (principal causa de glitches en Android) */
   *,
   *::before,

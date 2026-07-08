@@ -67,7 +67,13 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
 
   return (
     <div className="space-y-5">
-      <Link href="/admin/pedidos" className={adminShell.backLink}>
+      <Link
+        href="/admin/pedidos"
+        className={cn(
+          adminShell.backLink,
+          "inline-flex max-lg:items-center max-lg:rounded-lg max-lg:border max-lg:border-border/70 max-lg:bg-card max-lg:px-3 max-lg:py-2",
+        )}
+      >
         <ArrowLeft className="h-4 w-4" />
         Volver a pedidos
       </Link>

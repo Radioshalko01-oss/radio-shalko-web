@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Music, HeartHandshake, Wrench } from "lucide-react";
-import { HOME_CAROUSEL_INTERVAL_MS } from "@/lib/site/home-motion";
+import { HOME_CAROUSEL_INTERVAL_MS, HOME_TOUCH_FADE_TRANSITION } from "@/lib/site/home-motion";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -50,7 +50,7 @@ function BenefitItem({
       <p
         className={cn(
           "leading-snug text-muted-foreground",
-          compact ? "line-clamp-2 text-[13px]" : "text-sm leading-[1.65] md:text-[15px]",
+          compact ? "line-clamp-2 text-[13px] md:line-clamp-3 md:text-sm" : "text-sm leading-[1.65] md:text-[15px]",
         )}
       >
         {desc}
@@ -78,31 +78,32 @@ export function StoryStrip() {
   }, [reduceMotion]);
 
   return (
-    <section className="border-b border-border bg-background py-4 md:py-12">
+    <section className="border-b border-border bg-background py-5 md:py-8 lg:py-12">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
-        <ul className="hidden grid-cols-1 gap-10 sm:gap-12 md:grid md:grid-cols-3 md:gap-0 md:divide-x md:divide-border">
+        <ul className="hidden grid-cols-1 gap-10 sm:gap-12 lg:grid lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-border">
           {ITEMS.map((item) => (
             <li
               key={item.title}
-              className="md:px-6 md:first:pl-0 md:last:pr-0 lg:px-10 lg:first:pl-0 lg:last:pr-0"
+              className="lg:px-6 lg:first:pl-0 lg:last:pr-0 xl:px-10 xl:first:pl-0 xl:last:pr-0"
             >
               <BenefitItem {...item} />
             </li>
           ))}
         </ul>
 
-        <div className="md:hidden">
-          <div className="relative min-h-[5rem]">
+        <div className="lg:hidden">
+          <div className="relative min-h-[5.5rem] md:min-h-[6.5rem]">
             {ITEMS.map((item, index) => {
               const isActive = index === activeIndex;
               return (
                 <div
                   key={item.title}
                   className={cn(
-                    "absolute inset-x-0 top-0 max-lg:transition-none lg:transition-[opacity,transform] lg:duration-700 lg:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:[transform:translateZ(0)]",
+                    "absolute inset-x-0 top-0",
+                    HOME_TOUCH_FADE_TRANSITION,
                     isActive
-                      ? "z-10 translate-y-0 opacity-100"
-                      : "pointer-events-none invisible z-0 translate-y-2 opacity-0",
+                      ? "z-10 opacity-100"
+                      : "pointer-events-none invisible z-0 opacity-0",
                   )}
                   aria-hidden={!isActive}
                 >
@@ -113,7 +114,7 @@ export function StoryStrip() {
           </div>
 
           <div
-            className="mt-1 flex justify-center gap-1.5"
+            className="mt-2 flex justify-center gap-1.5 md:mt-3"
             role="tablist"
             aria-label="Beneficios de Radio Shalko"
           >
@@ -127,12 +128,12 @@ export function StoryStrip() {
                   aria-selected={isActive}
                   aria-label={item.title}
                   onClick={() => setActiveIndex(index)}
-                  className="flex min-h-6 min-w-6 items-center justify-center rounded-full"
+                  className="flex min-h-8 min-w-8 items-center justify-center rounded-full"
                 >
                   <span
                     className={cn(
                       "block h-1 rounded-full transition-all duration-300 motion-reduce:transition-none",
-                      isActive ? "w-5 bg-copper" : "w-2 bg-border",
+                      isActive ? "w-6 bg-copper md:w-7" : "w-2 bg-border",
                     )}
                   />
                 </button>
