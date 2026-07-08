@@ -293,7 +293,7 @@ function CartMobileActionBar({
   shareLines: { productId: string; quantity: number; unitPrice: number }[];
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.12)] max-lg:backdrop-blur-none md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm md:hidden">
       <div className="mx-auto max-w-7xl space-y-2.5">
         <div className="flex items-baseline justify-between gap-4">
           <div className="min-w-0">

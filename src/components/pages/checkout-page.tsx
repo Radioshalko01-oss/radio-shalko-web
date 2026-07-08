@@ -155,7 +155,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         description="Revisaremos la disponibilidad de tus productos antes de enviarte el método de pago."
       />
 
-    <div className="mx-auto max-w-6xl isolate bg-background px-4 pb-44 sm:px-6 md:pb-24 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-44 sm:px-6 md:pb-24 lg:px-8">
 
       <div className="mt-6 md:hidden">
         <CheckoutSummary rows={rows} compact />
@@ -166,7 +166,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         onSubmit={handleSubmit}
         className="mt-5 grid gap-6 md:mt-6 md:grid-cols-[minmax(0,1fr)_300px] md:items-start lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]"
       >
-        <div className="space-y-5 max-lg:[transform:translateZ(0)]">
+        <div className="space-y-5">
           <CheckoutSection title="¿Cómo te contactamos?">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -374,7 +374,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         </aside>
       </form>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 isolate border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.12)] md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:hidden">
         <div className="mx-auto max-w-6xl space-y-2.5">
           <div className="flex items-baseline justify-between gap-4">
             <div>
@@ -423,8 +423,8 @@ function CheckoutLoginGate({ hasItems }: { hasItems: boolean }) {
         description="Inicia sesión para guardar tu solicitud, confirmar disponibilidad y avisarte cuando esté lista para recoger."
       />
 
-      <div className="mx-auto flex w-full max-w-lg flex-col px-4 py-14 sm:px-6 md:max-w-2xl md:py-20 lg:max-w-xl lg:py-24">
-        <div className="rounded-2xl border border-border bg-card px-8 py-10 text-center shadow-sm sm:px-10 md:px-12 md:py-14">
+      <div className="mx-auto flex max-w-md flex-col px-4 py-12 sm:px-6">
+        <div className="rounded-2xl border border-border bg-card px-6 py-8 text-center shadow-sm sm:px-8">
 
         {!hasItems && (
           <p className="mt-3 text-xs text-muted-foreground">

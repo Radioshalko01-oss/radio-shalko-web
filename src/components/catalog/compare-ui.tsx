@@ -226,14 +226,14 @@ function CompareModal({
       <button
         type="button"
         aria-label="Cerrar comparación"
-        className="absolute inset-0 bg-black/40 max-lg:backdrop-blur-none lg:backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="compare-modal-title"
-        className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 md:px-6">
           <h2 id="compare-modal-title" className="text-lg font-semibold tracking-tight">
@@ -248,8 +248,8 @@ function CompareModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-5 py-5 sm:px-6 md:px-8">
-          <div className="grid gap-5 sm:grid-cols-2">
+        <div className="overflow-y-auto px-5 py-5 md:px-6">
+          <div className="grid gap-5 md:grid-cols-2">
             {ordered.map((product) => (
               <CompareProductColumn key={product.id} product={product} />
             ))}

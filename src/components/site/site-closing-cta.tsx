@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useStableMotion } from "@/lib/motion/use-stable-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { MessageCircle, ArrowUpRight } from "lucide-react";
 import { whatsappHref, SITE_CONTACT } from "@/lib/site-contact";
 import { cn } from "@/lib/utils";
@@ -85,7 +84,7 @@ export function SiteClosingCta({
   className,
 }: SiteClosingCtaProps) {
   const [mounted, setMounted] = useState(false);
-  const reduceMotion = useStableMotion();
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);

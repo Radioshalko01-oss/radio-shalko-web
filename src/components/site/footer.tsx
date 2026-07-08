@@ -200,35 +200,69 @@ function FooterLegalBar() {
 export function Footer() {
   return (
     <footer className="bg-[#1a1a1a] text-white selection:bg-white selection:text-[#1a1a1a]">
-      <div className="mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-10 lg:py-16">
-        {/* ——— Móvil + tablet ——— */}
-        <div className="lg:hidden">
-          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-            <div className="text-center md:text-left">
-              <Link href="/" className="inline-block transition-opacity hover:opacity-90">
-                <p className="font-display text-[1.6rem] font-semibold leading-none tracking-tight text-white md:text-[1.75rem]">
-                  Radio Shalko
-                </p>
-                <p className="mt-1.5 text-sm italic text-white/70">Make noise, make history.</p>
-              </Link>
-              <p className="mx-auto mt-3 max-w-[28ch] text-[13px] leading-relaxed text-white/70 md:mx-0 md:max-w-none">
-                Más de 40 años acompañando a músicos con instrumentos, audio profesional y asesoría
-                especializada.
+      <div className="mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-16">
+        {/* ——— Móvil ——— */}
+        <div className="md:hidden">
+          <div className="text-center">
+            <Link href="/" className="inline-block transition-opacity hover:opacity-90">
+              <p className="font-display text-[1.6rem] font-semibold leading-none tracking-tight text-white">
+                Radio Shalko
               </p>
-            </div>
+              <p className="mt-1.5 text-sm italic text-white/70">Make noise, make history.</p>
+            </Link>
+            <p className="mx-auto mt-3 max-w-[28ch] text-[13px] leading-relaxed text-white/70">
+              Más de 40 años acompañando a músicos con instrumentos, audio profesional y asesoría
+              especializada.
+            </p>
+          </div>
 
+          <div className="mt-5 space-y-4">
+            <a
+              href={whatsappHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center rounded-full bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1a1a] transition-colors hover:bg-white/90"
+            >
+              Escribir por WhatsApp
+            </a>
+            <SocialLinks className="justify-center" />
+          </div>
+
+          <ul className="mt-5 flex flex-col items-center space-y-2.5 border-y border-white/15 py-4 text-center text-[13px] text-white/80">
+            <li className="flex items-start justify-center gap-2.5">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
+              <div className="space-y-0.5 text-left leading-snug">
+                {SITE_CONTACT.footerHoursSummary.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+            </li>
+            <li className="flex items-center justify-center gap-2.5">
+              <Phone className="h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
+              <a href={telHref(SITE_CONTACT.phone.e164)} className="hover:text-white">
+                {SITE_CONTACT.phone.display}
+              </a>
+            </li>
+            <li className="flex items-center justify-center gap-2.5">
+              <Mail className="h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
+              <a href={mailtoHref()} className="hover:text-white">
+                {SITE_CONTACT.email}
+              </a>
+            </li>
+          </ul>
+
+          <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-1">
             <div>
               <FooterHeading>¿Necesitas ayuda?</FooterHeading>
-              <ul className="mt-2.5 md:mt-3">
+              <ul className="mt-2.5">
                 {HELP.map((item) => (
                   <FooterLink key={item.label} {...item} compact />
                 ))}
               </ul>
             </div>
-
             <div>
               <FooterHeading>Conócenos</FooterHeading>
-              <ul className="mt-2.5 md:mt-3">
+              <ul className="mt-2.5">
                 {ABOUT.map((item) => (
                   <FooterLink key={item.label} {...item} compact />
                 ))}
@@ -236,50 +270,14 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-5 border-t border-white/15 pt-6 md:grid-cols-2 md:gap-8">
-            <div>
-              <FooterHeading>Nuestras tiendas</FooterHeading>
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                <StoreCard compact />
-              </div>
+          <div className="mt-6 border-t border-white/15 pt-5">
+            <FooterHeading className="text-center">Nuestras tiendas</FooterHeading>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <StoreCard compact />
             </div>
-
-            <div className="flex flex-col justify-between gap-4">
-              <ul className="space-y-2 text-[13px] text-white/80">
-                <li className="flex items-start gap-2.5">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
-                  <div className="space-y-0.5 leading-snug">
-                    {SITE_CONTACT.footerHoursSummary.map((line) => (
-                      <p key={line}>{line}</p>
-                    ))}
-                  </div>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Phone className="h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
-                  <a href={telHref(SITE_CONTACT.phone.e164)} className="hover:text-white">
-                    {SITE_CONTACT.phone.display}
-                  </a>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Mail className="h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
-                  <a href={mailtoHref()} className="hover:text-white">
-                    {SITE_CONTACT.email}
-                  </a>
-                </li>
-              </ul>
-
-              <div className="space-y-3">
-                <a
-                  href={whatsappHref()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center rounded-full bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1a1a] transition-colors hover:bg-white/90 md:inline-flex md:w-auto"
-                >
-                  Escribir por WhatsApp
-                </a>
-                <SocialLinks />
-              </div>
-            </div>
+            <p className="mt-4 text-center text-[13px] leading-relaxed text-white/70">
+              Visítanos en nuestras tiendas físicas. Nuestro equipo estará encantado de ayudarte.
+            </p>
           </div>
 
           <div className="mt-6 border-t border-white/15 pt-5">
@@ -288,7 +286,7 @@ export function Footer() {
         </div>
 
         {/* ——— Desktop ——— */}
-        <div className="hidden lg:block">
+        <div className="hidden md:block">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
             <div>
               <Link href="/" className="inline-block transition-opacity hover:opacity-90">

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useStableMotion } from "@/lib/motion/use-stable-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Wrench,
   Headphones,
@@ -107,7 +106,7 @@ const fadeUp = {
 };
 
 export function ServiciosPage() {
-  const reduceMotion = useStableMotion();
+  const reduceMotion = useReducedMotion();
 
   const motionProps = reduceMotion
     ? {}
@@ -127,7 +126,7 @@ export function ServiciosPage() {
         align="center"
       />
 
-      <div className="pb-16 md:pb-20 max-lg:isolate max-lg:bg-background">
+      <div className="pb-16 md:pb-20">
         {/* Taller */}
         <section className="mx-auto max-w-7xl px-5 pt-10 md:px-8 md:pt-12">
           <SectionIntro
@@ -603,7 +602,7 @@ function WorkshopPhoto({
   motionProps: Record<string, unknown>;
   delay: number;
 }) {
-  const reduceMotion = useStableMotion();
+  const reduceMotion = useReducedMotion();
 
   return (
     <motion.div

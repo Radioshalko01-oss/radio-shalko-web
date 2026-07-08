@@ -33,7 +33,7 @@ export function SitePageHero({
     <section
       id={id}
       className={cn(
-        "bg-[#1a1a1a] pt-[calc(3.5rem+1.25rem+env(safe-area-inset-top,0px))] text-white max-md:pt-[calc(3.5rem+0.75rem+env(safe-area-inset-top,0px))] md:pt-36 lg:pt-32",
+        "bg-[#1a1a1a] pt-[calc(3.5rem+1.25rem+env(safe-area-inset-top,0px))] text-white max-md:pt-[calc(3.5rem+0.75rem+env(safe-area-inset-top,0px))] md:pt-32",
         className,
       )}
     >
@@ -52,7 +52,7 @@ export function SitePageHero({
                 ? "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 text-center max-md:py-0 max-md:pb-5 md:flex md:flex-col md:items-center md:pb-12 md:pt-2"
                 : compact
                   ? "pb-5 pt-1 max-md:pb-4 md:pb-6 md:pt-2"
-                  : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:min-h-[12.5rem] md:pb-16 md:pt-2 lg:min-h-0 lg:pb-12",
+                  : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
           )}
         >
           {showBreadcrumbs ? (

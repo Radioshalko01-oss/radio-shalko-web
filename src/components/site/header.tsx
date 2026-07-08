@@ -784,10 +784,10 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 max-lg:backdrop-blur-none lg:backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
+            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
             onClick={closeMobileMenu}
           />
-          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] max-lg:backdrop-blur-none lg:bg-background/98 lg:backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
+          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col px-5 py-5 sm:py-6">
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
@@ -911,10 +911,10 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Cerrar cuenta"
-            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 max-lg:backdrop-blur-none lg:backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
+            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/35 backdrop-blur-[3px] animate-in fade-in duration-300 lg:hidden"
             onClick={closeMobileAccount}
           />
-          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] max-lg:backdrop-blur-none lg:bg-background/98 lg:backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
+          <div className="relative z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto border-t border-border/60 bg-background/98 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col px-5 py-5 sm:py-6">
               <MobileAccountMenu account={account} onNavigate={closeMobileAccount} />
             </nav>
