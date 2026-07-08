@@ -198,9 +198,9 @@ export function warrantyCustomerDisplayLabel(
 export const BANK_TRANSFER_DETAILS = {
   bank: "Santander",
   holder: "Verónica Valdivia Herrera",
-  account: "6056596203",
+  account: "60565966203",
   card: "5579070137322544",
-  clabe: "01418060565962032",
+  clabe: "014180605659662032",
 } as const;
 
 export function bankTransferDetailsText(orderNumber: string, amount: number): string {
