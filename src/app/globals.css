@@ -362,6 +362,42 @@
     background-color: transparent;
   }
 
+  /* Nav e iconos oscuros: el fondo del header en tablet es blanco */
+  .site-header .site-header__nav-link,
+  .site-header[data-has-hero="true"] .site-header__nav-link {
+    color: color-mix(in oklab, var(--foreground) 80%, transparent) !important;
+  }
+
+  .site-header .site-header__nav-link:hover,
+  .site-header[data-has-hero="true"] .site-header__nav-link:hover {
+    color: var(--foreground) !important;
+  }
+
+  .site-header .site-header__nav-underline,
+  .site-header[data-has-hero="true"] .site-header__nav-underline {
+    background-color: var(--copper) !important;
+  }
+
+  .site-header .site-header__icon-btn,
+  .site-header[data-has-hero="true"] .site-header__icon-btn {
+    color: color-mix(in oklab, var(--foreground) 80%, transparent) !important;
+  }
+
+  .site-header .site-header__divider,
+  .site-header[data-has-hero="true"] .site-header__divider {
+    background-color: color-mix(in oklab, var(--border) 70%, transparent) !important;
+  }
+
+  .site-header .site-header__mobile-wordmark,
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-wordmark {
+    color: var(--foreground) !important;
+  }
+
+  .site-header[data-state="hero"] .site-header__icon-btn:hover {
+    background-color: var(--color-muted) !important;
+    color: var(--foreground) !important;
+  }
+
   /* Toolbars sticky opacos */
   section.sticky {
     background-color: var(--background) !important;
@@ -387,23 +423,6 @@
   z-index: 0;
   opacity: var(--header-reveal);
   box-shadow: 0 1px 0 0 rgb(0 0 0 / calc(0.04 * var(--header-reveal)));
-}
-
-@media (max-width: 1023px) {
-  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__bg {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__bar,
-  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__actions,
-  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-logo {
-    background: transparent;
-  }
-
-  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__icon-btn {
-    background-color: transparent;
-  }
 }
 
 .site-header__bar {
