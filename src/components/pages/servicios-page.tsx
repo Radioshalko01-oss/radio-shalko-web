@@ -127,7 +127,7 @@ export function ServiciosPage() {
         align="center"
       />
 
-      <div className="pb-16 md:pb-20">
+      <div className="pb-16 md:pb-20 max-lg:isolate max-lg:bg-background">
         {/* Taller */}
         <section className="mx-auto max-w-7xl px-5 pt-10 md:px-8 md:pt-12">
           <SectionIntro

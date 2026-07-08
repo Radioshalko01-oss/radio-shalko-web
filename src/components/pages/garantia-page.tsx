@@ -129,7 +129,7 @@ export function GarantiaPage() {
         description="Compras tranquilo. Toda nuestra línea está respaldada por garantía oficial, servicio técnico autorizado y atención directa."
       />
 
-      <div className="bg-white pb-16 md:pb-20">
+      <div className="max-lg:isolate bg-white pb-16 md:pb-20">
         {/* Cobertura */}
         <section className="mx-auto max-w-7xl px-5 pt-10 md:px-8 md:pt-12">
           <div className="grid gap-5 md:grid-cols-2 md:gap-6">

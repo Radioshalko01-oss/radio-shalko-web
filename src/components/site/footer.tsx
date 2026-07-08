@@ -228,7 +228,7 @@ export function Footer() {
             <SocialLinks className="justify-center" />
           </div>
 
-          <ul className="mt-5 flex flex-col items-center space-y-2 border-y border-[#2d2d2d] py-3.5 text-center text-[13px] text-white/80">
+          <ul className="mt-5 flex flex-col items-center space-y-2 border-y border-white/15 py-3.5 text-center text-[13px] text-white/80">
             <li className="flex items-start justify-center gap-2.5">
               <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
               <div className="space-y-0.5 text-left leading-snug">
@@ -270,7 +270,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-5 border-t border-[#2d2d2d] pt-5">
+          <div className="mt-5 border-t border-white/15 pt-5">
             <FooterHeading className="text-center">Nuestras tiendas</FooterHeading>
             <div className="mt-3.5 grid grid-cols-2 gap-4">
               <StoreCard compact />
@@ -280,7 +280,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="mt-5 border-t border-[#2d2d2d] pt-5">
+          <div className="mt-5 border-t border-white/15 pt-5">
             <FooterLegalBar />
           </div>
         </div>

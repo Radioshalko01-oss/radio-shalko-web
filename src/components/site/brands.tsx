@@ -298,7 +298,7 @@ export function Brands() {
       </div>
 
       <div
-        className="relative h-14 w-full overflow-hidden md:h-16"
+        className="relative isolate h-14 w-full overflow-hidden md:h-16"
         aria-label="Carrusel de marcas oficiales"
       >
         {prefersReducedMotion ? (
