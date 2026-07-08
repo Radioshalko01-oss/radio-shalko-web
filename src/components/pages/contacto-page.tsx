@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useStableMotion } from "@/lib/motion/use-stable-motion";
 import { Mail, MessageCircle, Phone, MapPin, Clock, ArrowUpRight } from "lucide-react";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
@@ -12,7 +13,7 @@ import { SITE_CONTACT, telHref, whatsappHref, mailtoHref } from "@/lib/site-cont
 const WHATSAPP_E164 = SITE_CONTACT.whatsapp.e164;
 
 export function ContactoPage() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useStableMotion();
   const motionProps = reduceMotion
     ? {}
     : {

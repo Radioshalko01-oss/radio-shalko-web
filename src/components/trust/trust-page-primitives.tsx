@@ -3,13 +3,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useStableMotion } from "@/lib/motion/use-stable-motion";
 import { ArrowUpRight, Check } from "lucide-react";
 import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
 
 export function useTrustMotion() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useStableMotion();
   return reduceMotion
     ? {}
     : {

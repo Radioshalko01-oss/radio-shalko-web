@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useStableMotion } from "@/lib/motion/use-stable-motion";
 import {
   ShieldCheck,
   Wrench,
@@ -109,7 +110,7 @@ const INSTRUMENT_POLICY = {
 } as const;
 
 export function GarantiaPage() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useStableMotion();
 
   const motionProps = reduceMotion
     ? {}
@@ -128,11 +129,12 @@ export function GarantiaPage() {
         description="Compras tranquilo. Toda nuestra línea está respaldada por garantía oficial, servicio técnico autorizado y atención directa."
       />
 
-      <div className="bg-white pb-16 md:pb-20">
+      <div className="max-lg:isolate bg-white pb-16 md:pb-20">
         {/* Cobertura */}
         <section className="mx-auto max-w-7xl px-5 pt-10 md:px-8 md:pt-12">
           <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <motion.article
+            <AnimatedArticle
+              reduceMotion={reduceMotion}
               {...motionProps}
               className="flex flex-col rounded-2xl border border-border bg-card p-6 md:p-7"
             >
@@ -155,9 +157,10 @@ export function GarantiaPage() {
                   </li>
                 ))}
               </ul>
-            </motion.article>
+            </AnimatedArticle>
 
-            <motion.article
+            <AnimatedArticle
+              reduceMotion={reduceMotion}
               {...motionProps}
               transition={{ ...(motionProps as { transition?: object }).transition, delay: 0.06 }}
               className="flex flex-col rounded-2xl border border-border bg-card p-6 md:p-7"
@@ -182,7 +185,7 @@ export function GarantiaPage() {
                   </li>
                 ))}
               </ul>
-            </motion.article>
+            </AnimatedArticle>
           </div>
         </section>
 
@@ -197,8 +200,9 @@ export function GarantiaPage() {
 
           <div className="mt-8 grid gap-5 md:grid-cols-3 md:gap-6">
             {PROCESS_STEPS.map((s, i) => (
-              <motion.article
+              <AnimatedArticle
                 key={s.step}
+                reduceMotion={reduceMotion}
                 {...motionProps}
                 transition={{ ...(motionProps as { transition?: object }).transition, delay: i * 0.06 }}
                 className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 md:p-7"
@@ -215,7 +219,7 @@ export function GarantiaPage() {
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                   {s.detail}
                 </p>
-              </motion.article>
+              </AnimatedArticle>
             ))}
           </div>
         </section>
@@ -235,6 +239,7 @@ export function GarantiaPage() {
           <div className="mt-8 space-y-5 md:mt-10 md:space-y-6">
             <div className="grid gap-5 md:grid-cols-2 md:gap-6">
               <PolicyCard
+                reduceMotion={reduceMotion}
                 {...motionProps}
                 icon={Guitar}
                 eyebrow="Al recibir"
@@ -246,6 +251,7 @@ export function GarantiaPage() {
               </PolicyCard>
 
               <PolicyCard
+                reduceMotion={reduceMotion}
                 {...motionProps}
                 transition={{ ...(motionProps as { transition?: object }).transition, delay: 0.06 }}
                 icon={ShieldCheck}
@@ -259,6 +265,7 @@ export function GarantiaPage() {
 
             <div className="grid gap-5 md:grid-cols-2 md:gap-6">
               <PolicyCard
+                reduceMotion={reduceMotion}
                 {...motionProps}
                 transition={{ ...(motionProps as { transition?: object }).transition, delay: 0.1 }}
                 icon={Wrench}
@@ -268,6 +275,7 @@ export function GarantiaPage() {
               />
 
               <PolicyCard
+                reduceMotion={reduceMotion}
                 {...motionProps}
                 transition={{ ...(motionProps as { transition?: object }).transition, delay: 0.14 }}
                 icon={Clock}
@@ -279,6 +287,7 @@ export function GarantiaPage() {
             </div>
 
             <PolicyCard
+              reduceMotion={reduceMotion}
               {...motionProps}
               transition={{ ...(motionProps as { transition?: object }).transition, delay: 0.18 }}
               icon={X}
@@ -294,7 +303,8 @@ export function GarantiaPage() {
 
         {/* CTA */}
         <section className="mx-auto mt-14 max-w-7xl px-5 md:mt-20 md:px-8">
-          <motion.div
+          <AnimatedDiv
+            reduceMotion={reduceMotion}
             {...motionProps}
             className="overflow-hidden rounded-2xl bg-[#1a1a1a] px-6 py-10 text-white md:px-10 md:py-12"
           >
@@ -331,7 +341,7 @@ export function GarantiaPage() {
                 WhatsApp: {SITE_CONTACT.whatsapp.display}
               </p>
             </div>
-          </motion.div>
+          </AnimatedDiv>
         </section>
       </div>
     </>
@@ -339,6 +349,7 @@ export function GarantiaPage() {
 }
 
 function PolicyCard({
+  reduceMotion = false,
   icon: Icon,
   eyebrow,
   title,
@@ -349,6 +360,7 @@ function PolicyCard({
   children,
   ...motionProps
 }: {
+  reduceMotion?: boolean;
   icon: React.ComponentType<{ className?: string }>;
   eyebrow: string;
   title: string;
@@ -359,15 +371,13 @@ function PolicyCard({
   children?: React.ReactNode;
 } & Record<string, unknown>) {
   const centered = headerAlign === "center";
+  const className = cn(
+    "flex h-full flex-col rounded-2xl border border-border p-6 md:p-7",
+    tone === "muted" ? "bg-muted/30" : "bg-card",
+  );
 
-  return (
-    <motion.article
-      {...motionProps}
-      className={cn(
-        "flex h-full flex-col rounded-2xl border border-border p-6 md:p-7",
-        tone === "muted" ? "bg-muted/30" : "bg-card",
-      )}
-    >
+  const content = (
+    <>
       <div className={cn("flex items-center gap-3", centered && "justify-center")}>
         <IconBadge icon={Icon} />
         <p className={siteShell.brandEyebrow}>{eyebrow}</p>
@@ -398,7 +408,59 @@ function PolicyCard({
           {footer}
         </p>
       ) : null}
+    </>
+  );
+
+  if (reduceMotion) {
+    return <article className={className}>{content}</article>;
+  }
+
+  return (
+    <motion.article {...motionProps} className={className}>
+      {content}
     </motion.article>
+  );
+}
+
+function AnimatedArticle({
+  reduceMotion,
+  className,
+  children,
+  ...motionProps
+}: {
+  reduceMotion: boolean;
+  className?: string;
+  children: React.ReactNode;
+} & Record<string, unknown>) {
+  if (reduceMotion) {
+    return <article className={className}>{children}</article>;
+  }
+
+  return (
+    <motion.article className={className} {...motionProps}>
+      {children}
+    </motion.article>
+  );
+}
+
+function AnimatedDiv({
+  reduceMotion,
+  className,
+  children,
+  ...motionProps
+}: {
+  reduceMotion: boolean;
+  className?: string;
+  children: React.ReactNode;
+} & Record<string, unknown>) {
+  if (reduceMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div className={className} {...motionProps}>
+      {children}
+    </motion.div>
   );
 }
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
+import { useStableMotion } from "@/lib/motion/use-stable-motion";
 import type { CatalogImage } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 
@@ -241,7 +241,7 @@ function MobileZoomLightbox({
   onActiveChange: (index: number) => void;
   name: string;
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useStableMotion();
   const [mounted, setMounted] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -525,7 +525,7 @@ function GalleryMain({
   onTouchStart?: (clientX: number, clientY: number) => void;
   onTouchEnd?: (clientX: number, clientY: number) => void;
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useStableMotion();
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hovering, setHovering] = useState(false);

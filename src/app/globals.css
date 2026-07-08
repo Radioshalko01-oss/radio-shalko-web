@@ -304,6 +304,25 @@
   }
 }
 
+/* Tablet / Android: evita artefactos de composición (rayas, ghosting, “TV antigua”) */
+@media (max-width: 1023px) {
+  .brands-marquee-track,
+  .animate-marquee-infinite,
+  .animate-marquee-primary,
+  .animate-marquee-secondary {
+    animation-play-state: paused !important;
+    will-change: auto !important;
+    transform: none !important;
+  }
+
+  .hero-ken-burns-wrap,
+  .animate-hero-ken-burns {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
 /* Header home: progreso vía --header-reveal (DOM), sin re-render React por frame */
 .site-header {
   --header-reveal: 0;

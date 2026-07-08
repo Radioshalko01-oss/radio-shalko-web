@@ -7,6 +7,7 @@ import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { SiteClosingCta } from "@/components/site/site-closing-cta";
+import { cn } from "@/lib/utils";
 import { whatsappHref, SITE_CONTACT } from "@/lib/site-contact";
 import { productosCatalogBreadcrumbs } from "@/lib/site/breadcrumbs";
 import { siteShell } from "@/lib/design/site-shell";
@@ -287,7 +288,7 @@ export function ProductosPage({
 
 
         {/* Toolbar */}
-        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
+        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] max-lg:backdrop-blur-none lg:bg-background/95 lg:backdrop-blur-md md:top-20">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
             <div className="grid gap-2 py-2.5 max-md:grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-3 md:py-3">
               <div className="flex min-w-0 items-center justify-between gap-2 max-md:gap-1.5">
@@ -424,7 +425,7 @@ export function ProductosPage({
                 </button>
               </div>
             ) : (
-              <div className={gridClass}>
+              <div className={cn(gridClass, "isolate max-lg:[transform:translateZ(0)]")}>
                 {filtered.map((p) => (
                   <ProductCard
                     key={p.id}
