@@ -7,6 +7,7 @@ import {
 import type { AdminOrderDetail } from "@/lib/orders/admin-queries";
 import { adminShell } from "@/lib/design/admin-shell";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/catalog/format";
 
 type FlowStepState = "completed" | "current" | "pending";
 
@@ -23,6 +24,10 @@ function buildOrderFlowSteps(order: AdminOrderDetail): FlowStep[] {
   const approvedUnpaid = order.status === "confirmed" && order.paymentStatus === "unpaid";
   const paid = order.paymentStatus === "paid";
   const fs = order.fulfillmentStatus;
+
+  const priceDone = Boolean(order.confirmedFinalPriceAt);
+  const warrantyDone = Boolean(order.warrantyLabel);
+  const paymentMethodDone = order.paymentMethodConfirmed;
 
   const step = (
     id: string,
@@ -45,6 +50,38 @@ function buildOrderFlowSteps(order: AdminOrderDetail): FlowStep[] {
     ];
   }
 
+  const priceState: FlowStepState = pending
+    ? "pending"
+    : priceDone
+      ? "completed"
+      : approvedUnpaid
+        ? "current"
+        : "pending";
+
+  const warrantyState: FlowStepState = pending
+    ? "pending"
+    : warrantyDone
+      ? "completed"
+      : priceDone && approvedUnpaid
+        ? "current"
+        : priceDone
+          ? "completed"
+          : "pending";
+
+  const paymentMethodState: FlowStepState = pending
+    ? "pending"
+    : paymentMethodDone
+      ? "completed"
+      : warrantyDone && approvedUnpaid
+        ? "current"
+        : "pending";
+
+  const validatePaymentState: FlowStepState = paid
+    ? "completed"
+    : paymentMethodDone && approvedUnpaid
+      ? "current"
+      : "pending";
+
   return [
     step("received", "Solicitud recibida", "completed"),
     step(
@@ -56,37 +93,53 @@ function buildOrderFlowSteps(order: AdminOrderDetail): FlowStep[] {
     step(
       "price",
       "Confirmar precio final",
-      pending ? "pending" : "completed",
-      pending ? undefined : "Precio acordado con el cliente.",
+      priceState,
+      priceDone && order.confirmedFinalPrice
+        ? `Precio final confirmado con el cliente: ${formatPrice(order.confirmedFinalPrice)}`
+        : approvedUnpaid && !priceDone
+          ? "Acción requerida: confirma el precio acordado y aceptado por el cliente."
+          : undefined,
     ),
     step(
       "warranty",
       "Definir garantía",
-      pending ? "pending" : approvedUnpaid || paid ? "completed" : "current",
-      approvedUnpaid ? "Confirma garantía al cliente si aún no lo hiciste." : undefined,
+      warrantyState,
+      warrantyDone
+        ? order.warrantyLabel ?? undefined
+        : priceDone && !warrantyDone
+          ? "Acción requerida: define la garantía del pedido."
+          : undefined,
     ),
     step(
       "payment_method",
       "Confirmar forma de pago",
-      approvedUnpaid ? "current" : paid ? "completed" : "pending",
-      approvedUnpaid
-        ? "Comparte instrucciones oficiales según la preferencia del cliente."
-        : undefined,
+      paymentMethodState,
+      paymentMethodDone
+        ? order.paymentInstructionsSent
+          ? "Instrucciones enviadas al cliente."
+          : "Forma de pago confirmada."
+        : warrantyDone
+          ? "Acción requerida: confirma instrucciones o pago presencial."
+          : undefined,
     ),
     step(
       "validate_payment",
       "Validar pago",
-      paid ? "completed" : approvedUnpaid ? "current" : "pending",
-      approvedUnpaid ? "Acción requerida: validar transferencia o pago presencial." : undefined,
+      validatePaymentState,
+      approvedUnpaid && paymentMethodDone && !paid
+        ? "Acción requerida: validar transferencia o pago presencial."
+        : undefined,
     ),
     step(
       "prepare",
       "Preparar pedido",
-      fs === "preparing" ? "current" : ["ready_for_pickup", "delivered"].includes(fs)
-        ? "completed"
-        : paid && fs === "unfulfilled"
-          ? "current"
-          : "pending",
+      fs === "preparing"
+        ? "current"
+        : ["ready_for_pickup", "delivered"].includes(fs)
+          ? "completed"
+          : paid && fs === "unfulfilled"
+            ? "current"
+            : "pending",
       paid && fs === "unfulfilled" ? "Acción requerida: iniciar preparación." : undefined,
     ),
     step(
@@ -99,11 +152,7 @@ function buildOrderFlowSteps(order: AdminOrderDetail): FlowStep[] {
           : "pending",
       fs === "ready_for_pickup" ? "Avisar al cliente que puede recoger." : undefined,
     ),
-    step(
-      "delivered",
-      "Entregado",
-      fs === "delivered" ? "completed" : "pending",
-    ),
+    step("delivered", "Entregado", fs === "delivered" ? "completed" : "pending"),
   ];
 }
 
@@ -113,6 +162,15 @@ function recommendedNextAction(order: AdminOrderDetail): string {
     return "Revisar disponibilidad y confirmar al cliente.";
   }
   if (order.status === "confirmed" && order.paymentStatus === "unpaid") {
+    if (!order.confirmedFinalPriceAt) {
+      return "Confirmar el precio final acordado y aceptado por el cliente.";
+    }
+    if (!order.warrantyLabel) {
+      return "Definir la garantía del pedido.";
+    }
+    if (!order.paymentMethodConfirmed) {
+      return "Confirmar forma de pago e instrucciones oficiales para el cliente.";
+    }
     return "Validar el pago manual cuando hayas confirmado transferencia o pago presencial.";
   }
   if (order.paymentStatus === "paid" && order.fulfillmentStatus === "unfulfilled") {

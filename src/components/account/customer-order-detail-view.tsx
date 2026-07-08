@@ -44,6 +44,14 @@ export function CustomerOrderDetailView({
     order.status === "confirmed" && order.paymentStatus === "unpaid";
   const fs = order.fulfillmentStatus;
   const paymentPreference = customerPaymentPreferenceLabel(order.paymentMethod);
+  const hasConfirmedPrice = order.confirmedFinalPrice != null;
+  const displayTotal = order.confirmedFinalPrice ?? order.total;
+  const hasPriceAdjustment =
+    Boolean(order.confirmedFinalPriceNote) ||
+    (hasConfirmedPrice && order.confirmedFinalPrice !== order.subtotal);
+  const isTransfer = order.paymentMethod === "bank_transfer";
+  const showTransferInstructionsMessage =
+    isApprovedUnpaid && isTransfer && order.paymentInstructionsSent;
 
   const waLink = whatsappHref(undefined, buildCustomerOrderWhatsAppMessage(order.orderNumber));
 
@@ -92,8 +100,10 @@ export function CustomerOrderDetailView({
             <p className="mt-1 text-sm text-muted-foreground">{formatDateTime(order.createdAt)}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-muted-foreground">Total estimado</p>
-            <p className={typography.priceTotal}>{formatPrice(order.total)}</p>
+            <p className="text-xs text-muted-foreground">
+              {hasConfirmedPrice ? "Precio final confirmado con el cliente" : "Total estimado"}
+            </p>
+            <p className={typography.priceTotal}>{formatPrice(displayTotal)}</p>
           </div>
         </div>
       </div>
@@ -118,6 +128,35 @@ export function CustomerOrderDetailView({
           envíos; debes recoger tu producto en la tienda indicada.
         </p>
       </section>
+
+      {hasConfirmedPrice && (
+        <section className="rounded-2xl border border-border bg-card/60 p-5">
+          <h2 className="text-sm font-semibold text-foreground">
+            Precio final confirmado con el cliente
+          </h2>
+          <p className="mt-2 text-lg font-semibold text-foreground">
+            {formatPrice(order.confirmedFinalPrice!)}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Este monto fue acordado y confirmado contigo por Radio Shalko.
+          </p>
+          {order.confirmedFinalPriceNote && (
+            <p className="mt-2 text-sm text-foreground/85">{order.confirmedFinalPriceNote}</p>
+          )}
+          {hasPriceAdjustment && (
+            <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Este precio fue acordado contigo. Debes aceptarlo antes de continuar con el pago.
+            </p>
+          )}
+        </section>
+      )}
+
+      {order.warrantyLabel && (
+        <section className="rounded-2xl border border-border bg-card/60 p-5">
+          <h2 className="text-sm font-semibold text-foreground">Garantía</h2>
+          <p className="mt-2 text-sm font-medium text-foreground">{order.warrantyLabel}</p>
+        </section>
+      )}
 
       {order.customerMessage && (
         <section className="rounded-2xl border border-border bg-card/60 p-5">
@@ -161,8 +200,10 @@ export function CustomerOrderDetailView({
             <dd className="font-medium text-foreground">{formatPrice(order.subtotal)}</dd>
           </div>
           <div className="flex justify-between border-t border-border/60 pt-2">
-            <dt className="font-medium text-foreground">Total estimado</dt>
-            <dd className="text-lg font-semibold text-foreground">{formatPrice(order.total)}</dd>
+            <dt className="font-medium text-foreground">
+              {hasConfirmedPrice ? "Precio final confirmado con el cliente" : "Total estimado"}
+            </dt>
+            <dd className="text-lg font-semibold text-foreground">{formatPrice(displayTotal)}</dd>
           </div>
         </dl>
         {!isPaid && (
@@ -185,10 +226,28 @@ export function CustomerOrderDetailView({
       {isApprovedUnpaid && (
         <section className="rounded-2xl border border-border bg-muted/30 p-5">
           <h2 className="text-sm font-semibold text-foreground">Pago pendiente</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones de pago por
-            transferencia o pago presencial en tienda.
-          </p>
+          {showTransferInstructionsMessage ? (
+            <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+              Radio Shalko ya confirmó tu forma de pago. Por favor realiza tu transferencia y
+              comparte tu comprobante por el canal oficial.
+            </p>
+          ) : isTransfer ? (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones oficiales de
+              transferencia por el canal acordado cuando estén listas.
+            </p>
+          ) : order.paymentMethodConfirmed ? (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Radio Shalko confirmó tu forma de pago presencial en{" "}
+              {branchDisplayName(order.branchSlug, order.branchLabel)}. Acude a la tienda indicada
+              cuando te indiquemos continuar.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones de pago por
+              transferencia o pago presencial en tienda.
+            </p>
+          )}
         </section>
       )}
 

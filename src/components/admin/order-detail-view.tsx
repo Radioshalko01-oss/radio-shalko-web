@@ -16,6 +16,11 @@ import { OrderDetailActions } from "@/components/admin/order-detail-actions";
 import { OrderAvailabilityReview } from "@/components/admin/order-availability-review";
 import { OrderPaymentSection } from "@/components/admin/order-payment-section";
 import { OrderRequestFlow } from "@/components/admin/order-request-flow";
+import {
+  OrderFinalPriceSection,
+  OrderPaymentInstructionsSection,
+  OrderWarrantySection,
+} from "@/components/admin/order-operational-sections";
 import { OrderFulfillmentSection } from "@/components/admin/order-fulfillment-section";
 import { customerPaymentPreferenceLabel } from "@/lib/orders/status-labels";
 import { adminShell } from "@/lib/design/admin-shell";
@@ -159,6 +164,10 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
       <OrderRequestFlow order={order} />
 
       <OrderAvailabilityReview order={order} />
+
+      <OrderFinalPriceSection order={order} />
+      <OrderWarrantySection order={order} />
+      <OrderPaymentInstructionsSection order={order} />
 
       <OrderPaymentSection order={order} />
 

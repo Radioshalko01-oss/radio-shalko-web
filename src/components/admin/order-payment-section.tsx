@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
 import { registerManualPaymentForOrder } from "@/lib/orders/admin-actions";
 import {
@@ -40,6 +41,7 @@ function parseManualPaymentOption(option: ManualPaymentOption) {
 }
 
 export function OrderPaymentSection({ order }: { order: AdminOrderDetail }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(order.paymentStatus === "paid");
@@ -55,6 +57,7 @@ export function OrderPaymentSection({ order }: { order: AdminOrderDetail }) {
   const isApproved =
     order.status === "confirmed" && order.paymentStatus === "unpaid" && !isPaid;
   const showSection = isPaid || isApproved;
+  const canValidate = order.canValidatePayment;
 
   if (!showSection) return null;
 
@@ -80,12 +83,13 @@ export function OrderPaymentSection({ order }: { order: AdminOrderDetail }) {
       setPaidMethodLabel(
         manualPaymentMethodLabel(payload.paymentMethod, payload.storeLocation ?? null),
       );
+      router.refresh();
     });
   };
 
   return (
     <section className={adminShell.cardSection}>
-      <h3 className={adminShell.sectionTitleSm}>Pago manual</h3>
+      <h3 className={adminShell.sectionTitleSm}>6. Validar pago</h3>
 
       {isPaid ? (
         <div className="mt-3 space-y-2 text-sm">
@@ -146,7 +150,18 @@ export function OrderPaymentSection({ order }: { order: AdminOrderDetail }) {
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
           )}
 
-          <AdminButton type="button" onClick={validatePayment} disabled={isPending} size="lg">
+          {!canValidate && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Antes de validar el pago debes confirmar precio final, garantía y forma de pago.
+            </p>
+          )}
+
+          <AdminButton
+            type="button"
+            onClick={validatePayment}
+            disabled={isPending || !canValidate}
+            size="lg"
+          >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Validar pago
           </AdminButton>

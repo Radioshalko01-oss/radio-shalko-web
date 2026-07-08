@@ -5,6 +5,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { branchDisplayName } from "@/lib/orders/status-labels";
+import {
+  canValidateManualPayment,
+  isPaymentMethodConfirmed,
+  parseOperationalMetadata,
+  warrantyDisplayLabel,
+  type OrderOperationalMeta,
+} from "@/lib/orders/operational-metadata";
 
 export type AdminOrderFilter =
   | "all"
@@ -76,6 +83,15 @@ export type AdminOrderDetail = AdminOrderListItem & {
   pickupReadyEstimate: string | null;
   items: AdminOrderLineItem[];
   history: AdminOrderHistoryEntry[];
+  operational: OrderOperationalMeta;
+  legacyAdminNote: string | null;
+  confirmedFinalPrice: number | null;
+  confirmedFinalPriceNote: string | null;
+  confirmedFinalPriceAt: string | null;
+  warrantyLabel: string | null;
+  paymentMethodConfirmed: boolean;
+  paymentInstructionsSent: boolean;
+  canValidatePayment: boolean;
 };
 
 export type AdminOrderListFilters = {
@@ -389,6 +405,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     }))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
+  const operational = parseOperationalMetadata(row.admin_internal_note);
+
   return {
     ...base,
     notes: row.notes,
@@ -410,5 +428,14 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     pickupReadyEstimate: row.pickup_ready_estimate,
     items,
     history,
+    operational,
+    legacyAdminNote: operational.legacyAdminNote ?? null,
+    confirmedFinalPrice: operational.finalPrice?.amount ?? null,
+    confirmedFinalPriceNote: operational.finalPrice?.note ?? null,
+    confirmedFinalPriceAt: operational.finalPrice?.confirmedAt ?? null,
+    warrantyLabel: warrantyDisplayLabel(operational.warranty),
+    paymentMethodConfirmed: isPaymentMethodConfirmed(operational),
+    paymentInstructionsSent: Boolean(operational.paymentMethodConfirmed?.instructionsSent),
+    canValidatePayment: canValidateManualPayment(operational),
   };
 }

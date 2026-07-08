@@ -14,6 +14,18 @@ import { branchDisplayName } from "@/lib/orders/status-labels";
 import { notifyCustomerPickupReady } from "@/lib/notifications/customer-pickup-email";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
 import { logAdminAudit } from "@/lib/admin/audit-log";
+import {
+  canValidateManualPayment,
+  mergeOperationalMetadata,
+  parseOperationalMetadata,
+  serializeOperationalMetadata,
+  warrantyDisplayLabel,
+  type OrderOperationalMeta,
+  type WarrantyCustomUnit,
+  type WarrantyOption,
+  WARRANTY_OPTIONS,
+} from "@/lib/orders/operational-metadata";
+import { notifyCustomerPaymentInstructions } from "@/lib/notifications/customer-payment-instructions-email";
 
 const uuidSchema = z.string().uuid("Identificador de pedido inválido.");
 
@@ -245,7 +257,7 @@ export async function registerManualPaymentForOrder(input: {
 
   const { data: order, error: fetchError } = await supabase
     .from("orders")
-    .select("id, order_number, user_id, status, payment_status")
+    .select("id, order_number, user_id, status, payment_status, admin_internal_note")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -262,6 +274,15 @@ export async function registerManualPaymentForOrder(input: {
     return {
       ok: false,
       error: "Solo pedidos aprobados pueden registrar pago manual.",
+    };
+  }
+
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  if (!canValidateManualPayment(operational)) {
+    return {
+      ok: false,
+      error:
+        "Antes de validar el pago debes confirmar precio final, garantía y forma de pago.",
     };
   }
 
@@ -321,6 +342,326 @@ export async function registerManualPaymentForOrder(input: {
   }
 
   revalidateOrderPaths(orderId);
+  return { ok: true };
+}
+
+const PRE_PAYMENT_BLOCK_MESSAGE =
+  "Antes de validar el pago debes confirmar precio final, garantía y forma de pago.";
+
+async function fetchConfirmedOrderForPrePayment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+) {
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select("id, order_number, user_id, status, payment_status, admin_internal_note, total")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) return { ok: false as const, error: error.message };
+  if (!order) return { ok: false as const, error: "Pedido no encontrado." };
+  if (order.status === "cancelled") {
+    return { ok: false as const, error: "Este pedido está cancelado." };
+  }
+  if (order.status !== "confirmed") {
+    return { ok: false as const, error: "Solo pedidos aprobados pueden avanzar en este flujo." };
+  }
+  if (order.payment_status === "paid") {
+    return { ok: false as const, error: "Este pedido ya tiene el pago registrado." };
+  }
+  return { ok: true as const, order };
+}
+
+async function persistOperationalMetadata(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+  rawNote: string | null,
+  meta: OrderOperationalMeta,
+) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ admin_internal_note: serializeOperationalMetadata(meta) })
+    .eq("id", orderId);
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
+
+const finalPriceSchema = z.object({
+  orderId: uuidSchema,
+  amount: z.coerce.number().positive("Ingresa un precio final válido."),
+  note: z.string().trim().optional(),
+});
+
+/** Paso 3 · Confirmar precio final acordado con el cliente. */
+export async function confirmOrderFinalPrice(input: {
+  orderId: string;
+  amount: number;
+  note?: string;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = finalPriceSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const supabase = await createClient();
+  const fetched = await fetchConfirmedOrderForPrePayment(supabase, parsed.data.orderId);
+  if (!fetched.ok) return fetched;
+
+  const now = new Date().toISOString();
+  const meta = mergeOperationalMetadata(fetched.order.admin_internal_note, {
+    finalPrice: {
+      amount: Math.round(parsed.data.amount),
+      note: parsed.data.note?.trim() || null,
+      confirmedAt: now,
+      confirmedBy: user.id,
+    },
+  });
+
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({
+      admin_internal_note: serializeOperationalMetadata(meta),
+      total: Math.round(parsed.data.amount),
+    })
+    .eq("id", parsed.data.orderId);
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: fetched.order.status,
+    to_status: fetched.order.status,
+    note: `Precio final confirmado: $${Math.round(parsed.data.amount).toLocaleString("es-MX")} MXN${
+      parsed.data.note?.trim() ? `. Nota: ${parsed.data.note.trim()}` : ""
+    }`,
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.final_price_confirmed",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { amount: Math.round(parsed.data.amount) },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+const warrantySchema = z
+  .object({
+    orderId: uuidSchema,
+    type: z.enum(WARRANTY_OPTIONS),
+    noneReason: z.string().trim().optional(),
+    customValue: z.coerce.number().optional(),
+    customUnit: z.enum(["days", "months", "years"]).optional(),
+    note: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "none" && !data.noneReason?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Indica el motivo cuando la garantía no aplica.",
+        path: ["noneReason"],
+      });
+    }
+    if (data.type === "custom") {
+      if (!data.customValue || data.customValue <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ingresa la duración personalizada de la garantía.",
+          path: ["customValue"],
+        });
+      }
+      if (!data.customUnit) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Selecciona la unidad de la garantía personalizada.",
+          path: ["customUnit"],
+        });
+      }
+    }
+  });
+
+/** Paso 4 · Definir garantía del pedido. */
+export async function defineOrderWarranty(input: {
+  orderId: string;
+  type: string;
+  noneReason?: string;
+  customValue?: number;
+  customUnit?: string;
+  note?: string;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = warrantySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const supabase = await createClient();
+  const fetched = await fetchConfirmedOrderForPrePayment(supabase, parsed.data.orderId);
+  if (!fetched.ok) return fetched;
+
+  const operational = parseOperationalMetadata(fetched.order.admin_internal_note);
+  if (!operational.finalPrice?.confirmedAt) {
+    return { ok: false, error: "Primero debes confirmar el precio final." };
+  }
+
+  const now = new Date().toISOString();
+  const meta = mergeOperationalMetadata(fetched.order.admin_internal_note, {
+    warranty: {
+      type: parsed.data.type as WarrantyOption,
+      noneReason: parsed.data.noneReason?.trim() || null,
+      customValue: parsed.data.customValue ?? null,
+      customUnit: (parsed.data.customUnit as WarrantyCustomUnit | undefined) ?? null,
+      note: parsed.data.note?.trim() || null,
+      definedAt: now,
+      definedBy: user.id,
+    },
+  });
+
+  const persisted = await persistOperationalMetadata(
+    supabase,
+    parsed.data.orderId,
+    fetched.order.admin_internal_note,
+    meta,
+  );
+  if (!persisted.ok) return persisted;
+
+  const label = warrantyDisplayLabel(meta.warranty);
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: fetched.order.status,
+    to_status: fetched.order.status,
+    note: `Garantía definida: ${label ?? parsed.data.type}`,
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.warranty_defined",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { warranty_type: parsed.data.type },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+const paymentMethodConfirmSchema = z.object({
+  orderId: uuidSchema,
+  instructionsSent: z.boolean().optional(),
+});
+
+/** Paso 5 · Confirmar forma de pago e instrucciones enviadas al cliente. */
+export async function confirmOrderPaymentMethod(input: {
+  orderId: string;
+  instructionsSent?: boolean;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = paymentMethodConfirmSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const supabase = await createClient();
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select(
+      "id, order_number, user_id, status, payment_status, payment_method, admin_internal_note, total, customer_email, customer_name, branches ( slug, display_name, name )",
+    )
+    .eq("id", parsed.data.orderId)
+    .maybeSingle();
+
+  if (fetchError) return { ok: false, error: fetchError.message };
+  if (!order) return { ok: false, error: "Pedido no encontrado." };
+  if (order.status !== "confirmed" || order.payment_status === "paid") {
+    return { ok: false, error: "Este pedido no puede confirmar forma de pago en este momento." };
+  }
+
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  if (!operational.finalPrice?.confirmedAt) {
+    return { ok: false, error: "Primero debes confirmar el precio final." };
+  }
+  if (!operational.warranty?.definedAt) {
+    return { ok: false, error: "Primero debes definir la garantía." };
+  }
+
+  const now = new Date().toISOString();
+  const instructionsSent = parsed.data.instructionsSent ?? true;
+  const meta = mergeOperationalMetadata(order.admin_internal_note, {
+    paymentMethodConfirmed: {
+      confirmedAt: now,
+      confirmedBy: user.id,
+      instructionsSent,
+    },
+  });
+
+  const persisted = await persistOperationalMetadata(
+    supabase,
+    parsed.data.orderId,
+    order.admin_internal_note,
+    meta,
+  );
+  if (!persisted.ok) return persisted;
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: order.status,
+    to_status: order.status,
+    note: instructionsSent
+      ? "Forma de pago confirmada e instrucciones enviadas al cliente"
+      : "Forma de pago confirmada",
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.payment_method_confirmed",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { instructions_sent: instructionsSent },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+/** Envía instrucciones de transferencia por correo (opcional · Resend). */
+export async function sendOrderPaymentInstructionsEmail(
+  orderId: string,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select(
+      "id, order_number, customer_email, customer_name, payment_method, total, admin_internal_note",
+    )
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  if (!order) return { ok: false, error: "Pedido no encontrado." };
+  if (order.payment_method !== "bank_transfer") {
+    return { ok: false, error: "Las instrucciones por correo aplican solo a transferencia." };
+  }
+
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  const amount = operational.finalPrice?.amount ?? order.total;
+
+  void notifyCustomerPaymentInstructions({
+    orderNumber: order.order_number,
+    customerEmail: order.customer_email,
+    customerName: order.customer_name,
+    amount,
+  });
+
   return { ok: true };
 }
 
