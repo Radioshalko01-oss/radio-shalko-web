@@ -5,7 +5,7 @@ import {
   isOfficialBrandName,
   sortByOfficialBrandOrder,
 } from "@/lib/navigation/catalog-taxonomy";
-import { resolveProductSelect, hasFeaturedColumn } from "./product-select";
+import { resolveProductSelect } from "./product-select";
 import {
   mapProduct,
   mapBrand,
@@ -107,7 +107,6 @@ const HOME_FEATURED_SELECT = `
   price,
   sku,
   is_new,
-  is_featured,
   is_published,
   brand:brands ( id, name, slug, logo_url ),
   category:categories ( id, name, slug ),
@@ -130,25 +129,21 @@ export type HomeFeaturedProducts = {
  */
 export const getHomeFeaturedProducts = cache(async (): Promise<HomeFeaturedProducts> => {
   const supabase = await createClient();
-  const featuredColumn = await hasFeaturedColumn(supabase);
 
-  const [newRes, featuredRes] = await Promise.all([
+  const [newRes, priceRes] = await Promise.all([
     supabase
       .from("products")
       .select(HOME_FEATURED_SELECT)
       .eq("is_published", true)
       .eq("is_new", true)
-      .order("created_at", { ascending: false })
-      .limit(4),
-    featuredColumn
-      ? supabase
-          .from("products")
-          .select(HOME_FEATURED_SELECT)
-          .eq("is_published", true)
-          .eq("is_featured", true)
-          .order("created_at", { ascending: false })
-          .limit(4)
-      : Promise.resolve({ data: null, error: null }),
+      .order("title", { ascending: true })
+      .limit(8),
+    supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("price", { ascending: false })
+      .limit(8),
   ]);
 
   const mapRows = (rows: unknown[] | null): CatalogProduct[] =>
@@ -163,10 +158,10 @@ export const getHomeFeaturedProducts = cache(async (): Promise<HomeFeaturedProdu
       } as RawProduct),
     );
 
-  const novedades = mapRows(newRes.data as unknown[] | null);
-  const destacados = featuredColumn
-    ? mapRows(featuredRes.data as unknown[] | null)
-    : [];
+  const novedadesRaw = mapRows(newRes.data as unknown[] | null);
+  const novedades = novedadesRaw.length > 0 ? novedadesRaw.slice(0, 4) : [];
+
+  const destacados = mapRows(priceRes.data as unknown[] | null).slice(0, 4);
 
   if (novedades.length === 0 && destacados.length === 0) {
     const { data } = await supabase

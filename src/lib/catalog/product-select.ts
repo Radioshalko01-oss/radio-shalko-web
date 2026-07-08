@@ -10,7 +10,6 @@ export const PRODUCT_SELECT_BASE = `
   price,
   sku,
   is_new,
-  is_featured,
   is_published,
   brand:brands ( id, name, slug, logo_url ),
   category:categories ( id, name, slug ),
@@ -36,7 +35,6 @@ export const PRODUCT_SELECT_EXTENDED = `
   price,
   sku,
   is_new,
-  is_featured,
   is_published,
   catalog_variant,
   brand:brands ( id, name, slug, logo_url ),
@@ -121,27 +119,4 @@ export function productDetailWriteFields(
     features: input.features ?? null,
     includes: input.includes ?? null,
   };
-}
-
-type FeaturedColumnState = "unknown" | "available" | "missing";
-
-let featuredColumnState: FeaturedColumnState = "unknown";
-
-export async function hasFeaturedColumn(supabase: SupabaseClient): Promise<boolean> {
-  if (featuredColumnState === "available") return true;
-  if (featuredColumnState === "missing") return false;
-
-  const { error } = await supabase.from("products").select("is_featured").limit(1);
-  if (error?.code === "42703") {
-    featuredColumnState = "missing";
-    return false;
-  }
-
-  featuredColumnState = "available";
-  return true;
-}
-
-export function productFeaturedWriteField(isFeatured: boolean | undefined, includeColumn: boolean) {
-  if (!includeColumn) return {};
-  return { is_featured: isFeatured ?? false };
 }

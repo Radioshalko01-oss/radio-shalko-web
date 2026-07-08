@@ -58,7 +58,6 @@ export function ProductForm({
   const [features, setFeatures] = useState(product?.features ?? "");
   const [includes, setIncludes] = useState(product?.includes ?? "");
   const [isNew, setIsNew] = useState(product?.isNew ?? false);
-  const [isFeatured, setIsFeatured] = useState(product?.isFeatured ?? false);
   const [isPublished, setIsPublished] = useState(product?.isPublished ?? false);
 
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -82,7 +81,6 @@ export function ProductForm({
       features: features.trim() || null,
       includes: includes.trim() || null,
       isNew,
-      isFeatured,
       isPublished,
     };
   }
@@ -101,7 +99,6 @@ export function ProductForm({
       features,
       includes,
       isNew,
-      isFeatured,
       isPublished,
     ],
   );
@@ -276,15 +273,9 @@ export function ProductForm({
         <div className="space-y-3">
           <AdminToggle
             label="Marcar como novedad"
-            description="Muestra la etiqueta “Nuevo” en el catálogo. Solo se muestran 4 novedades; al agregar una nueva, la más antigua sale de la cola."
+            description="Muestra la etiqueta “Nuevo” en el catálogo."
             checked={isNew}
             onChange={setIsNew}
-          />
-          <AdminToggle
-            label="Marcar como destacado"
-            description="Aparece en la pestaña “Destacados” del inicio."
-            checked={isFeatured}
-            onChange={setIsFeatured}
           />
           <AdminToggle
             label="Publicado"

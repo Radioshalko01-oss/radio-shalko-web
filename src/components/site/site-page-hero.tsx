@@ -10,7 +10,7 @@ export type SitePageHeroProps = {
   description?: ReactNode;
   /** default: hero centrado amplio; compact: más bajo */
   variant?: "default" | "compact";
-  /** start: título alineado al inicio; center: título centrado en el panel (laptop+) */
+  /** compact: alinea título al inicio o al centro del panel */
   align?: "start" | "center";
   showBreadcrumbs?: boolean;
   className?: string;
@@ -27,7 +27,7 @@ export function SitePageHero({
   className,
 }: SitePageHeroProps) {
   const compact = variant === "compact";
-  const centered = align === "center";
+  const centered = compact && align === "center";
 
   return (
     <section
@@ -46,22 +46,17 @@ export function SitePageHero({
         <header
           className={cn(
             "border-b border-white/15",
-            centered && compact
+            centered
               ? "flex min-h-[7.5rem] flex-col items-center justify-center pb-5 text-center md:min-h-[8.5rem] md:pb-6"
-              : centered
-                ? "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 text-center max-md:py-0 max-md:pb-5 md:flex md:flex-col md:items-center md:pb-12 md:pt-2"
-                : compact
-                  ? "pb-5 pt-1 max-md:pb-4 md:pb-6 md:pt-2"
-                  : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
+              : compact
+                ? "pb-5 pt-1 max-md:pb-4 md:pb-6 md:pt-2"
+                : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
           )}
         >
           {showBreadcrumbs ? (
             <nav
               aria-label="Ubicación en el sitio"
-              className={cn(
-                "hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 md:block",
-                centered && !compact && "md:text-center",
-              )}
+              className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 md:block"
             >
               {breadcrumbs.map((item, index) => (
                 <Fragment key={`${item.label}-${index}`}>
@@ -84,9 +79,7 @@ export function SitePageHero({
           <div
             className={cn(
               centered
-                ? compact
-                  ? "flex flex-col items-center text-center"
-                  : "mx-auto flex w-full max-w-2xl flex-col items-center text-center max-md:mt-0 md:mt-6"
+                ? "flex flex-col items-center text-center"
                 : compact
                   ? "mt-4 md:mt-5"
                   : "mx-auto flex max-w-2xl flex-col items-center text-center max-md:mt-0 md:mt-8",

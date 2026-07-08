@@ -314,7 +314,6 @@ export const OFFICIAL_BRANDS = [
   "Laney",
   "Meteoro",
   "JZG",
-  "Kaiser",
   "AlíenPro",
   "Bellator",
   "Cort",

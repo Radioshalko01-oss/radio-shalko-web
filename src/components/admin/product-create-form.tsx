@@ -73,7 +73,6 @@ export function ProductCreateForm({
   const [features, setFeatures] = useState("");
   const [includes, setIncludes] = useState("");
   const [isNew, setIsNew] = useState(false);
-  const [isFeatured, setIsFeatured] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
 
   // Galería (pendiente, client-side hasta guardar)
@@ -167,7 +166,6 @@ export function ProductCreateForm({
       features: features.trim() || null,
       includes: includes.trim() || null,
       isNew,
-      isFeatured,
       isPublished,
     };
   }
@@ -517,15 +515,9 @@ export function ProductCreateForm({
         <div className="mt-4 space-y-3">
           <Toggle
             label="Marcar como novedad"
-            description="Muestra la etiqueta “Nuevo” en el catálogo. Solo se muestran 4 novedades; al agregar una nueva, la más antigua sale de la cola."
+            description="Muestra la etiqueta “Nuevo” en el catálogo."
             checked={isNew}
             onChange={setIsNew}
-          />
-          <Toggle
-            label="Marcar como destacado"
-            description="Aparece en la pestaña “Destacados” del inicio."
-            checked={isFeatured}
-            onChange={setIsFeatured}
           />
           <Toggle
             label="Publicado"

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/lib/catalog/format";
+import { getBrandWarranty } from "@/lib/catalog/brand-warranty";
 import { isAvailable } from "@/lib/catalog/inventory";
 import { spacing, typography } from "@/lib/design/tokens";
 import { SITE_CONTACT } from "@/lib/site-contact";
@@ -66,6 +67,7 @@ export function ProductDetail({
   const desc = shortDescription(product.description ?? product.subtitle);
   const detailSections = getProductDetailSections(product);
   const legacySpecs = splitSpecs(product.specs);
+  const warranty = getBrandWarranty(brand?.name);
 
   const storeNames = SITE_CONTACT.stores.map((s) => s.name).join(" y ");
 
@@ -127,9 +129,24 @@ export function ProductDetail({
           )}
 
           <div className="mt-5 border-b border-border/60 pb-5">
-            <p className="text-[1.75rem] font-semibold tabular-nums leading-none tracking-tight text-foreground sm:text-[2rem] md:text-[2.125rem]">
-              {formatPrice(product.price)}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 max-md:gap-x-2 md:gap-x-4 lg:gap-x-6">
+              <p className="shrink-0 text-[1.75rem] font-semibold tabular-nums leading-none tracking-tight text-foreground sm:text-[2rem] md:text-[2.125rem]">
+                {formatPrice(product.price)}
+              </p>
+              <div className="inline-flex min-w-0 max-w-full flex-1 items-center gap-2 rounded-lg border border-border/60 bg-[#fafafa] px-2.5 py-1.5 max-md:text-[13px] sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2.5 md:ml-1 md:w-auto md:flex-initial lg:ml-3 xl:ml-5">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-foreground/70 max-md:h-3.5 max-md:w-3.5 md:h-4 md:w-4" strokeWidth={1.75} />
+                <p className="min-w-0 truncate font-medium leading-tight text-foreground max-md:text-[13px] md:text-sm">
+                  Garantía {warranty.duration}
+                  {brand ? ` · ${brand.name}` : ""}
+                </p>
+                <Link
+                  href="/garantia"
+                  className="shrink-0 text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:text-sm md:ml-0"
+                >
+                  Ver política
+                </Link>
+              </div>
+            </div>
             <p className="mt-1.5 text-xs text-muted-foreground">IVA incluido</p>
           </div>
 

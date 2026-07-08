@@ -7,7 +7,7 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "Marcas",
   description:
-    "Distribuidor autorizado: Casio, Yamaha, Ibanez, Fender, Behringer, Kaiser, McCartney y más.",
+    "Distribuidor autorizado: Casio, Yamaha, Ibanez, Fender, Behringer, McCartney y más.",
 };
 
 export default async function MarcasRoute() {

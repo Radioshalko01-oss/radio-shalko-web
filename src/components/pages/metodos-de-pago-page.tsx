@@ -93,8 +93,8 @@ export function MetodosDePagoPage() {
         </TrustSection>
 
         <TrustSection className="mt-4 md:mt-6">
-          <TrustCard icon={Lock} eyebrow="Seguridad" title="Recomendaciones importantes" delay={0} center>
-            <TrustBulletList center items={SECURITY} />
+          <TrustCard icon={Lock} eyebrow="Seguridad" title="Recomendaciones importantes" delay={0}>
+            <TrustBulletList items={SECURITY} />
           </TrustCard>
         </TrustSection>
 

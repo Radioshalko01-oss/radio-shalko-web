@@ -397,11 +397,7 @@ export function ProductsManager({
                           <span className={stock > 0 ? "text-foreground" : "text-amber-700"}>{stock}</span>
                         </td>
                         <td className={adminShell.tableCell}>
-                          <StatusBadge
-                            published={p.isPublished}
-                            isNew={p.isNew}
-                            isFeatured={p.isFeatured}
-                          />
+                          <StatusBadge published={p.isPublished} />
                         </td>
                         <td className={adminShell.tableCell}>
                           <div className="flex items-center justify-end gap-1">
@@ -597,35 +593,11 @@ export function ProductsManager({
   );
 }
 
-function StatusBadge({
-  published,
-  isNew,
-  isFeatured,
-}: {
-  published: boolean;
-  isNew: boolean;
-  isFeatured: boolean;
-}) {
+function StatusBadge({ published }: { published: boolean }) {
   return (
-    <div className="flex flex-col gap-1">
-      <AdminStatusBadge tone={published ? "active" : "inactive"} dot>
-        {published ? "Publicado" : "Oculto"}
-      </AdminStatusBadge>
-      {(isNew || isFeatured) && (
-        <div className="flex flex-wrap gap-1">
-          {isNew ? (
-            <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800">
-              Novedad
-            </span>
-          ) : null}
-          {isFeatured ? (
-            <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
-              Destacado
-            </span>
-          ) : null}
-        </div>
-      )}
-    </div>
+    <AdminStatusBadge tone={published ? "active" : "inactive"} dot>
+      {published ? "Publicado" : "Oculto"}
+    </AdminStatusBadge>
   );
 }
 
