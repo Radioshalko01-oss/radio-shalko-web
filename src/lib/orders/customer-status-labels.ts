@@ -55,7 +55,7 @@ export function customerOrderStatusUi(
     return {
       label: "Pago confirmado",
       description:
-        "Recibimos tu pago. Radio Shalko continuará con la preparación de tu pedido para recolección en tienda.",
+        "Pago confirmado. Prepararemos tu producto para entrega o recolección según corresponda.",
       tone: "paid",
     };
   }
@@ -67,25 +67,18 @@ export function customerOrderStatusUi(
     };
   }
   if (status === "confirmed" && paymentStatus === "unpaid") {
-    if (opts?.hasPaymentUrl) {
-      return {
-        label: "Pago disponible",
-        description:
-          "Tu solicitud fue aprobada. Puedes completar el pago de forma segura para continuar con la recolección en tienda.",
-        tone: "approved",
-      };
-    }
     return {
       label: "Aprobado · esperando pago",
       description:
-        "Tu solicitud fue aprobada. Estamos preparando las instrucciones de pago.",
+        "Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones de pago por transferencia o pago presencial en tienda.",
       tone: "approved",
     };
   }
   if (status === "pending" && paymentStatus === "unpaid") {
     return {
       label: "Solicitud recibida",
-      description: "Estamos revisando la disponibilidad de tus productos.",
+      description:
+        "Tu solicitud fue recibida. No realices pagos fuera de los canales oficiales. Nuestro equipo te confirmará disponibilidad, garantía y forma de pago.",
       tone: "pending",
     };
   }

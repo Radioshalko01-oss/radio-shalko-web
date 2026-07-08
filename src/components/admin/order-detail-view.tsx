@@ -15,7 +15,9 @@ import { AdminOrderStatusBadge } from "@/components/admin/admin-status-badge";
 import { OrderDetailActions } from "@/components/admin/order-detail-actions";
 import { OrderAvailabilityReview } from "@/components/admin/order-availability-review";
 import { OrderPaymentSection } from "@/components/admin/order-payment-section";
+import { OrderRequestFlow } from "@/components/admin/order-request-flow";
 import { OrderFulfillmentSection } from "@/components/admin/order-fulfillment-section";
+import { customerPaymentPreferenceLabel } from "@/lib/orders/status-labels";
 import { adminShell } from "@/lib/design/admin-shell";
 import { typography } from "@/lib/design/tokens";
 import { cn } from "@/lib/utils";
@@ -128,13 +130,33 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
         </section>
 
         <section className={adminShell.cardSection}>
-          <h3 className={adminShell.sectionTitleSm}>Recolección</h3>
+          <h3 className={adminShell.sectionTitleSm}>Tienda de recolección</h3>
           <p className="mt-2 text-sm font-medium text-foreground">
             {branchDisplayName(order.branchSlug, order.branchLabel)}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{branchHint}</p>
         </section>
+
+        <section className={adminShell.cardSection}>
+          <h3 className={adminShell.sectionTitleSm}>Preferencia del cliente</h3>
+          <dl className="mt-3 space-y-2 text-sm">
+            <div>
+              <dt className={adminShell.fieldLabel}>Forma de pago preferida</dt>
+              <dd className="font-medium text-foreground">
+                {customerPaymentPreferenceLabel(order.paymentMethod)}
+              </dd>
+            </div>
+            <div>
+              <dt className={adminShell.fieldLabel}>Tienda de recolección</dt>
+              <dd className="text-foreground/90">
+                {branchDisplayName(order.branchSlug, order.branchLabel)}
+              </dd>
+            </div>
+          </dl>
+        </section>
       </div>
+
+      <OrderRequestFlow order={order} />
 
       <OrderAvailabilityReview order={order} />
 
@@ -211,12 +233,10 @@ export function OrderDetailView({ order }: { order: AdminOrderDetail }) {
               hasPaymentUrl: order.hasPaymentUrl,
               fulfillmentStatus: order.fulfillmentStatus,
             })}
-            {order.status === "confirmed" &&
-            order.paymentStatus === "unpaid" &&
-            !order.hasPaymentUrl
-              ? " · El pago aún no ha sido solicitado."
+            {order.status === "confirmed" && order.paymentStatus === "unpaid"
+              ? " · Esperando validación de pago manual."
               : order.status === "pending"
-                ? " · El pago aún no ha sido solicitado."
+                ? " · Esperando revisión de disponibilidad."
                 : ""}
           </p>
         </section>

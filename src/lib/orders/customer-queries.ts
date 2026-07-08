@@ -14,6 +14,7 @@ export type CustomerOrderListItem = {
   total: number;
   status: string;
   paymentStatus: string;
+  paymentMethod: string;
   hasPaymentUrl: boolean;
   fulfillmentStatus: string;
   createdAt: string;
@@ -59,6 +60,7 @@ const ORDER_LIST_SELECT = `
   order_number,
   status,
   payment_status,
+  payment_method,
   total,
   created_at,
   stripe_payment_url,
@@ -73,6 +75,7 @@ const ORDER_DETAIL_SELECT = `
   order_number,
   status,
   payment_status,
+  payment_method,
   subtotal,
   shipping_cost,
   total,
@@ -101,6 +104,7 @@ type RawOrderList = {
   order_number: string;
   status: string;
   payment_status: string;
+  payment_method: string;
   total: number;
   created_at: string;
   stripe_payment_url: string | null;
@@ -130,6 +134,7 @@ function mapListItem(row: RawOrderList): CustomerOrderListItem {
     total: row.total,
     status: row.status,
     paymentStatus: row.payment_status,
+    paymentMethod: row.payment_method,
     hasPaymentUrl: Boolean(row.stripe_payment_url),
     fulfillmentStatus: row.fulfillment_status,
     createdAt: row.created_at,

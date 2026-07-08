@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -12,13 +11,6 @@ import {
 } from "@/lib/orders/types";
 import { isValidYmd, mexicoTodayYmd, mexicoTomorrowYmd } from "@/lib/orders/dates";
 import { branchDisplayName } from "@/lib/orders/status-labels";
-import {
-  createCheckoutSessionForOrder,
-  validateOrderForStripeCheckout,
-} from "@/lib/stripe/checkout";
-import { isStripeConfigured, getStripeClient } from "@/lib/stripe/client";
-import { stripeReturnBaseUrl } from "@/lib/site/site-url";
-import { notifyCustomerPaymentLink } from "@/lib/notifications/customer-payment-email";
 import { notifyCustomerPickupReady } from "@/lib/notifications/customer-pickup-email";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
 import { logAdminAudit } from "@/lib/admin/audit-log";
@@ -167,7 +159,7 @@ export async function submitOrderAvailabilityReview(input: {
       userId: order.user_id,
       type: "order_approved",
       title: "Tu solicitud fue aprobada",
-      message: `Tu solicitud ${order.order_number} fue aprobada. Pronto estará disponible el pago.`,
+      message: `Tu solicitud ${order.order_number} fue aprobada. Te compartiremos las instrucciones de pago oficiales.`,
       href: `/cuenta/pedidos/${orderId}`,
       orderId,
       metadata: { order_number: order.order_number },
@@ -185,216 +177,172 @@ export async function submitOrderAvailabilityReview(input: {
   return { ok: true };
 }
 
-export type CreateStripeCheckoutResult =
-  | { ok: true; url: string; reused: boolean }
-  | { ok: false; error: string };
+const MANUAL_PAYMENT_METHODS = ["bank_transfer", "pay_in_store"] as const;
+const MANUAL_STORE_LOCATIONS = ["chalco", "amecameca"] as const;
+
+const manualPaymentSchema = z
+  .object({
+    orderId: uuidSchema,
+    paymentMethod: z.enum(MANUAL_PAYMENT_METHODS),
+    storeLocation: z.enum(MANUAL_STORE_LOCATIONS).optional(),
+    paymentReference: z.string().trim().optional(),
+    adminNote: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMethod === "pay_in_store" && !data.storeLocation) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona la tienda donde se realizó el pago presencial.",
+        path: ["storeLocation"],
+      });
+    }
+  });
+
+function manualPaymentHistoryNote(
+  methodLabel: string,
+  paymentReference?: string,
+  adminNote?: string,
+): string {
+  let note = `Pago validado manualmente por admin. Método: ${methodLabel}`;
+  if (paymentReference?.trim()) {
+    note += `. Referencia: ${paymentReference.trim()}`;
+  }
+  if (adminNote?.trim()) {
+    note += `. Nota: ${adminNote.trim()}`;
+  }
+  return note;
+}
+
+function manualPaymentMethodLabel(
+  paymentMethod: (typeof MANUAL_PAYMENT_METHODS)[number],
+  storeLocation?: (typeof MANUAL_STORE_LOCATIONS)[number],
+): string {
+  if (paymentMethod === "bank_transfer") return "Transferencia bancaria";
+  if (storeLocation === "chalco") return "Pago presencial Chalco";
+  if (storeLocation === "amecameca") return "Pago presencial Amecameca";
+  return "Pago presencial en tienda";
+}
 
 /**
- * Genera (o reutiliza) Stripe Checkout Session para pedido aprobado · SALES-6.
+ * Registra pago manual validado por admin (transferencia o tienda) · C.1.
  */
-export async function createStripeCheckoutForOrder(
-  orderId: string,
-): Promise<CreateStripeCheckoutResult> {
+export async function registerManualPaymentForOrder(input: {
+  orderId: string;
+  paymentMethod: string;
+  storeLocation?: string;
+  paymentReference?: string;
+  adminNote?: string;
+}): Promise<ActionResult> {
   const user = await requireAdmin();
 
-  if (!isStripeConfigured()) {
-    return {
-      ok: false,
-      error:
-        "Stripe no está configurado. Agrega STRIPE_SECRET_KEY en las variables de entorno.",
-    };
+  const parsed = manualPaymentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
+  const { orderId, paymentMethod, storeLocation, paymentReference, adminNote } = parsed.data;
   const supabase = await createClient();
 
   const { data: order, error: fetchError } = await supabase
     .from("orders")
-    .select(
-      `
-      id,
-      order_number,
-      user_id,
-      customer_email,
-      customer_name,
-      status,
-      payment_status,
-      fulfillment_status,
-      total,
-      shipping_cost,
-      customer_message,
-      stripe_payment_url,
-      stripe_checkout_session_id,
-      branches ( slug, display_name, name ),
-      order_items (
-        product_title, quantity, unit_price
-      )
-    `,
-    )
+    .select("id, order_number, user_id, status, payment_status")
     .eq("id", orderId)
     .maybeSingle();
 
   if (fetchError) return { ok: false, error: fetchError.message };
   if (!order) return { ok: false, error: "Pedido no encontrado." };
 
-  const row = order as unknown as {
-    id: string;
-    order_number: string;
-    user_id: string | null;
-    customer_email: string;
-    customer_name: string;
-    status: string;
-    payment_status: string;
-    fulfillment_status: string;
-    total: number;
-    shipping_cost: number;
-    customer_message: string | null;
-    stripe_payment_url: string | null;
-    stripe_checkout_session_id: string | null;
-    branches: { slug: string; display_name: string; name: string } | null;
-    order_items: Array<{
-      product_title: string;
-      quantity: number;
-      unit_price: number;
-    }> | null;
-  };
-
-  const returnBase = stripeReturnBaseUrl(await headers());
-
-  if (row.stripe_payment_url && row.payment_status === "unpaid") {
-    let canReuse = false;
-    if (row.stripe_checkout_session_id) {
-      try {
-        const stripe = getStripeClient();
-        const session = await stripe.checkout.sessions.retrieve(row.stripe_checkout_session_id);
-        canReuse = Boolean(session.success_url?.startsWith(`${returnBase}/`));
-      } catch {
-        canReuse = false;
-      }
-    }
-
-    if (canReuse) {
-      void logAdminAudit({
-        actorId: user.id,
-        action: "order.stripe_checkout_created",
-        entity: "order",
-        entityId: orderId,
-        metadata: {
-          order_id: orderId,
-          order_number: row.order_number,
-          payment_status: row.payment_status,
-          amount: row.total,
-          reused: true,
-          stripe_checkout_session_id: row.stripe_checkout_session_id,
-        },
-      });
-      return { ok: true, url: row.stripe_payment_url, reused: true };
-    }
+  if (order.status === "cancelled") {
+    return { ok: false, error: "No se puede validar pago en un pedido cancelado." };
+  }
+  if (order.payment_status === "paid") {
+    return { ok: false, error: "Este pedido ya tiene el pago registrado." };
+  }
+  if (order.status !== "confirmed") {
+    return {
+      ok: false,
+      error: "Solo pedidos aprobados pueden registrar pago manual.",
+    };
   }
 
-  const lineItems = (row.order_items ?? []).map((item) => ({
-    productTitle: item.product_title,
-    quantity: item.quantity,
-    unitPrice: item.unit_price,
-  }));
+  const methodLabel = manualPaymentMethodLabel(paymentMethod, storeLocation);
+  const paidAt = new Date().toISOString();
+  const historyNote = manualPaymentHistoryNote(methodLabel, paymentReference, adminNote);
 
-  const validation = validateOrderForStripeCheckout({
-    status: row.status,
-    payment_status: row.payment_status,
-    fulfillment_status: row.fulfillment_status,
-    total: row.total,
-    customer_email: row.customer_email,
-    stripe_payment_url: row.stripe_payment_url,
-    order_items: lineItems,
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({
+      payment_status: "paid",
+      payment_method: paymentMethod,
+      stripe_paid_at: paidAt,
+    })
+    .eq("id", orderId)
+    .eq("payment_status", "unpaid")
+    .eq("status", "confirmed");
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  const { error: historyError } = await supabase.from("order_status_history").insert({
+    order_id: orderId,
+    actor_id: user.id,
+    from_status: order.status,
+    to_status: order.status,
+    note: historyNote,
   });
 
-  if (!validation.ok) return validation;
-
-  try {
-    const { sessionId, url } = await createCheckoutSessionForOrder(
-      {
-        id: row.id,
-        orderNumber: row.order_number,
-        userId: row.user_id,
-        customerEmail: row.customer_email,
-        shippingCost: row.shipping_cost,
-        total: row.total,
-        items: lineItems,
-      },
-      { returnBaseUrl: returnBase },
-    );
-
-    const now = new Date().toISOString();
-
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        stripe_checkout_session_id: sessionId,
-        stripe_payment_url: url,
-        stripe_payment_created_at: now,
-        payment_requested_at: now,
-        payment_requested_by: user.id,
-        payment_provider: "stripe",
-      })
-      .eq("id", orderId);
-
-    if (updateError) return { ok: false, error: updateError.message };
-
-    void logAdminAudit({
-      actorId: user.id,
-      action: "order.stripe_checkout_created",
-      entity: "order",
-      entityId: orderId,
-      metadata: {
-        order_id: orderId,
-        order_number: row.order_number,
-        payment_status: row.payment_status,
-        amount: row.total,
-        reused: false,
-        stripe_checkout_session_id: sessionId,
-      },
-    });
-
-    const branchLabel = branchDisplayName(
-      row.branches?.slug ?? null,
-      row.branches?.display_name ?? row.branches?.name,
-    );
-
-    void notifyCustomerPaymentLink({
-      orderNumber: row.order_number,
-      customerEmail: row.customer_email,
-      customerName: row.customer_name,
-      branchLabel,
-      total: row.total,
-      customerMessage: row.customer_message,
-      paymentUrl: url,
-    });
-
-    if (row.user_id) {
-      notifyCustomer({
-        userId: row.user_id,
-        type: "payment_available",
-        title: "Pago disponible",
-        message: `Tu pedido ${row.order_number} ya tiene pago disponible.`,
-        href: `/cuenta/pedidos/${row.id}`,
-        orderId: row.id,
-        metadata: { order_number: row.order_number },
-      });
-    }
-
-    revalidatePath("/admin/pedidos");
-    revalidatePath(`/admin/pedidos/${orderId}`);
-    revalidatePath("/cuenta");
-    revalidatePath("/cuenta/pedidos");
-    revalidatePath(`/cuenta/pedidos/${orderId}`);
-    revalidatePath("/cuenta/notificaciones");
-
-    return { ok: true, url, reused: false };
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "No se pudo crear la sesión de pago.";
-    console.error("[createStripeCheckoutForOrder]", message);
-    return { ok: false, error: message };
+  if (historyError) {
+    console.error("[registerManualPaymentForOrder] history insert:", historyError.message);
   }
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.manual_payment_registered",
+    entity: "order",
+    entityId: orderId,
+    metadata: {
+      order_id: orderId,
+      order_number: order.order_number,
+      payment_method: paymentMethod,
+      store_location: storeLocation ?? null,
+      payment_reference: paymentReference?.trim() || null,
+    },
+  });
+
+  if (order.user_id) {
+    notifyCustomer({
+      userId: order.user_id,
+      type: "payment_confirmed",
+      title: "Pago confirmado",
+      message: `Recibimos el pago de tu pedido ${order.order_number}.`,
+      href: `/cuenta/pedidos/${orderId}`,
+      orderId,
+      metadata: { order_number: order.order_number },
+    });
+  }
+
+  revalidateOrderPaths(orderId);
+  return { ok: true };
+}
+
+export type CreateStripeCheckoutResult =
+  | { ok: true; url: string; reused: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Genera (o reutiliza) Stripe Checkout Session para pedido aprobado · SALES-6.
+ * C.1: deshabilitado — los pagos manuales reemplazan la generación de enlaces Stripe.
+ */
+export async function createStripeCheckoutForOrder(
+  orderId: string,
+): Promise<CreateStripeCheckoutResult> {
+  await requireAdmin();
+  void orderId;
+
+  return {
+    ok: false,
+    error:
+      "Los pagos con tarjeta no están disponibles. Usa transferencia bancaria o pago presencial en tienda.",
+  };
 }
 
 const readyForPickupSchema = z.object({

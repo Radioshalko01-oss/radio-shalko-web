@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, MessageCircle, Settings2 } from "lucide-react";
+import { ArrowLeft, MessageCircle, Settings2 } from "lucide-react";
 import { formatPrice } from "@/lib/catalog/format";
 import { whatsappHref } from "@/lib/site-contact";
 import {
@@ -9,6 +9,7 @@ import {
   customerOrderStatusUi,
   customerPickupHint,
 } from "@/lib/orders/customer-status-labels";
+import { customerPaymentPreferenceLabel } from "@/lib/orders/status-labels";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
@@ -25,16 +26,14 @@ function formatDateTime(iso: string) {
 
 export function CustomerOrderDetailView({
   order,
-  paidQuery,
+  createdQuery,
   isAdminViewer = false,
 }: {
   order: CustomerOrderDetail;
-  paidQuery?: string | null;
+  createdQuery?: string | null;
   isAdminViewer?: boolean;
 }) {
-  const hasPaymentUrl = Boolean(order.stripePaymentUrl);
   const status = customerOrderStatusUi(order.status, order.paymentStatus, {
-    hasPaymentUrl,
     fulfillmentStatus: order.fulfillmentStatus,
     pickupReadyMessage: order.pickupReadyMessage,
     pickupReadyEstimate: order.pickupReadyEstimate,
@@ -44,6 +43,8 @@ export function CustomerOrderDetailView({
   const isApprovedUnpaid =
     order.status === "confirmed" && order.paymentStatus === "unpaid";
   const fs = order.fulfillmentStatus;
+  const paymentPreference = customerPaymentPreferenceLabel(order.paymentMethod);
+
   const waLink = whatsappHref(undefined, buildCustomerOrderWhatsAppMessage(order.orderNumber));
 
   return (
@@ -71,15 +72,10 @@ export function CustomerOrderDetailView({
         </div>
       )}
 
-      {paidQuery === "success" && !isPaid && (
-        <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground/85">
-          Estamos confirmando tu pago. Esto puede tardar unos segundos.
-        </div>
-      )}
-
-      {paidQuery === "cancelled" && !isPaid && (
-        <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-          El pago no se completó. Puedes intentarlo de nuevo cuando quieras.
+      {createdQuery === "1" && (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900/85">
+          Solicitud enviada correctamente. Radio Shalko la revisará y te contactará por canales
+          oficiales.
         </div>
       )}
 
@@ -107,6 +103,22 @@ export function CustomerOrderDetailView({
         <p className="mt-2 text-sm leading-relaxed text-foreground/85">{status.description}</p>
       </section>
 
+      <section className="rounded-2xl border border-border bg-card/60 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Preferencia de pago</h2>
+        <p className="mt-2 text-sm font-medium text-foreground">{paymentPreference}</p>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card/60 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Tienda de recolección</h2>
+        <p className="mt-2 text-sm font-medium text-foreground">
+          {branchDisplayName(order.branchSlug, order.branchLabel)}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Radio Shalko confirmará disponibilidad, garantía y forma de pago final. No realizamos
+          envíos; debes recoger tu producto en la tienda indicada.
+        </p>
+      </section>
+
       {order.customerMessage && (
         <section className="rounded-2xl border border-border bg-card/60 p-5">
           <h2 className="text-sm font-semibold text-foreground">Mensaje de Radio Shalko</h2>
@@ -117,10 +129,7 @@ export function CustomerOrderDetailView({
       )}
 
       <section className="rounded-2xl border border-border bg-card/60 p-5">
-        <h2 className="text-sm font-semibold text-foreground">Recolección</h2>
-        <p className="mt-2 text-sm font-medium text-foreground">
-          {branchDisplayName(order.branchSlug, order.branchLabel)}
-        </p>
+        <h2 className="text-sm font-semibold text-foreground">Estado de recolección</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {customerPickupHint(fs)}
         </p>
@@ -156,7 +165,7 @@ export function CustomerOrderDetailView({
             <dd className="text-lg font-semibold text-foreground">{formatPrice(order.total)}</dd>
           </div>
         </dl>
-        {!isPaid && !hasPaymentUrl && (
+        {!isPaid && (
           <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
             El pago se solicitará después de la confirmación de Radio Shalko.
           </p>
@@ -167,39 +176,18 @@ export function CustomerOrderDetailView({
         <section className="rounded-2xl border border-border bg-muted/30 p-5">
           <h2 className="text-sm font-semibold text-foreground">Pago</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Estamos revisando tu solicitud. El pago estará disponible cuando Radio Shalko confirme
-            disponibilidad.
+            No realices pagos fuera de los canales oficiales. Nuestro equipo te confirmará
+            disponibilidad, garantía y forma de pago.
           </p>
         </section>
       )}
 
-      {isApprovedUnpaid && !hasPaymentUrl && (
+      {isApprovedUnpaid && (
         <section className="rounded-2xl border border-border bg-muted/30 p-5">
           <h2 className="text-sm font-semibold text-foreground">Pago pendiente</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Tu solicitud fue aprobada. Estamos preparando las instrucciones de pago.
-          </p>
-        </section>
-      )}
-
-      {isApprovedUnpaid && hasPaymentUrl && (
-        <section className="rounded-2xl border border-border bg-card/60 p-5">
-          <h2 className="text-sm font-semibold text-foreground">Pago disponible</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Tu solicitud fue aprobada. Puedes completar el pago de forma segura para continuar con
-            la recolección en tienda.
-          </p>
-          <a
-            href={order.stripePaymentUrl!}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Pagar ahora
-          </a>
-          <p className="mt-3 text-xs text-muted-foreground">
-            El pago se procesa de forma segura con Stripe.
+            Tu solicitud fue aprobada. Radio Shalko te compartirá las instrucciones de pago por
+            transferencia o pago presencial en tienda.
           </p>
         </section>
       )}
@@ -208,8 +196,8 @@ export function CustomerOrderDetailView({
         <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
           <h2 className="text-sm font-semibold text-emerald-800">Pago confirmado</h2>
           <p className="mt-2 text-sm leading-relaxed text-emerald-900/80">
-            Recibimos tu pago. Radio Shalko continuará con la preparación de tu pedido para
-            recolección en tienda.
+            Pago confirmado. Prepararemos tu producto para entrega o recolección según
+            corresponda.
           </p>
           {order.stripePaidAt && (
             <p className="mt-2 text-xs text-emerald-800/70">
@@ -274,16 +262,16 @@ export function CustomerOrderDetailView({
             linkKeys={["metodosPago", "compraSegura", "comoComprar"]}
           />
           <div className="flex flex-wrap gap-2">
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:border-foreground/20"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Contactar a Radio Shalko
-          </a>
-        </div>
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:border-foreground/20"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Contactar a Radio Shalko
+            </a>
+          </div>
         </div>
       )}
     </div>

@@ -82,8 +82,8 @@ const FAQ = [
 
 const PAYMENT = [
   "Efectivo en tienda",
-  "Tarjeta de débito y crédito",
   "Transferencia bancaria",
+  "Pago presencial en Chalco o Amecameca",
   "Sistema de apartado hasta 2 meses",
 ];
 

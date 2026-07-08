@@ -32,9 +32,6 @@ export function orderStatusUi(
     return { label: "Pago fallido", tone: "cancelled" };
   }
   if (status === "confirmed" && paymentStatus === "unpaid") {
-    if (opts?.hasPaymentUrl) {
-      return { label: "Pago disponible", tone: "approved" };
-    }
     return { label: "Aprobado · esperando pago", tone: "approved" };
   }
   if (status === "pending" && paymentStatus === "unpaid") {
@@ -59,7 +56,7 @@ export function paymentStatusUi(
     return "Pago confirmado";
   }
   if (status === "confirmed" && paymentStatus === "unpaid") {
-    return opts?.hasPaymentUrl ? "Esperando pago (enlace enviado)" : "Esperando pago";
+    return "Esperando pago";
   }
   switch (paymentStatus) {
     case "paid":
@@ -158,6 +155,29 @@ export function isOrderPaymentAvailable(
   hasPaymentUrl: boolean,
 ): boolean {
   return status === "confirmed" && paymentStatus === "unpaid" && hasPaymentUrl;
+}
+
+/** Etiqueta legible de preferencia de pago capturada en checkout. */
+export function customerPaymentPreferenceLabel(paymentMethod: string): string {
+  if (paymentMethod === "bank_transfer") return "Transferencia bancaria";
+  if (paymentMethod === "pay_in_store") return "Pago presencial en tienda";
+  return "Por confirmar";
+}
+
+/** Etiqueta legible del método de pago manual validado por admin. */
+export function manualPaymentMethodLabel(
+  paymentMethod: string,
+  storeLocation?: string | null,
+): string {
+  if (paymentMethod === "bank_transfer") return "Transferencia bancaria";
+  if (paymentMethod === "pay_in_store" && storeLocation === "chalco") {
+    return "Pago presencial Chalco";
+  }
+  if (paymentMethod === "pay_in_store" && storeLocation === "amecameca") {
+    return "Pago presencial Amecameca";
+  }
+  if (paymentMethod === "pay_in_store") return "Pago presencial en tienda";
+  return paymentMethod;
 }
 
 /** Mensaje WhatsApp con enlace de pago · SALES-6 */

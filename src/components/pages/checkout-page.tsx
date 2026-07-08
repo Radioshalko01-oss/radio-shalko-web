@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Info, Store } from "lucide-react";
+import { CheckCircle2, Info, Store, Landmark } from "lucide-react";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { CheckoutSubmitBlock } from "@/components/checkout/checkout-submit-block";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
@@ -19,7 +19,8 @@ import { Label } from "@/components/ui/label";
 import { useCartProducts } from "@/hooks/use-cart-products";
 import { useQuote } from "@/hooks/use-quote";
 import {
-  CHECKOUT_GENERAL_NOTE,
+  CHECKOUT_BANK_TRANSFER_NOTE,
+  CHECKOUT_PAY_IN_STORE_NOTE,
   pickupStoreLabel,
   PICKUP_STORE_HINTS,
 } from "@/lib/checkout/constants";
@@ -35,7 +36,7 @@ import { cn } from "@/lib/utils";
 const INITIAL_FORM: CheckoutFormState = {
   contact: { name: "", email: "", phone: "", notes: "" },
   deliveryMethod: "pickup",
-  branchSlug: "chalco",
+  branchSlug: "",
   localAddress: { street: "", neighborhood: "", postalCode: "" },
   nationalAddress: {
     recipientName: "",
@@ -47,7 +48,7 @@ const INITIAL_FORM: CheckoutFormState = {
     state: "Estado de México",
     postalCode: "",
   },
-  paymentMethod: "pay_in_store",
+  paymentMethod: "",
 };
 
 type CheckoutPageProps = {
@@ -81,10 +82,10 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
   }, [isAuthed, defaultEmail, form.contact.email]);
 
   useEffect(() => {
-    if (isAuthed && !loading && isEmpty && !orderResult) {
+    if (isAuthed && !loading && isEmpty && !orderResult && !submitting) {
       router.replace("/carrito");
     }
-  }, [isAuthed, loading, isEmpty, orderResult, router]);
+  }, [isAuthed, loading, isEmpty, orderResult, submitting, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,8 +115,8 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         return;
       }
 
-      await clearCart();
       setOrderResult(created);
+      await clearCart();
       window.scrollTo({ top: 0 });
     } catch {
       setSubmitError("No pudimos enviar tu solicitud. Intenta de nuevo.");
@@ -247,9 +248,60 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
             </div>
           </CheckoutSection>
 
-          <CheckoutSection title="¿Dónde quieres recoger tu pedido?">
+          <CheckoutSection title="¿Cómo prefieres pagar?">
+            <div className="grid gap-2.5 sm:grid-cols-2" data-field="paymentMethod">
+              <PaymentOptionCard
+                selected={form.paymentMethod === "pay_in_store"}
+                onSelect={() =>
+                  setForm((f) => ({
+                    ...f,
+                    paymentMethod: "pay_in_store",
+                  }))
+                }
+                icon={Store}
+                title="Pago presencial en tienda"
+                description="Pagas directamente en tienda cuando confirmemos tu solicitud."
+              />
+              <PaymentOptionCard
+                selected={form.paymentMethod === "bank_transfer"}
+                onSelect={() =>
+                  setForm((f) => ({
+                    ...f,
+                    paymentMethod: "bank_transfer",
+                  }))
+                }
+                icon={Landmark}
+                title="Transferencia bancaria"
+                description="Te compartiremos los datos bancarios oficiales al aprobar tu solicitud."
+              />
+            </div>
+            {errors.paymentMethod && (
+              <p className="mt-2 text-xs text-red-600">{errors.paymentMethod}</p>
+            )}
+
+            {form.paymentMethod === "pay_in_store" && (
+              <div className="mt-5 flex gap-3 rounded-xl border border-border/80 bg-muted/30 p-4">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-copper/80" />
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {CHECKOUT_PAY_IN_STORE_NOTE}
+                </p>
+              </div>
+            )}
+
+            {form.paymentMethod === "bank_transfer" && (
+              <div className="mt-5 flex gap-3 rounded-xl border border-border/80 bg-muted/30 p-4">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-copper/80" />
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {CHECKOUT_BANK_TRANSFER_NOTE}
+                </p>
+              </div>
+            )}
+          </CheckoutSection>
+
+          <CheckoutSection title="¿En qué tienda prefieres recoger tu producto?">
             <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-              {CHECKOUT_GENERAL_NOTE}
+              Radio Shalko no realiza envíos. Debes recoger tu producto en una de nuestras tiendas
+              físicas.
             </p>
             <div className="grid gap-2.5 sm:grid-cols-2" data-field="branchSlug">
               {(["chalco", "amecameca"] as const).map((slug) => (
@@ -279,22 +331,24 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
             {errors.branchSlug && (
               <p className="mt-2 text-xs text-red-600">{errors.branchSlug}</p>
             )}
-          </CheckoutSection>
 
-          <CheckoutSection title="Pago después de confirmación">
-            <div className="flex gap-3 rounded-xl border border-border/80 bg-muted/30 p-4">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-copper/80" />
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Cuando Radio Shalko confirme la disponibilidad de tu pedido, recibirás las
-                instrucciones de pago. No se realizará ningún cargo en este momento.
-              </p>
-            </div>
+            {form.paymentMethod && (
+              <div className="mt-5 flex gap-3 rounded-xl border border-border/80 bg-muted/30 p-4">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-copper/80" />
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  No se realizará ningún cobro en este momento. Radio Shalko confirmará
+                  disponibilidad, precio, garantía y forma de pago final antes de pedirte el
+                  pago.
+                </p>
+              </div>
+            )}
+
             <PurchaseTrustNote
               className="mt-4 hidden md:block"
               compact
               title="Antes de confirmar tu compra"
               lines={[
-                "Al enviar tu solicitud, nuestro equipo revisará disponibilidad, precio final y forma de entrega.",
+                "Al enviar tu solicitud, nuestro equipo revisará disponibilidad, precio final y condiciones.",
                 "El pedido no se considera confirmado hasta validar disponibilidad y pago.",
                 "Nunca compartas comprobantes o pagos fuera de canales oficiales.",
               ]}
@@ -408,55 +462,93 @@ function CheckoutRequestConfirmation({ order }: { order: CreateOrderSuccess }) {
           siteCrumbs.checkout,
           { label: order.orderNumber },
         ])}
-        title="Solicitud recibida"
-        description={`${order.orderNumber} · Estamos revisando disponibilidad y te contactaremos por canales oficiales.`}
+        title="Solicitud enviada correctamente"
+        description="Tu solicitud será revisada por Radio Shalko. Confirmaremos disponibilidad, precio, garantía y forma de pago."
       />
 
       <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 md:py-12">
-      <div className="text-center">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
-          <CheckCircle2 className="h-6 w-6" />
+        <div className="text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <p className="mt-5 font-mono text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            {order.orderNumber}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{order.statusLabel}</p>
         </div>
-        <p className="mt-5 font-mono text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-          {order.orderNumber}
+
+        <dl className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-5 text-sm sm:mt-10 sm:p-6">
+          <SummaryRow label="Estado" value="Pendiente de revisión" bold />
+          <SummaryRow label="Preferencia de pago" value={order.paymentPreferenceLabel} />
+          <SummaryRow label="Tienda de recolección" value={order.branchDisplayName} />
+          <SummaryRow label="Total estimado" value={formatPrice(order.total)} bold />
+        </dl>
+
+        <p className="mt-6 rounded-xl border border-border/80 bg-muted/30 px-4 py-3 text-center text-xs leading-relaxed text-muted-foreground">
+          No se realizó ningún cobro. Te avisaremos cuando confirmemos disponibilidad y los
+          siguientes pasos. Puedes revisar el estado en Mi cuenta.
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{order.statusLabel}</p>
-      </div>
 
-      <dl className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-5 text-sm sm:mt-10 sm:p-6">
-        <SummaryRow label="Estado" value="Pendiente de revisión" bold />
-        <SummaryRow label="Recoger en" value={order.branchDisplayName} />
-        <SummaryRow label="Total estimado" value={formatPrice(order.total)} bold />
-      </dl>
+        <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Button asChild className="h-11 w-full rounded-full sm:w-auto sm:min-w-[200px]">
+            <Link href={`/cuenta/pedidos/${order.orderId}?created=1`}>Ver mi solicitud</Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 w-full rounded-full sm:w-auto">
+            <Link href="/cuenta/pedidos">Ir a mis pedidos</Link>
+          </Button>
+        </div>
 
-      <p className="mt-6 rounded-xl border border-border/80 bg-muted/30 px-4 py-3 text-center text-xs leading-relaxed text-muted-foreground">
-        No se realizó ningún cobro. Te avisaremos cuando confirmemos disponibilidad y el método de
-        pago. Revisa el estado en Mi cuenta.
-      </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
+            <Link href="/productos">Seguir explorando</Link>
+          </Button>
+          <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
+            <a href={whatsappHref(undefined, whatsappMessage)} target="_blank" rel="noopener noreferrer">
+              Contactar a Radio Shalko
+            </a>
+          </Button>
+        </div>
 
-      <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button asChild className="h-11 w-full rounded-full sm:w-auto sm:min-w-[200px]">
-          <Link href="/cuenta/pedidos">Ver en Mi cuenta</Link>
-        </Button>
-        <Button asChild variant="outline" className="h-11 w-full rounded-full sm:w-auto">
-          <Link href="/productos">Ver catálogo</Link>
-        </Button>
-      </div>
-
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
-          <Link href="/">Volver al inicio</Link>
-        </Button>
-        <Button asChild variant="ghost" className="h-10 w-full rounded-full text-sm text-muted-foreground sm:w-auto">
-          <a href={whatsappHref(undefined, whatsappMessage)} target="_blank" rel="noopener noreferrer">
-            Contactar a Radio Shalko
-          </a>
-        </Button>
-      </div>
-
-      <PurchaseTrustLinkRow className="mt-6 border-t border-border/60 pt-5" linkKeys={["compraSegura", "metodosPago", "comoComprar"]} />
+        <PurchaseTrustLinkRow className="mt-6 border-t border-border/60 pt-5" linkKeys={["compraSegura", "metodosPago", "comoComprar"]} />
       </div>
     </>
+  );
+}
+
+function PaymentOptionCard({
+  selected,
+  onSelect,
+  icon: Icon,
+  title,
+  description,
+}: {
+  selected: boolean;
+  onSelect: () => void;
+  icon: typeof Store;
+  title: string;
+  description: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "rounded-xl border p-3.5 text-left transition-colors duration-150 motion-reduce:transition-none",
+        selected
+          ? "border-copper bg-copper/5 ring-1 ring-copper"
+          : "border-border hover:border-foreground/20",
+      )}
+    >
+      <div className="flex items-start gap-2.5">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <span>
+          <span className="block text-sm font-medium">{title}</span>
+          <span className="mt-1.5 block text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </span>
+        </span>
+      </div>
+    </button>
   );
 }
 

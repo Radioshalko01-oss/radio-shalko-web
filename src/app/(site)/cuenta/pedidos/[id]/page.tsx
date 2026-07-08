@@ -7,7 +7,6 @@ import { SitePageHero } from "@/components/site/site-page-hero";
 import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 
 type Params = Promise<{ id: string }>;
-type SearchParams = Promise<{ paid?: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id } = await params;
@@ -18,6 +17,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
+type SearchParams = Promise<{ created?: string }>;
+
 export default async function CuentaPedidoDetailPage({
   params,
   searchParams,
@@ -26,7 +27,7 @@ export default async function CuentaPedidoDetailPage({
   searchParams: SearchParams;
 }) {
   const { id } = await params;
-  const { paid } = await searchParams;
+  const { created } = await searchParams;
 
   const account = await getCurrentAccount();
   if (!account) {
@@ -51,7 +52,7 @@ export default async function CuentaPedidoDetailPage({
       />
 
       <div className="mx-auto w-full max-w-3xl px-5 pb-28 md:px-8">
-        <CustomerOrderDetailView order={order} paidQuery={paid} />
+        <CustomerOrderDetailView order={order} createdQuery={created} />
       </div>
     </>
   );

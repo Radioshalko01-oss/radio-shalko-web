@@ -49,7 +49,7 @@ const STEPS = [
     step: "06",
     title: "Eliges método de pago",
     description:
-      "Según tu pedido, puedes pagar en tienda, por transferencia previa confirmación o mediante link seguro si está disponible.",
+      "Según tu pedido, puedes pagar por transferencia bancaria o de forma presencial en nuestras tiendas de Chalco o Amecameca.",
   },
   {
     step: "07",

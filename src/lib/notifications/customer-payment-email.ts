@@ -1,10 +1,10 @@
 /**
- * Email al cliente con enlace de pago · SALES-6 (opcional).
+ * Email al cliente con instrucciones de pago · SALES-6 (opcional).
  *
  * Solo envía si están configuradas:
  *   RESEND_API_KEY, EMAIL_FROM, CUSTOMER_ORDER_EMAILS_ENABLED=true
  *
- * Fallos nunca bloquean la generación del enlace.
+ * Fallos nunca bloquean el flujo de pedido.
  */
 import { formatPrice } from "@/lib/catalog/format";
 
@@ -15,7 +15,7 @@ export type CustomerPaymentEmailPayload = {
   branchLabel: string;
   total: number;
   customerMessage: string | null;
-  paymentUrl: string;
+  paymentUrl?: string;
 };
 
 export function isCustomerPaymentEmailEnabled(): boolean {
@@ -49,10 +49,9 @@ function buildPlainText(payload: CustomerPaymentEmailPayload): string {
   }
   lines.push(
     "",
-    "Puedes completar el pago de forma segura aquí:",
-    payload.paymentUrl,
+    "Radio Shalko te compartirá las instrucciones oficiales de pago por transferencia bancaria o pago presencial en tienda (Chalco o Amecameca).",
     "",
-    "El pago se procesa con Stripe.",
+    "No realices pagos fuera de los canales oficiales hasta recibir nuestra confirmación.",
     "",
     "Radio Shalko",
   );
@@ -67,18 +66,16 @@ function buildHtml(payload: CustomerPaymentEmailPayload): string {
   return `
     <div style="font-family:system-ui,sans-serif;line-height:1.5;color:#18181b;max-width:560px">
       <h2 style="font-size:18px;margin:0 0 12px">Tu pedido ${escapeHtml(payload.orderNumber)} fue aprobado</h2>
-      <p style="margin:0 0 16px;color:#52525b">Hola ${escapeHtml(payload.customerName)}, ya puedes completar el pago de tu solicitud.</p>
+      <p style="margin:0 0 16px;color:#52525b">Hola ${escapeHtml(payload.customerName)}, tu solicitud puede avanzar al pago.</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">
         <tr><td style="padding:4px 0;color:#71717a">Total</td><td style="padding:4px 0"><strong>${formatPrice(payload.total)}</strong></td></tr>
         <tr><td style="padding:4px 0;color:#71717a">Recolección</td><td style="padding:4px 0">${escapeHtml(payload.branchLabel)}</td></tr>
       </table>
       ${messageBlock}
-      <p style="margin:0 0 16px">
-        <a href="${escapeHtml(payload.paymentUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500">
-          Pagar ahora
-        </a>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.5">
+        Te contactaremos con las instrucciones oficiales de pago por <strong>transferencia bancaria</strong> o <strong>pago presencial en tienda</strong> (Chalco o Amecameca).
       </p>
-      <p style="margin:0;font-size:12px;color:#71717a">El pago se procesa de forma segura con Stripe.</p>
+      <p style="margin:0;font-size:12px;color:#71717a">No hay pago automático en línea. No deposites ni pagues hasta recibir nuestra confirmación.</p>
     </div>
   `.trim();
 }

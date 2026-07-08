@@ -34,10 +34,10 @@ export type CheckoutNationalAddress = {
 export type CheckoutFormState = {
   contact: CheckoutContact;
   deliveryMethod: DeliveryMethod;
-  branchSlug: BranchSlug;
+  branchSlug: BranchSlug | "";
   localAddress: CheckoutLocalAddress;
   nationalAddress: CheckoutNationalAddress;
-  paymentMethod: PaymentMethod | "";
+  paymentMethod: "bank_transfer" | "pay_in_store" | "";
 };
 
 export type CheckoutValidationResult =

@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, CreditCard, Lock, Store } from "lucide-react";
+import { Banknote, Lock, Store } from "lucide-react";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { SiteClosingCta } from "@/components/site/site-closing-cta";
 import {
@@ -26,11 +26,12 @@ const SPEI = [
   "Envía tu comprobante únicamente por los canales oficiales que te indiquemos.",
 ] as const;
 
-const CARD = [
-  "En algunos pedidos podemos enviarte un link de pago seguro con tarjeta.",
-  "La disponibilidad de este método depende de tu pedido y de la confirmación previa.",
-  "El link te lo comparte Radio Shalko por correo o canal oficial; no lo solicites a terceros.",
-  "Si no recibes link, puedes usar pago en tienda o transferencia según lo acordado.",
+const PROCESS = [
+  "No hay pago automático en línea en el sitio web.",
+  "Radio Shalko confirma disponibilidad, precio y garantía antes de pedir el pago.",
+  "Recibirás instrucciones oficiales por los canales que acordemos contigo.",
+  "La compra se confirma hasta que validemos tu pago.",
+  "La entrega y recolección es en nuestras tiendas físicas de Chalco o Amecameca.",
 ] as const;
 
 const SECURITY = [
@@ -46,44 +47,55 @@ export function MetodosDePagoPage() {
       <SitePageHero
         breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.metodosDePago])}
         title="Métodos de pago"
-        description="Opciones claras y seguras, siempre con confirmación previa de Radio Shalko. Nunca pagues sin validar tu pedido."
+        description="Transferencia bancaria y pago presencial en tienda, siempre con confirmación previa de Radio Shalko. Nunca pagues sin validar tu pedido."
       />
 
       <TrustPageBody>
         <TrustSection>
           <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <TrustCard icon={Store} eyebrow="Presencial" title="Pago en tienda" delay={0}>
+            <TrustCard icon={Store} eyebrow="Presencial" title="Pago en tienda Chalco" delay={0}>
               <p>
-                Puedes concretar tu compra y pagar en nuestras sucursales una vez confirmada la
-                disponibilidad del producto.
+                Puedes pagar en persona en Radio Shalko Chalco una vez que confirmemos
+                disponibilidad, precio y garantía de tu pedido.
               </p>
               <TrustBulletList items={IN_STORE} />
             </TrustCard>
 
-            <TrustCard icon={Banknote} eyebrow="Transferencia" title="SPEI / transferencia bancaria" delay={0.06}>
+            <TrustCard
+              icon={Store}
+              eyebrow="Presencial"
+              title="Pago en tienda Amecameca"
+              delay={0.06}
+            >
               <p>
-                Cuando aplique, te compartimos los datos oficiales para transferir. Este método
-                requiere confirmación explícita de Radio Shalko; no está automatizado en el sitio.
+                También puedes concretar tu pago en Radio Shalko Amecameca con asesoría
+                personalizada y comprobante al momento.
               </p>
-              <TrustBulletList items={SPEI} />
+              <TrustBulletList items={IN_STORE} />
             </TrustCard>
           </div>
         </TrustSection>
 
         <TrustSection className="mt-4 md:mt-6">
           <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <TrustCard icon={CreditCard} eyebrow="Tarjeta" title="Link de pago seguro" delay={0}>
+            <TrustCard icon={Banknote} eyebrow="Transferencia" title="SPEI / transferencia bancaria" delay={0}>
               <p>
-                Para pedidos seleccionados, podemos generar un enlace de pago con tarjeta. Su
-                disponibilidad no está garantizada en todos los casos.
+                Cuando aplique, te compartimos los datos oficiales para transferir. Este método
+                requiere confirmación explícita de Radio Shalko; no está automatizado en el sitio.
               </p>
-              <TrustBulletList items={CARD} />
+              <TrustBulletList items={SPEI} />
             </TrustCard>
 
-            <TrustCard icon={Lock} eyebrow="Seguridad" title="Recomendaciones importantes" delay={0.06}>
-              <TrustBulletList items={SECURITY} />
+            <TrustCard icon={Lock} eyebrow="Proceso" title="Cómo funciona el pago" delay={0.06}>
+              <TrustBulletList items={PROCESS} />
             </TrustCard>
           </div>
+        </TrustSection>
+
+        <TrustSection className="mt-4 md:mt-6">
+          <TrustCard icon={Lock} eyebrow="Seguridad" title="Recomendaciones importantes" delay={0}>
+            <TrustBulletList items={SECURITY} />
+          </TrustCard>
         </TrustSection>
 
         <TrustSection narrow center className="mt-4 md:mt-6">
@@ -91,7 +103,7 @@ export function MetodosDePagoPage() {
             align="center"
             eyebrow="Recuerda"
             title="Solo paga cuando tu pedido esté confirmado"
-            description="Los métodos disponibles dependen de tu pedido, del producto y de la confirmación de nuestro equipo. Si algo cambia, te lo decimos antes de que pagues."
+            description="Los métodos disponibles son transferencia bancaria y pago presencial en Chalco o Amecameca. Si algo cambia, te lo decimos antes de que pagues."
           />
 
           <TrustRelatedLinks

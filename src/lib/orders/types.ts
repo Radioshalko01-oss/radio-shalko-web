@@ -20,6 +20,7 @@ export type CreateOrderSuccess = {
   total: number;
   branchDisplayName: string;
   statusLabel: string;
+  paymentPreferenceLabel: string;
 };
 
 export type CreateOrderFailure = {

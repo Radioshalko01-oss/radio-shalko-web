@@ -3,8 +3,12 @@
 /**
  * SALES-2 · Crear solicitud de compra desde checkout (solo autenticado, pickup).
  */
-import { PENDING_PAYMENT_METHOD, pickupStoreLabel } from "@/lib/checkout/constants";
-import type { CheckoutFormState } from "@/lib/checkout/types";
+import {
+  buildCheckoutOrderNotes,
+  checkoutPaymentPreferenceLabel,
+  pickupStoreLabel,
+} from "@/lib/checkout/constants";
+import type { BranchSlug, CheckoutFormState } from "@/lib/checkout/types";
 import { getProductsByIds } from "@/lib/catalog/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { QuoteItemDTO } from "@/lib/quotes/actions";
@@ -51,7 +55,7 @@ function rpcErrorMessage(code: string | undefined): string {
   }
 }
 
-async function resolveBranchId(branchSlug: string): Promise<string | null> {
+async function resolveBranchId(branchSlug: BranchSlug): Promise<string | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("branches")
@@ -95,12 +99,30 @@ export async function createOrderFromCart(
     return cartResult;
   }
 
-  const branchId = await resolveBranchId(form.branchSlug);
+  const paymentMethod = form.paymentMethod;
+  if (paymentMethod !== "bank_transfer" && paymentMethod !== "pay_in_store") {
+    return {
+      ok: false,
+      error: "Elige cómo prefieres pagar.",
+      fieldErrors: { paymentMethod: "Elige cómo prefieres pagar." },
+    };
+  }
+
+  const branchSlug = form.branchSlug;
+  if (branchSlug !== "chalco" && branchSlug !== "amecameca") {
+    return {
+      ok: false,
+      error: "Elige en qué tienda prefieres recoger tu producto.",
+      fieldErrors: { branchSlug: "Elige en qué tienda prefieres recoger tu producto." },
+    };
+  }
+
+  const branchId = await resolveBranchId(branchSlug);
   if (!branchId) {
     return {
       ok: false,
-      error: "La sucursal seleccionada no está disponible.",
-      fieldErrors: { branchSlug: "La sucursal seleccionada no está disponible." },
+      error: "La tienda de recolección seleccionada no está disponible.",
+      fieldErrors: { branchSlug: "La tienda de recolección seleccionada no está disponible." },
     };
   }
 
@@ -117,6 +139,8 @@ export async function createOrderFromCart(
     subtotal: line.subtotal,
   }));
 
+  const paymentPreferenceLabel = checkoutPaymentPreferenceLabel(paymentMethod);
+
   const { data, error } = await supabase.rpc("create_order_from_checkout", {
     p_payload: {
       customer_email: form.contact.email.trim(),
@@ -124,12 +148,12 @@ export async function createOrderFromCart(
       customer_phone: digitsOnly(form.contact.phone),
       delivery_method: "pickup",
       branch_id: branchId,
-      payment_method: PENDING_PAYMENT_METHOD,
+      payment_method: paymentMethod,
       subtotal,
       shipping_cost: 0,
       total,
       currency: "MXN",
-      notes: form.contact.notes.trim() || null,
+      notes: buildCheckoutOrderNotes(paymentMethod, branchSlug, form.contact.notes),
       items: orderItems.map((item) => ({
         product_id: item.productId,
         product_title: item.productTitle,
@@ -153,13 +177,16 @@ export async function createOrderFromCart(
     return { ok: false, error: "No pudimos confirmar tu solicitud. Intenta de nuevo." };
   }
 
+  const pickupStoreName = pickupStoreLabel(branchSlug);
+
   void notifyAdminNewOrder({
     orderId: result.id,
     orderNumber: result.order_number,
     customerName: form.contact.name.trim(),
     customerEmail: form.contact.email.trim(),
     customerPhone: digitsOnly(form.contact.phone),
-    branchLabel: pickupStoreLabel(form.branchSlug),
+    branchLabel: pickupStoreName,
+    paymentPreferenceLabel,
     total,
     items: orderItems.map((item) => ({
       title: item.productTitle,
@@ -184,7 +211,8 @@ export async function createOrderFromCart(
     orderNumber: result.order_number,
     customerName: form.contact.name.trim(),
     total,
-    branchDisplayName: pickupStoreLabel(form.branchSlug),
+    branchDisplayName: pickupStoreName,
     statusLabel: "Solicitud recibida",
+    paymentPreferenceLabel,
   };
 }

@@ -67,6 +67,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
   adminInternalNote: string | null;
   stripePaymentUrl: string | null;
   stripePaidAt: string | null;
+  paymentMethod: string;
   paymentRequestedAt: string | null;
   preparedAt: string | null;
   readyForPickupAt: string | null;
@@ -115,6 +116,7 @@ const ORDER_SELECT = `
   admin_internal_note,
   stripe_payment_url,
   stripe_paid_at,
+  payment_method,
   payment_requested_at,
   prepared_at,
   ready_for_pickup_at,
@@ -149,6 +151,7 @@ type RawOrder = {
   admin_internal_note: string | null;
   stripe_payment_url: string | null;
   stripe_paid_at: string | null;
+  payment_method: string;
   payment_requested_at: string | null;
   prepared_at: string | null;
   ready_for_pickup_at: string | null;
@@ -398,6 +401,7 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     adminInternalNote: row.admin_internal_note,
     stripePaymentUrl: row.stripe_payment_url,
     stripePaidAt: row.stripe_paid_at,
+    paymentMethod: row.payment_method,
     paymentRequestedAt: row.payment_requested_at,
     preparedAt: row.prepared_at,
     readyForPickupAt: row.ready_for_pickup_at,

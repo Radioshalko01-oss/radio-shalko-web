@@ -1,4 +1,4 @@
-import type { BranchSlug, CheckoutFormState, CheckoutValidationResult } from "@/lib/checkout/types";
+import type { CheckoutFormState, CheckoutValidationResult } from "@/lib/checkout/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,8 +32,12 @@ export function validatePurchaseRequestForm(
     errors.contactPhone = "Ingresa un teléfono de 10 dígitos.";
   }
 
+  if (!form.paymentMethod) {
+    errors.paymentMethod = "Elige cómo prefieres pagar.";
+  }
+
   if (!form.branchSlug) {
-    errors.branchSlug = "Elige dónde quieres recoger tu pedido.";
+    errors.branchSlug = "Elige en qué tienda prefieres recoger tu producto.";
   }
 
   if (Object.keys(errors).length > 0) {
