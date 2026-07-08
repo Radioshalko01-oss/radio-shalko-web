@@ -368,9 +368,34 @@ export function Footer() {
           </div>
 
           <div className="mt-10 border-t border-white/20 pt-8">
-            <FooterHeading>Nuestras tiendas</FooterHeading>
-            <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.8fr)_1.1fr_1.1fr_minmax(11rem,1fr)] lg:items-start lg:gap-x-[var(--store-gutter)] [--store-gutter:clamp(1.75rem,4vw,3rem)]">
-              <StoreCard />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[minmax(6.5rem,auto)_minmax(0,1fr)_minmax(0,1fr)_minmax(11rem,1fr)] lg:items-start lg:gap-x-[var(--store-gutter)] [--store-gutter:clamp(1.75rem,4vw,3rem)]">
+              <FooterHeading className="lg:pt-3">Nuestras tiendas</FooterHeading>
+              {SITE_CONTACT.stores.map((store) => (
+                <div key={store.id} className="flex min-w-0 gap-4 lg:-ml-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 bg-white/5 md:h-11 md:w-11">
+                    <MapPin className="h-4 w-4 text-white/90" aria-hidden />
+                  </div>
+                  <div className="min-w-0 space-y-2 md:space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white md:text-[11px] md:tracking-[0.2em]">
+                      {store.displayName}
+                    </p>
+                    <p className="text-[13px] leading-snug text-white/70 md:text-sm md:leading-relaxed">
+                      {store.address}
+                      <br />
+                      {store.region}
+                    </p>
+                    <a
+                      href={store.mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 transition-colors hover:text-white md:text-[11px] md:tracking-[0.18em]"
+                    >
+                      Ver en mapa
+                      <ArrowRight className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
               <div className="hidden min-w-0 lg:flex lg:justify-end">
                 <p className="max-w-[12rem] text-sm leading-snug text-white/70">
                   Visítanos en nuestras tiendas físicas.

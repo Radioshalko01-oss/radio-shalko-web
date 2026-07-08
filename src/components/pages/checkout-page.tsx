@@ -249,7 +249,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
           </CheckoutSection>
 
           <CheckoutSection title="¿Cómo prefieres pagar?">
-            <div className="grid gap-2.5 sm:grid-cols-2" data-field="paymentMethod">
+            <div className="isolate grid gap-2.5 sm:grid-cols-2" data-field="paymentMethod">
               <PaymentOptionCard
                 selected={form.paymentMethod === "pay_in_store"}
                 onSelect={() =>
@@ -303,7 +303,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
               Radio Shalko no realiza envíos. Debes recoger tu producto en una de nuestras tiendas
               físicas.
             </p>
-            <div className="grid gap-2.5 sm:grid-cols-2" data-field="branchSlug">
+            <div className="isolate grid gap-2.5 sm:grid-cols-2" data-field="branchSlug">
               {(["chalco", "amecameca"] as const).map((slug) => (
                 <button
                   key={slug}
@@ -312,7 +312,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
                   className={cn(
                     "rounded-xl border p-3.5 text-left transition-colors duration-150 motion-reduce:transition-none",
                     form.branchSlug === slug
-                      ? "border-copper bg-copper/5 ring-1 ring-copper"
+                      ? "border-2 border-copper bg-copper/[0.06]"
                       : "border-border hover:border-foreground/20",
                   )}
                 >
@@ -374,7 +374,7 @@ export function CheckoutPage({ isAuthed, defaultEmail }: CheckoutPageProps) {
         </aside>
       </form>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:hidden">
         <div className="mx-auto max-w-6xl space-y-2.5">
           <div className="flex items-baseline justify-between gap-4">
             <div>
@@ -535,7 +535,7 @@ function PaymentOptionCard({
       className={cn(
         "rounded-xl border p-3.5 text-left transition-colors duration-150 motion-reduce:transition-none",
         selected
-          ? "border-copper bg-copper/5 ring-1 ring-copper"
+          ? "border-2 border-copper bg-copper/[0.06]"
           : "border-border hover:border-foreground/20",
       )}
     >

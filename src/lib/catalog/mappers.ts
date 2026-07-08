@@ -81,6 +81,7 @@ export type RawProduct = {
   price: number;
   sku: string | null;
   is_new: boolean;
+  is_featured?: boolean;
   is_published: boolean;
   catalog_variant?: string | null;
   brand: RawBrand;
@@ -191,6 +192,7 @@ export function mapProduct(row: RawProduct): CatalogProduct {
     price: row.price,
     sku: row.sku,
     isNew: row.is_new,
+    isFeatured: row.is_featured ?? false,
     isPublished: row.is_published,
     brand: mapBrand(row.brand),
     category: mapCategory(row.category),

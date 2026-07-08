@@ -123,6 +123,7 @@ export function ServiciosPage() {
         breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.servicios])}
         title="Servicios"
         description="Todo lo que tu sonido necesita, en un solo lugar: instrumentos, audio profesional, servicio técnico y asesoría especializada."
+        align="center"
       />
 
       <div className="pb-16 md:pb-20">

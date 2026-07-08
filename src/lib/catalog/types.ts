@@ -66,6 +66,7 @@ export type CatalogProduct = {
   price: number;
   sku: string | null;
   isNew: boolean;
+  isFeatured: boolean;
   isPublished: boolean;
   brand: CatalogBrand | null;
   category: CatalogCategory | null;

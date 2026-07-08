@@ -812,6 +812,7 @@ export type Database = {
           id: string
           includes: string | null
           is_new: boolean
+          is_featured: boolean
           is_published: boolean
           price: number
           sku: string | null
@@ -831,6 +832,7 @@ export type Database = {
           id?: string
           includes?: string | null
           is_new?: boolean
+          is_featured?: boolean
           is_published?: boolean
           price?: number
           sku?: string | null
@@ -850,6 +852,7 @@ export type Database = {
           id?: string
           includes?: string | null
           is_new?: boolean
+          is_featured?: boolean
           is_published?: boolean
           price?: number
           sku?: string | null

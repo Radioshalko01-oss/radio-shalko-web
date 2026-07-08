@@ -19,8 +19,10 @@ import { slugify } from "@/lib/catalog/format";
 import {
   hasProductDetailColumns,
   hasCatalogVariantColumn,
+  hasFeaturedColumn,
   productCatalogVariantWriteField,
   productDetailWriteFields,
+  productFeaturedWriteField,
 } from "@/lib/catalog/product-select";
 import { syncDetailSectionsToSpecs } from "@/lib/catalog/detail-specs-fallback";
 
@@ -48,6 +50,7 @@ const productSchema = z.object({
     .min(0, "El precio no puede ser negativo."),
   sku: z.string().trim().nullish(),
   isNew: z.boolean().optional().default(false),
+  isFeatured: z.boolean().optional().default(false),
   isPublished: z.boolean().optional().default(false),
   brandId: uuid,
   categoryId: uuid,
@@ -96,6 +99,24 @@ async function ensureUniqueSlug(
   }
   // Fallback improbable.
   return `${root}-${Date.now()}`;
+}
+
+const MAX_HOME_NOVEDADES = 4;
+
+/** Mantiene como máximo 4 novedades publicadas; la más antigua sale de la cola. */
+async function enforceNovedadesQueue(supabase: SupabaseServerClient): Promise<void> {
+  const { data } = await supabase
+    .from("products")
+    .select("id")
+    .eq("is_new", true)
+    .eq("is_published", true)
+    .order("created_at", { ascending: true });
+
+  const ids = (data ?? []).map((row) => row.id);
+  if (ids.length <= MAX_HOME_NOVEDADES) return;
+
+  const toUnset = ids.slice(0, ids.length - MAX_HOME_NOVEDADES);
+  await supabase.from("products").update({ is_new: false }).in("id", toUnset);
 }
 
 /** Verifica que la subcategoría exista y pertenezca a la categoría dada. */
@@ -159,6 +180,7 @@ export async function createProduct(
   const slug = await ensureUniqueSlug(supabase, d.slug || d.title);
   const detailColumns = await hasProductDetailColumns(supabase);
   const catalogVariantColumn = await hasCatalogVariantColumn(supabase);
+  const featuredColumn = await hasFeaturedColumn(supabase);
 
   const { data: created, error } = await supabase
     .from("products")
@@ -177,6 +199,7 @@ export async function createProduct(
       price: d.price,
       sku: nullifyEmpty(d.sku),
       is_new: d.isNew,
+      ...productFeaturedWriteField(d.isFeatured, featuredColumn),
       is_published: d.isPublished,
       brand_id: d.brandId,
       category_id: d.categoryId,
@@ -212,6 +235,10 @@ export async function createProduct(
       features: nullifyEmpty(d.features),
       includes: nullifyEmpty(d.includes),
     });
+  }
+
+  if (d.isNew && d.isPublished) {
+    await enforceNovedadesQueue(supabase);
   }
 
   revalidatePublic(created.slug);
@@ -252,6 +279,7 @@ export async function updateProduct(
   const slug = await ensureUniqueSlug(supabase, d.slug || d.title, id);
   const detailColumns = await hasProductDetailColumns(supabase);
   const catalogVariantColumn = await hasCatalogVariantColumn(supabase);
+  const featuredColumn = await hasFeaturedColumn(supabase);
 
   const { error } = await supabase
     .from("products")
@@ -270,6 +298,7 @@ export async function updateProduct(
       price: d.price,
       sku: nullifyEmpty(d.sku),
       is_new: d.isNew,
+      ...productFeaturedWriteField(d.isFeatured, featuredColumn),
       is_published: d.isPublished,
       brand_id: d.brandId,
       category_id: d.categoryId,
@@ -288,6 +317,10 @@ export async function updateProduct(
       features: nullifyEmpty(d.features),
       includes: nullifyEmpty(d.includes),
     });
+  }
+
+  if (d.isNew && d.isPublished) {
+    await enforceNovedadesQueue(supabase);
   }
 
   // Revalidar slug viejo y nuevo (por si cambió).

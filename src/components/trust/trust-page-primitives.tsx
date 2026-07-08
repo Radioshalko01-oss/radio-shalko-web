@@ -91,6 +91,7 @@ export function TrustCard({
   children,
   className,
   delay = 0,
+  center = false,
 }: {
   icon?: LucideIcon;
   eyebrow?: string;
@@ -98,6 +99,8 @@ export function TrustCard({
   children: ReactNode;
   className?: string;
   delay?: number;
+  /** Centra eyebrow, título y contenido (laptop+) */
+  center?: boolean;
 }) {
   const motionProps = useTrustMotion();
   return (
@@ -106,11 +109,12 @@ export function TrustCard({
       transition={{ ...(motionProps as { transition?: object }).transition, delay }}
       className={cn(
         "rounded-2xl border border-border bg-card p-6 md:p-7",
+        center && "text-center md:mx-auto md:max-w-2xl",
         className,
       )}
     >
       {(icon || eyebrow) && (
-        <div className="flex items-center gap-3">
+        <div className={cn("flex items-center gap-3", center && "justify-center")}>
           {icon ? <TrustIconBadge icon={icon} /> : null}
           {eyebrow ? <p className={siteShell.brandEyebrow}>{eyebrow}</p> : null}
         </div>
@@ -123,9 +127,20 @@ export function TrustCard({
   );
 }
 
-export function TrustBulletList({ items }: { items: readonly string[] }) {
+export function TrustBulletList({
+  items,
+  center = false,
+}: {
+  items: readonly string[];
+  center?: boolean;
+}) {
   return (
-    <ul className="mt-4 space-y-2.5 border-t border-border pt-5">
+    <ul
+      className={cn(
+        "mt-4 space-y-2.5 border-t border-border pt-5",
+        center && "mx-auto max-w-md text-left",
+      )}
+    >
       {items.map((item) => (
         <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/85">
           <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-copper" />

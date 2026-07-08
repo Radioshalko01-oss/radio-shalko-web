@@ -38,6 +38,7 @@ export function mockToCatalogProduct(p: Product): CatalogProduct {
     price: p.price,
     sku: p.id,
     isNew: Boolean(p.isNew),
+    isFeatured: false,
     isPublished: true,
     brand: { id: brandSlug, name: p.brand, slug: brandSlug, logoUrl: null },
     category: { id: categorySlug, name: p.category, slug: categorySlug },
