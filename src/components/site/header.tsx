@@ -29,7 +29,6 @@ import {
   BrandsMegaMenu,
   ProductsMegaMenu,
 } from "@/components/site/mega-menus";
-import { STABLE_COMPOSITOR_MQ } from "@/lib/motion/stable-viewport";
 import {
   FEATURED_BRAND_CANDIDATES,
   OFFICIAL_BRANDS,
@@ -110,7 +109,7 @@ const MOBILE_THEME_SOLID = "#fafafa";
 
 function syncMobileThemeColor(el: HTMLElement) {
   if (typeof window === "undefined") return;
-  if (!window.matchMedia(STABLE_COMPOSITOR_MQ).matches) return;
+  if (!window.matchMedia("(max-width: 1023px)").matches) return;
 
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   const onHero =

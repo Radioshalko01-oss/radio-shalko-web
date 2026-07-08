@@ -54,7 +54,7 @@ export function Hero() {
 
   const touchTextClass = cn(
     HOME_TOUCH_FADE_TRANSITION,
-    textVisible ? "max-xl:opacity-100" : "max-xl:opacity-0",
+    textVisible ? "max-lg:opacity-100" : "max-lg:opacity-0",
   );
 
   return (
@@ -71,7 +71,7 @@ export function Hero() {
             <div
               key={slide.id}
               className={cn(
-                "hero-slide-layer absolute inset-0 max-md:h-[100svh] bg-[#111] transition-opacity motion-reduce:transition-none",
+                "absolute inset-0 max-md:h-[100svh] bg-[#111] transition-opacity motion-reduce:transition-none",
                 isActive ? "opacity-100" : "pointer-events-none opacity-0",
               )}
               style={{
@@ -81,7 +81,7 @@ export function Hero() {
               }}
             >
               <div
-                className="absolute inset-0 max-md:h-[100svh] max-md:overflow-hidden hero-ken-burns-wrap xl:motion-safe:animate-hero-ken-burns"
+                className="absolute inset-0 max-md:h-[100svh] max-md:overflow-hidden hero-ken-burns-wrap lg:motion-safe:animate-hero-ken-burns lg:[transform:translateZ(0)]"
                 style={
                   slide.mobileObjectPosition
                     ? ({ "--hero-object-position": slide.mobileObjectPosition } as CSSProperties)
@@ -116,7 +116,7 @@ export function Hero() {
         <div key={textKey} className="flex w-full flex-col items-center">
           <p
             className={cn(
-              "text-[11px] font-semibold uppercase tracking-[0.22em] text-white xl:hero-text-in md:text-xs xl:motion-reduce:animate-none",
+              "text-[11px] font-semibold uppercase tracking-[0.22em] text-white lg:hero-text-in md:text-xs lg:motion-reduce:animate-none",
               touchTextClass,
             )}
             style={{ animationDelay: "320ms" }}
@@ -126,7 +126,7 @@ export function Hero() {
 
           <h1
             className={cn(
-              "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white xl:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] xl:motion-reduce:animate-none xl:text-[4rem]",
+              "mt-5 max-w-[16ch] text-balance font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white lg:hero-text-in md:mt-6 md:max-w-[15ch] md:text-[3.35rem] md:leading-[1.04] md:tracking-[-0.035em] lg:motion-reduce:animate-none lg:text-[4rem]",
               touchTextClass,
             )}
             style={{ animationDelay: "480ms" }}
@@ -136,7 +136,7 @@ export function Hero() {
 
           <p
             className={cn(
-              "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 xl:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] xl:motion-reduce:animate-none",
+              "mt-5 max-w-[38ch] text-pretty text-[15px] font-normal leading-relaxed text-white/95 lg:hero-text-in md:mt-6 md:max-w-[42ch] md:text-[17px] md:leading-[1.7] lg:motion-reduce:animate-none",
               touchTextClass,
             )}
             style={{ animationDelay: "620ms" }}
@@ -146,7 +146,7 @@ export function Hero() {
 
           <div
             className={cn(
-              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 xl:hero-text-in md:mt-10 md:items-center md:gap-3 xl:motion-reduce:animate-none sm:max-w-none sm:flex-row sm:items-center sm:justify-center",
+              "mt-8 flex w-full max-w-[20rem] flex-col items-stretch gap-3 lg:hero-text-in md:mt-10 md:items-center md:gap-3 lg:motion-reduce:animate-none sm:max-w-none sm:flex-row sm:items-center sm:justify-center",
               touchTextClass,
             )}
             style={{ animationDelay: "760ms" }}

@@ -2,23 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { readCompositorStable, STABLE_COMPOSITOR_MQ } from "@/lib/motion/stable-viewport";
+
+/** Viewports tablet/móvil anchos donde WebKit suele mostrar artefactos de composición. */
+const TABLET_MQ = "(max-width: 1023px)";
+
+function readTabletViewport(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia(TABLET_MQ).matches;
+}
 
 /**
- * Desactiva animaciones Framer Motion en tablet/touch.
- * Complementa prefers-reduced-motion para evitar rayas en Android WebKit.
+ * Desactiva animaciones que usan transform/opacity en tablet.
+ * Complementa prefers-reduced-motion para evitar rayas / “pantalla de TV” en Android.
  */
 export function useStableMotion(): boolean {
   const prefersReducedMotion = useReducedMotion();
-  const [isStableViewport, setIsStableViewport] = useState(readCompositorStable);
+  const [isTabletViewport, setIsTabletViewport] = useState(readTabletViewport);
 
   useEffect(() => {
-    const mq = window.matchMedia(STABLE_COMPOSITOR_MQ);
-    const sync = () => setIsStableViewport(mq.matches);
+    const mq = window.matchMedia(TABLET_MQ);
+    const sync = () => setIsTabletViewport(mq.matches);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  return Boolean(prefersReducedMotion || isStableViewport);
+  return Boolean(prefersReducedMotion || isTabletViewport);
 }
