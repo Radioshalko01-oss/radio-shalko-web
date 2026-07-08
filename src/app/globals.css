@@ -304,8 +304,8 @@
   }
 }
 
-/* Tablet / Android WebKit: evita rayas, parpadeos y capas rotas de composición */
-@media (max-width: 1023px) {
+/* Tablet / touch WebKit: evita rayas, parpadeos y capas rotas de composición */
+@media (max-width: 1279px), (pointer: coarse) {
   .hero-ken-burns-wrap,
   .animate-hero-ken-burns {
     animation: none !important;
@@ -319,7 +319,15 @@
     transform: none !important;
   }
 
-  /* Sin backdrop-filter en tablet (principal causa de glitches en Android) */
+  .hero-slide-layer {
+    transition-duration: 0ms !important;
+  }
+
+  .brands-marquee-track {
+    will-change: auto !important;
+  }
+
+  /* Sin backdrop-filter (principal causa de glitches en Android) */
   *,
   *::before,
   *::after {
@@ -389,6 +397,16 @@
 
   .will-change-transform {
     will-change: auto !important;
+  }
+
+  .site-header {
+    isolation: auto !important;
+  }
+
+  /* Sin transiciones de transform en tarjetas (evita rayas en admin/home) */
+  .compositor-stable-card {
+    transition: none !important;
+    transform: none !important;
   }
 }
 

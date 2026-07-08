@@ -5,9 +5,9 @@ export const HOME_IMAGE_CROSSFADE_MS = 1400;
 export const HOME_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const BRANDS_MARQUEE_SECONDS = 45;
 
-/** Clases de fade táctil (móvil + tablet): solo opacidad para evitar glitches en WebKit. */
+/** Clases de fade táctil (móvil + tablet ancha): solo opacidad para evitar glitches en WebKit. */
 export const HOME_TOUCH_FADE_TRANSITION =
-  "max-lg:transition-opacity max-lg:duration-[700ms] max-lg:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-lg:transition-none";
+  "max-xl:transition-opacity max-xl:duration-[700ms] max-xl:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:max-xl:transition-none";
 
 /** @deprecated Usar HOME_TOUCH_FADE_TRANSITION */
 export const HOME_MOBILE_FADE_TRANSITION = HOME_TOUCH_FADE_TRANSITION;

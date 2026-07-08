@@ -3,6 +3,7 @@ import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
 import { BRAND_FAVICON_SRC, BRAND_ICON_SRC } from "@/lib/brand/assets";
 import { siteBaseUrl } from "@/lib/site/site-url";
 import { StableMotionProvider } from "@/components/providers/stable-motion-provider";
+import { TouchStableRoot } from "@/components/providers/touch-stable-root";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +35,9 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="flex min-h-dvh flex-col">
-        <StableMotionProvider>{children}</StableMotionProvider>
+        <TouchStableRoot>
+          <StableMotionProvider>{children}</StableMotionProvider>
+        </TouchStableRoot>
       </body>
     </html>
   );

@@ -80,18 +80,18 @@ export function StoryStrip() {
   return (
     <section className="border-b border-border bg-background py-5 md:py-8 lg:py-12">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
-        <ul className="hidden grid-cols-1 gap-10 sm:gap-12 lg:grid lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-border">
+        <ul className="hidden grid-cols-1 gap-10 sm:gap-12 xl:grid xl:grid-cols-3 xl:gap-0 xl:divide-x xl:divide-border">
           {ITEMS.map((item) => (
             <li
               key={item.title}
-              className="lg:px-6 lg:first:pl-0 lg:last:pr-0 xl:px-10 xl:first:pl-0 xl:last:pr-0"
+              className="xl:px-6 xl:first:pl-0 xl:last:pr-0 2xl:px-10 2xl:first:pl-0 2xl:last:pr-0"
             >
               <BenefitItem {...item} />
             </li>
           ))}
         </ul>
 
-        <div className="lg:hidden">
+        <div className="xl:hidden">
           <div className="relative min-h-[5.5rem] md:min-h-[6.5rem]">
             {ITEMS.map((item, index) => {
               const isActive = index === activeIndex;

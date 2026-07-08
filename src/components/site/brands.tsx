@@ -6,6 +6,8 @@ import {
   BRANDS_MARQUEE_SECONDS,
   nodeContains,
 } from "@/lib/site/home-motion";
+import { DESKTOP_MOTION_MQ, readDesktopMotion } from "@/lib/motion/stable-viewport";
+import { cn } from "@/lib/utils";
 
 const behringer = "/images/brands/behringer.png";
 const yamaha = "/images/brands/yamaha.png";
@@ -78,6 +80,7 @@ export function Brands() {
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduceMotionRef = useRef(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [useDesktopMarquee, setUseDesktopMarquee] = useState(readDesktopMotion);
 
   const applyTransform = useCallback(() => {
     const track = trackRef.current;
@@ -153,27 +156,33 @@ export function Brands() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     reduceMotionRef.current = reduced;
     setPrefersReducedMotion(reduced);
+
+    const desktopMq = window.matchMedia(DESKTOP_MOTION_MQ);
+    const syncDesktop = () => setUseDesktopMarquee(desktopMq.matches);
+    syncDesktop();
+    desktopMq.addEventListener("change", syncDesktop);
+
     measure();
 
     const segment = segmentRef.current;
-    if (!segment) return;
+    if (!segment) return () => desktopMq.removeEventListener("change", syncDesktop);
 
     const observer = new ResizeObserver(measure);
     observer.observe(segment);
 
-    return () => observer.disconnect();
+    return () => {
+      desktopMq.removeEventListener("change", syncDesktop);
+      observer.disconnect();
+    };
   }, [measure]);
 
-  /** Marquee mobile con Web Animations API (Safari iOS no anima bien % en CSS). */
+  /** Marquee táctil/tablet con Web Animations API (Safari iOS no anima bien % en CSS). */
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (prefersReducedMotion || useDesktopMarquee) return;
 
     const track = mobileTrackRef.current;
     const segment = track?.firstElementChild as HTMLElement | null;
     if (!track || !segment) return;
-
-    const mq = window.matchMedia("(max-width: 1023px)");
-    if (!mq.matches) return;
 
     let animation: Animation | null = null;
 
@@ -215,9 +224,11 @@ export function Brands() {
       window.removeEventListener("load", start);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, useDesktopMarquee]);
 
   useEffect(() => {
+    if (!useDesktopMarquee) return;
+
     window.addEventListener("load", measure);
 
     const onVisible = () => {
@@ -264,7 +275,7 @@ export function Brands() {
       cancelAnimationFrame(rafRef.current);
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
     };
-  }, [measure]);
+  }, [measure, useDesktopMarquee]);
 
   return (
     <section
@@ -311,7 +322,10 @@ export function Brands() {
           <>
             <div
               ref={mobileTrackRef}
-              className="brands-marquee-track flex w-max items-center lg:hidden"
+              className={cn(
+                "brands-marquee-track flex w-max items-center",
+                useDesktopMarquee && "hidden",
+              )}
             >
               {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
                 <div
@@ -331,7 +345,10 @@ export function Brands() {
             </div>
             <div
               ref={trackRef}
-              className="hidden w-max items-center will-change-transform motion-reduce:transform-none lg:flex"
+              className={cn(
+                "w-max items-center motion-reduce:transform-none",
+                useDesktopMarquee ? "flex will-change-transform" : "hidden",
+              )}
             >
               {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
                 <div

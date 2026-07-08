@@ -110,7 +110,7 @@ function QuickLink({
       className={cn(
         adminShell.cardInteractive,
         "group flex items-start justify-between gap-3 p-4",
-        highlight && "border-copper/20 bg-copper/[0.02]",
+        highlight && "border-copper/20 bg-copper/5 max-xl:bg-copper/5",
       )}
     >
       <div className="flex min-w-0 gap-3">
