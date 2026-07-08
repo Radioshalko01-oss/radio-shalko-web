@@ -21,8 +21,6 @@ type GoogleSignInButtonProps = {
 function setAuthCookies(next: string, origin: string) {
   const safeNext = safeAuthNextPath(next);
   const secure = origin.startsWith("https://") ? "; Secure" : "";
-  document.cookie = `${AUTH_NEXT_COOKIE}=; Path=/; Max-Age=0`;
-  document.cookie = `${AUTH_ORIGIN_COOKIE}=; Path=/; Max-Age=0`;
   document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(safeNext)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
   document.cookie = `${AUTH_ORIGIN_COOKIE}=${encodeURIComponent(origin)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
 }

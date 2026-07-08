@@ -137,7 +137,7 @@ export function MarcasPage({
       ) : null}
 
       {selectedBrand ? (
-        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background max-lg:shadow-none md:top-20 lg:bg-background/95 lg:shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] lg:backdrop-blur-md">
+        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] max-lg:backdrop-blur-none lg:bg-background/95 lg:backdrop-blur-md md:top-20">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
             <div className="flex items-center justify-between gap-3 py-2.5 max-md:py-2">
               <button

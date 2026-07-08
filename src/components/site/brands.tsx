@@ -172,7 +172,7 @@ export function Brands() {
     const segment = track?.firstElementChild as HTMLElement | null;
     if (!track || !segment) return;
 
-    const mq = window.matchMedia("(max-width: 1023px)");
+    const mq = window.matchMedia("(max-width: 767px)");
     if (!mq.matches) return;
 
     let animation: Animation | null = null;
@@ -311,7 +311,7 @@ export function Brands() {
           <>
             <div
               ref={mobileTrackRef}
-              className="brands-marquee-track flex w-max items-center lg:hidden"
+              className="brands-marquee-track flex w-max items-center md:hidden [transform:translateZ(0)]"
             >
               {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
                 <div
@@ -331,7 +331,7 @@ export function Brands() {
             </div>
             <div
               ref={trackRef}
-              className="hidden w-max items-center will-change-transform motion-reduce:transform-none lg:flex"
+              className="hidden w-max items-center will-change-transform motion-reduce:transform-none md:flex"
             >
               {Array.from({ length: MARQUEE_COPIES }, (_, copyIndex) => (
                 <div
