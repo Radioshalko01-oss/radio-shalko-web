@@ -495,7 +495,6 @@ export function SiteHeader({
       ref={headerRef}
       className="site-header fixed inset-x-0 top-0 z-50 max-lg:pt-[env(safe-area-inset-top,0px)]"
       data-has-hero={hasHero ? "true" : "false"}
-      data-state={headerForcedSolid || !hasHero ? "solid" : "hero"}
       data-forced-solid={headerForcedSolid ? "true" : "false"}
       onMouseLeave={scheduleClose}
     >

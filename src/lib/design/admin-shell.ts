@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils";
 export const adminShell = {
   layoutBg: "bg-background",
   sidebar:
-    "shrink-0 border-b border-border/80 bg-card max-lg:backdrop-blur-none lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r lg:bg-card/40 lg:backdrop-blur-sm",
+    "shrink-0 border-b border-border/80 bg-card/40 backdrop-blur-sm lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r",
   main: "min-w-0 flex-1 bg-background",
   mainPadding: "px-4 py-6 sm:px-6 sm:py-7 md:px-8 md:py-8",
 
   card: cn(radius.cardAdmin, "border border-border bg-card"),
   cardInteractive: cn(
     radius.cardAdmin,
-    "border border-border bg-card max-lg:transition-none max-lg:hover:shadow-none lg:transition-all lg:hover:border-copper/25 lg:hover:shadow-[0_8px_30px_-20px_rgba(0,0,0,0.1)]",
+    "border border-border bg-card transition-all hover:border-copper/25 hover:shadow-[0_8px_30px_-20px_rgba(0,0,0,0.1)]",
   ),
   cardSection: cn(radius.cardAdmin, "border border-border bg-card p-5"),
   cardToolbar: cn(radius.cardAdmin, "border border-border bg-card p-3"),
@@ -44,7 +44,7 @@ export const adminShell = {
   tableRow: "border-b border-border/60 transition-colors hover:bg-muted/20 last:border-b-0",
 
   modalOverlay:
-    "fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 max-lg:backdrop-blur-none lg:backdrop-blur-sm sm:p-6",
+    "fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 backdrop-blur-sm sm:p-6",
   modalPanel: cn(
     radius.cardAdmin,
     "mt-6 w-full max-w-md border border-border bg-card shadow-2xl sm:mt-10",
