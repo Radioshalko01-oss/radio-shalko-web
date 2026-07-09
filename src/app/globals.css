@@ -401,14 +401,20 @@
   background-color: color-mix(in oklab, var(--border) 70%, transparent);
 }
 
-/* Wordmark móvil: claro sobre hero, oscuro al hacer scroll o sin hero */
+/* Wordmark móvil: claro sobre hero, oscuro al hacer scroll o sin hero.
+   Sin utilidad Tailwind text-foreground en el span: en Android Chrome puede
+   ganar la cascada y dejar el texto oscuro invisible sobre el hero. */
 .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-wordmark {
   color: rgb(255 255 255 / 0.95);
+  -webkit-text-fill-color: rgb(255 255 255 / 0.95);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
 }
 
 .site-header[data-has-hero="false"] .site-header__mobile-wordmark,
 .site-header[data-has-hero="true"][data-state="solid"] .site-header__mobile-wordmark {
   color: var(--foreground);
+  -webkit-text-fill-color: var(--foreground);
+  text-shadow: none;
 }
 
 .site-header[data-has-hero="false"] .site-header__nav-link {

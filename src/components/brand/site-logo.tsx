@@ -75,7 +75,7 @@ export function SiteLogo({
 
   if (context === "mobileHeader") {
     return (
-      <span className={cn("inline-flex h-8 min-w-0 items-center gap-1.5 max-[389px]:gap-0", className)}>
+      <span className={cn("inline-flex h-8 min-w-0 items-center gap-1.5", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={BRAND_ICON_SRC}
@@ -87,7 +87,7 @@ export function SiteLogo({
         />
         <span
           className={cn(
-            "block truncate font-display text-[12px] font-semibold uppercase leading-none tracking-[0.05em] text-foreground site-header__mobile-wordmark max-[389px]:hidden",
+            "site-header__mobile-wordmark block shrink-0 truncate font-display text-[12px] font-semibold uppercase leading-none tracking-[0.05em]",
             imgFade,
           )}
         >
