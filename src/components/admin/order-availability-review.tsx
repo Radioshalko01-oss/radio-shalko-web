@@ -257,11 +257,11 @@ export function OrderAvailabilityReview({ order }: { order: AdminOrderDetail }) 
             </div>
           )}
 
-          {order.adminInternalNote && (
+          {order.legacyAdminNote && (
             <div className={adminShell.mutedBox}>
               <p className={typography.labelCaps}>Nota interna</p>
               <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">
-                {order.adminInternalNote}
+                {order.legacyAdminNote}
               </p>
             </div>
           )}

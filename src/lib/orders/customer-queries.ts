@@ -4,6 +4,11 @@
  */
 import { createClient } from "@/lib/supabase/server";
 import { branchDisplayName } from "@/lib/orders/status-labels";
+import {
+  isPaymentMethodConfirmed,
+  parseOperationalMetadata,
+  warrantyCustomerDisplayLabel,
+} from "@/lib/orders/operational-metadata";
 
 export type CustomerOrderListItem = {
   id: string;
@@ -14,6 +19,7 @@ export type CustomerOrderListItem = {
   total: number;
   status: string;
   paymentStatus: string;
+  paymentMethod: string;
   hasPaymentUrl: boolean;
   fulfillmentStatus: string;
   createdAt: string;
@@ -41,6 +47,11 @@ export type CustomerOrderDetail = CustomerOrderListItem & {
   pickupReadyEstimate: string | null;
   deliveredAt: string | null;
   items: CustomerOrderLineItem[];
+  confirmedFinalPrice: number | null;
+  confirmedFinalPriceNote: string | null;
+  warrantyLabel: string | null;
+  paymentMethodConfirmed: boolean;
+  paymentInstructionsSent: boolean;
 };
 
 export type CustomerOrderSummary = {
@@ -59,6 +70,7 @@ const ORDER_LIST_SELECT = `
   order_number,
   status,
   payment_status,
+  payment_method,
   total,
   created_at,
   stripe_payment_url,
@@ -73,6 +85,7 @@ const ORDER_DETAIL_SELECT = `
   order_number,
   status,
   payment_status,
+  payment_method,
   subtotal,
   shipping_cost,
   total,
@@ -86,6 +99,7 @@ const ORDER_DETAIL_SELECT = `
   pickup_ready_message,
   pickup_ready_estimate,
   delivered_at,
+  admin_internal_note,
   branch_id,
   branches ( slug, display_name, name ),
   order_items (
@@ -101,6 +115,7 @@ type RawOrderList = {
   order_number: string;
   status: string;
   payment_status: string;
+  payment_method: string;
   total: number;
   created_at: string;
   stripe_payment_url: string | null;
@@ -130,6 +145,7 @@ function mapListItem(row: RawOrderList): CustomerOrderListItem {
     total: row.total,
     status: row.status,
     paymentStatus: row.payment_status,
+    paymentMethod: row.payment_method,
     hasPaymentUrl: Boolean(row.stripe_payment_url),
     fulfillmentStatus: row.fulfillment_status,
     createdAt: row.created_at,
@@ -301,6 +317,7 @@ export async function getCustomerOrder(id: string): Promise<CustomerOrderDetail 
     pickup_ready_message: string | null;
     pickup_ready_estimate: string | null;
     delivered_at: string | null;
+    admin_internal_note: string | null;
     order_items: RawOrderItem[] | null;
   };
 
@@ -319,6 +336,8 @@ export async function getCustomerOrder(id: string): Promise<CustomerOrderDetail 
     imageUrl: images.get(item.product_id) ?? null,
   }));
 
+  const operational = parseOperationalMetadata(row.admin_internal_note);
+
   return {
     ...base,
     notes: row.notes,
@@ -332,5 +351,10 @@ export async function getCustomerOrder(id: string): Promise<CustomerOrderDetail 
     pickupReadyEstimate: row.pickup_ready_estimate,
     deliveredAt: row.delivered_at,
     items,
+    confirmedFinalPrice: operational.finalPrice?.amount ?? null,
+    confirmedFinalPriceNote: operational.finalPrice?.note ?? null,
+    warrantyLabel: warrantyCustomerDisplayLabel(operational.warranty),
+    paymentMethodConfirmed: isPaymentMethodConfirmed(operational),
+    paymentInstructionsSent: Boolean(operational.paymentMethodConfirmed?.instructionsSent),
   };
 }

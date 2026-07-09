@@ -6,6 +6,10 @@
  * protección de rol vive en el layout/acciones que las invocan (requireAdmin).
  */
 import { createClient } from "@/lib/supabase/server";
+import {
+  isOfficialBrandName,
+  sortByOfficialBrandOrder,
+} from "@/lib/navigation/catalog-taxonomy";
 
 export type AdminBrand = {
   id: string;
@@ -52,16 +56,20 @@ export async function listAdminBrands(): Promise<AdminBrand[]> {
     counts.set(p.brand_id, (counts.get(p.brand_id) ?? 0) + 1);
   }
 
-  return (brands as RawAdminBrand[]).map((b) => ({
-    id: b.id,
-    name: b.name,
-    slug: b.slug,
-    logoUrl: b.logo_url,
-    description: b.description,
-    isActive: b.is_active,
-    sortOrder: b.sort_order,
-    productCount: counts.get(b.id) ?? 0,
-  }));
+  return sortByOfficialBrandOrder(
+    (brands as RawAdminBrand[])
+      .filter((b) => isOfficialBrandName(b.name))
+      .map((b) => ({
+        id: b.id,
+        name: b.name,
+        slug: b.slug,
+        logoUrl: b.logo_url,
+        description: b.description,
+        isActive: b.is_active,
+        sortOrder: b.sort_order,
+        productCount: counts.get(b.id) ?? 0,
+      })),
+  );
 }
 
 /** Conteo de productos asociados a una marca (para guardas de borrado). */

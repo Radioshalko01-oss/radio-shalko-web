@@ -5,8 +5,11 @@ import Link from "next/link";
 import { ArrowLeft, MessageCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { CartShareActions } from "@/components/cart/cart-share-actions";
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { PurchaseTrustNote } from "@/components/trust/purchase-trust-note";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
 import { useQuote } from "@/hooks/use-quote";
@@ -25,10 +28,20 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const idsKey = useMemo(() => [...ids].sort().join(","), [ids.join(",")]);
+
   useEffect(() => {
+    if (!idsKey) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    const requestedIds = idsKey.split(",");
     let active = true;
     setLoading(true);
-    fetchProductsByIds(ids)
+
+    fetchProductsByIds(requestedIds)
       .then((res) => {
         if (active) {
           setProducts(res);
@@ -38,10 +51,11 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       .catch(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
-  }, [ids]);
+  }, [idsKey]);
 
   const rows = useMemo(() => {
     const byId = new Map(products.map((p) => [p.id, p]));
@@ -81,15 +95,31 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
   );
 
   const hasItems = count > 0;
+  const showInitialLoader = loading && ids.length > 0 && rows.length === 0;
 
   return (
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([siteCrumbs.home, siteCrumbs.carrito])}
+        title={isAdmin ? "Carrito tienda" : "Tu carrito"}
+        description={
+          isAdmin
+            ? count === 0
+              ? "Agrega productos desde el catálogo."
+              : "Prepara una selección de productos y compártela con un cliente."
+            : count === 0
+              ? "Agrega productos desde el catálogo."
+              : `${count} producto${count === 1 ? "" : "s"} · ${units} unidad${units === 1 ? "" : "es"}`
+        }
+      />
+
     <div
       className={cn(
-        "mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-24 lg:px-8",
-        hasItems && "pb-32 md:pb-24",
+        "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
+        hasItems && "pb-44 md:pb-24",
       )}
     >
-      <nav className="flex items-center justify-between gap-4">
+      <nav className="flex items-center justify-between gap-4 pt-5 md:pt-6">
         <Link
           href="/productos"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -104,53 +134,42 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
         )}
       </nav>
 
-      <PageHeader
-        variant="account"
-        className="mt-6 md:mt-8"
-        title={isAdmin ? "Carrito tienda" : "Tu carrito"}
-        description={
-          isAdmin ? (
-            count === 0
-              ? "Agrega productos desde el catálogo."
-              : "Usa este carrito para preparar una selección de productos y compartirla con un cliente."
-          ) : count === 0 ? (
-            "Agrega productos desde el catálogo."
-          ) : (
-            `${count} producto${count === 1 ? "" : "s"} · ${units} unidad${units === 1 ? "" : "es"}`
-          )
-        }
-      />
-
-      {loading && ids.length > 0 ? (
-        <p className="mt-12 text-sm text-muted-foreground">Cargando tu carrito…</p>
+      {showInitialLoader ? (
+        <CartLoadingSkeleton />
       ) : count === 0 ? (
-        <div className={cn(siteShell.emptyState, "mt-12")}>
-          <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <p className="mt-4 font-display text-lg font-medium">Tu carrito está vacío</p>
-          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-            Explora el catálogo y agrega los productos que te interesen.
-          </p>
-          <Button asChild className="mt-6 h-11 rounded-full px-8">
-            <Link href="/productos">Explorar catálogo</Link>
-          </Button>
-        </div>
+        <SiteEmptyState
+          className="mt-10 md:mt-12"
+          icon={<ShoppingBag className="h-6 w-6" />}
+          title="Tu carrito está vacío"
+          description="Explora el catálogo y agrega los productos que te interesen."
+          action={{ label: "Explorar catálogo", href: "/productos" }}
+        />
       ) : (
-        <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_320px] md:items-start lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
-          <section aria-label="Productos">
-            <div className="hidden border-b border-border px-1 pb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
+        <div className="mt-5 flex flex-col gap-10 md:mt-6 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
+          <section aria-label="Productos" className="min-w-0 w-full md:flex-1">
+            {!isAdmin && (
+              <PurchaseTrustNote
+                className="mb-5 md:hidden"
+                compact
+                title="Solicitud de compra"
+                lines={[
+                  "Revisaremos disponibilidad antes de confirmar. No pagues hasta recibir instrucciones oficiales.",
+                ]}
+                linkKeys={["compraSegura", "metodosPago"]}
+              />
+            )}
+            <div className="hidden border-b border-border px-1 pb-4 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:gap-4">
               <span>Producto</span>
               <span className="text-center">Cantidad</span>
               <span className="text-right">Subtotal</span>
               <span className="sr-only">Quitar</span>
             </div>
 
-            <ul className="divide-y divide-border md:mt-0">
+            <ul className="divide-y divide-border md:mt-4">
               {rows.map(({ product: p, quantity, subtotal }) => (
                 <li
                   key={p.id}
-                  className="grid gap-3 py-4 first:pt-0 md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:items-center md:gap-4 md:py-5"
+                  className="grid gap-3 py-5 md:grid-cols-[minmax(0,1fr)_112px_96px_36px] md:items-center md:gap-4 md:py-6"
                 >
                   <div className="flex min-w-0 gap-3 md:gap-4">
                     <Link
@@ -169,14 +188,14 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
                         </div>
                       )}
                     </Link>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 pt-0.5">
                       <Link href={`/productos/${p.slug}`} className="block min-w-0">
                         {p.brand?.name && (
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-copper">
                             {p.brand.name}
                           </p>
                         )}
-                        <p className="mt-0.5 line-clamp-2 text-sm font-medium leading-snug sm:text-[15px]">
+                        <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug sm:text-[15px]">
                           {p.name}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground tabular-nums md:hidden">
@@ -232,7 +251,7 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
             </ul>
           </section>
 
-          <aside className="hidden md:block md:sticky md:top-24">
+          <aside className="hidden md:sticky md:top-24 md:block md:w-[320px] md:shrink-0 lg:w-[340px] xl:w-[380px]">
             <CartSummaryPanel
               count={count}
               units={units}
@@ -247,30 +266,95 @@ export function CotizacionPage({ isAdmin = false }: CotizacionPageProps) {
       )}
 
       {hasItems && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm md:hidden">
-          <div className="mx-auto flex max-w-6xl items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className={siteShell.labelCaps}>Total estimado</p>
-              <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
-            </div>
-            {isAdmin ? (
-              <div className="shrink-0 [&_button]:h-11 [&_button]:min-w-[148px] [&_button]:px-5">
-                <CartShareActions lines={shareLines} variant="primary" compact />
-              </div>
-            ) : (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-copper px-5 text-sm font-semibold text-copper-foreground hover:bg-copper/90"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Asesoría
-              </a>
-            )}
-          </div>
-        </div>
+        <CartMobileActionBar
+          count={count}
+          total={total}
+          isAdmin={isAdmin}
+          whatsappHref={whatsappHref}
+          shareLines={shareLines}
+        />
       )}
+    </div>
+    </>
+  );
+}
+
+function CartMobileActionBar({
+  count,
+  total,
+  isAdmin,
+  whatsappHref,
+  shareLines,
+}: {
+  count: number;
+  total: number;
+  isAdmin: boolean;
+  whatsappHref: string;
+  shareLines: { productId: string; quantity: number; unitPrice: number }[];
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm md:hidden">
+      <div className="mx-auto max-w-7xl space-y-2.5">
+        <div className="flex items-baseline justify-between gap-4">
+          <div className="min-w-0">
+            <p className={siteShell.labelCaps}>Total estimado</p>
+            <p className={cn(typography.priceTotal, "mt-0.5")}>{formatPrice(total)}</p>
+          </div>
+          <p className="shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+            {count} producto{count === 1 ? "" : "s"}
+          </p>
+        </div>
+        {isAdmin ? (
+          <div className="[&_button]:h-12 [&_button]:w-full [&_button]:rounded-full">
+            <CartShareActions lines={shareLines} variant="primary" compact />
+          </div>
+        ) : (
+          <>
+            <Button asChild className="h-12 w-full rounded-full text-sm font-semibold">
+              <Link href="/checkout">Continuar solicitud</Link>
+            </Button>
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 w-full items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Asesoría por WhatsApp
+            </a>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CartLoadingSkeleton() {
+  return (
+    <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-x-12 lg:gap-x-16 xl:gap-x-20">
+      <div className="min-w-0 flex-1 space-y-0 divide-y divide-border">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="flex gap-4 py-5 animate-pulse motion-reduce:animate-none"
+          >
+            <div className="h-[72px] w-[72px] shrink-0 rounded-lg bg-muted" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-2.5 w-16 rounded bg-muted" />
+              <div className="h-4 w-3/4 max-w-xs rounded bg-muted" />
+              <div className="h-3 w-20 rounded bg-muted md:hidden" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden w-[320px] shrink-0 rounded-2xl border border-border bg-card p-6 md:block lg:w-[340px] xl:w-[380px]">
+        <div className="h-3 w-32 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+        <div className="mt-5 space-y-3">
+          <div className="h-3 w-full animate-pulse rounded bg-muted motion-reduce:animate-none" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+        </div>
+        <div className="mt-6 h-11 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
+      </div>
     </div>
   );
 }
@@ -334,6 +418,18 @@ function CartSummaryPanel({
         </p>
       </div>
 
+      {!isAdmin && (
+        <PurchaseTrustNote
+          className="mt-5"
+          compact
+          title="Antes de pagar"
+          lines={[
+            "Revisaremos disponibilidad antes de confirmar. No realices pagos hasta recibir instrucciones oficiales.",
+          ]}
+          linkKeys={["compraSegura", "metodosPago"]}
+        />
+      )}
+
       <div className="mt-6 space-y-2.5">
         {isAdmin ? (
           <>
@@ -357,23 +453,18 @@ function CartSummaryPanel({
           </>
         ) : (
           <>
+            <Button asChild className="h-12 w-full rounded-full text-sm font-semibold">
+              <Link href="/checkout">Enviar solicitud</Link>
+            </Button>
             <a
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-copper text-sm font-semibold text-copper-foreground transition-colors hover:bg-copper/90"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-background text-sm font-medium text-foreground transition-colors hover:border-foreground/20 hover:bg-muted/40"
             >
-              <MessageCircle className="h-4 w-4" />
-              Solicitar asesoría
+              <MessageCircle className="h-4 w-4 text-copper" />
+              Asesoría por WhatsApp
             </a>
-            <Button
-              type="button"
-              variant="outline"
-              asChild
-              className="h-11 w-full rounded-full"
-            >
-              <Link href="/checkout">Comprar</Link>
-            </Button>
           </>
         )}
       </div>

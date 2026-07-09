@@ -1,10 +1,11 @@
-/** Precio en pesos mexicanos, sin decimales (igual que el mock actual). */
+/** Precio en pesos mexicanos, sin decimales. Redondea para evitar artefactos (ej. $7,5355). */
 export const formatPrice = (n: number): string =>
   new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
     maximumFractionDigits: 0,
-  }).format(n);
+    minimumFractionDigits: 0,
+  }).format(Math.round(n));
 
 /**
  * Convierte un texto a slug seguro para URL:

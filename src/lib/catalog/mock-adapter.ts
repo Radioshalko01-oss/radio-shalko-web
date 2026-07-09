@@ -32,6 +32,9 @@ export function mockToCatalogProduct(p: Product): CatalogProduct {
     name: p.name,
     subtitle: null,
     description: null,
+    specifications: null,
+    features: null,
+    includes: null,
     price: p.price,
     sku: p.id,
     isNew: Boolean(p.isNew),
@@ -39,6 +42,7 @@ export function mockToCatalogProduct(p: Product): CatalogProduct {
     brand: { id: brandSlug, name: p.brand, slug: brandSlug, logoUrl: null },
     category: { id: categorySlug, name: p.category, slug: categorySlug },
     subcategory: { id: subSlug, name: p.subcategory, slug: subSlug, categoryId: categorySlug },
+    catalogVariant: null,
     images: getProductImages(p).map((url, i) => ({
       id: `${p.id}-img-${i}`,
       url,

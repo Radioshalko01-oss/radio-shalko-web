@@ -9,6 +9,7 @@
  * Fallos de email nunca bloquean la creación del pedido.
  */
 import { formatPrice } from "@/lib/catalog/format";
+import { siteBaseUrl } from "@/lib/site/site-url";
 
 export type AdminNewOrderEmailPayload = {
   orderId: string;
@@ -17,6 +18,7 @@ export type AdminNewOrderEmailPayload = {
   customerEmail: string;
   customerPhone: string;
   branchLabel: string;
+  paymentPreferenceLabel: string;
   total: number;
   items: Array<{ title: string; quantity: number; subtotal: number }>;
 };
@@ -30,8 +32,7 @@ export function isAdminOrderEmailConfigured(): boolean {
 }
 
 function adminOrderDetailUrl(orderId: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-  return `${base}/admin/pedidos/${orderId}`;
+  return `${siteBaseUrl()}/admin/pedidos/${orderId}`;
 }
 
 function buildPlainText(payload: AdminNewOrderEmailPayload): string {
@@ -43,6 +44,7 @@ function buildPlainText(payload: AdminNewOrderEmailPayload): string {
     `Teléfono: ${payload.customerPhone}`,
     `Correo: ${payload.customerEmail}`,
     `Recolección: ${payload.branchLabel}`,
+    `Preferencia de pago: ${payload.paymentPreferenceLabel}`,
     `Total estimado: ${formatPrice(payload.total)}`,
     "",
     "Productos:",
@@ -74,6 +76,7 @@ function buildHtml(payload: AdminNewOrderEmailPayload): string {
         <tr><td style="padding:4px 0;color:#71717a">Teléfono</td><td style="padding:4px 0">${escapeHtml(payload.customerPhone)}</td></tr>
         <tr><td style="padding:4px 0;color:#71717a">Correo</td><td style="padding:4px 0">${escapeHtml(payload.customerEmail)}</td></tr>
         <tr><td style="padding:4px 0;color:#71717a">Recolección</td><td style="padding:4px 0">${escapeHtml(payload.branchLabel)}</td></tr>
+        <tr><td style="padding:4px 0;color:#71717a">Preferencia de pago</td><td style="padding:4px 0">${escapeHtml(payload.paymentPreferenceLabel)}</td></tr>
         <tr><td style="padding:4px 0;color:#71717a">Total estimado</td><td style="padding:4px 0"><strong>${formatPrice(payload.total)}</strong></td></tr>
       </table>
       <p style="margin:16px 0 8px;font-size:14px;font-weight:600">Productos</p>

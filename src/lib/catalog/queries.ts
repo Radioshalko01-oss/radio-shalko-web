@@ -1,6 +1,12 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
-  PRODUCT_SELECT,
+  getOfficialCatalogTypeSubcategories,
+  isOfficialBrandName,
+  sortByOfficialBrandOrder,
+} from "@/lib/navigation/catalog-taxonomy";
+import { resolveProductSelect } from "./product-select";
+import {
   mapProduct,
   mapBrand,
   mapCategory,
@@ -25,6 +31,163 @@ export type CatalogFilters = {
   includeUnpublished?: boolean;
 };
 
+/** Índice ligero para header (búsqueda, favoritos, cotización). */
+export type HeaderCatalogProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  subcategory: string;
+  category: string;
+  price: number;
+  image: string;
+};
+
+const HEADER_PRODUCT_SELECT = `
+  id,
+  slug,
+  title,
+  price,
+  brand:brands ( name ),
+  category:categories ( name ),
+  subcategory:subcategories ( name ),
+  images:product_images ( url, alt_text, sort_order )
+` as const;
+
+type RawHeaderProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  price: number;
+  brand: { name: string } | null;
+  category: { name: string } | null;
+  subcategory: { name: string } | null;
+  images: { url: string; alt_text: string | null; sort_order: number | null }[] | null;
+};
+
+function mapHeaderProduct(raw: RawHeaderProduct): HeaderCatalogProduct {
+  const images = [...(raw.images ?? [])].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
+  return {
+    id: raw.id,
+    name: raw.title,
+    slug: raw.slug,
+    brand: raw.brand?.name ?? "",
+    subcategory: raw.subcategory?.name ?? "",
+    category: raw.category?.name ?? "",
+    price: raw.price,
+    image: images[0]?.url ?? "",
+  };
+}
+
+/**
+ * Catálogo mínimo para el header: sin specs, inventario ni descripciones.
+ * Mucho más rápido que getCatalogProducts en cada navegación.
+ */
+export const getHeaderCatalogProducts = cache(async (): Promise<HeaderCatalogProduct[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(HEADER_PRODUCT_SELECT)
+    .eq("is_published", true)
+    .order("title", { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as RawHeaderProduct[]).map(mapHeaderProduct);
+});
+
+/** Select ligero para tarjetas destacadas en home (sin specs ni detalle extendido). */
+const HOME_FEATURED_SELECT = `
+  id,
+  slug,
+  title,
+  subtitle,
+  description,
+  price,
+  sku,
+  is_new,
+  is_published,
+  brand:brands ( id, name, slug, logo_url ),
+  category:categories ( id, name, slug ),
+  subcategory:subcategories ( id, name, slug, category_id ),
+  images:product_images ( id, url, alt_text, sort_order ),
+  inventory:product_inventory (
+    quantity,
+    branch:branches ( id, slug, name, display_name, is_active, sort_order )
+  )
+` as const;
+
+export type HomeFeaturedProducts = {
+  novedades: CatalogProduct[];
+  destacados: CatalogProduct[];
+};
+
+/**
+ * Productos para la sección destacada del home: consulta mínima (8+8 filas)
+ * en lugar de cargar el catálogo completo con specs e inventario detallado.
+ */
+export const getHomeFeaturedProducts = cache(async (): Promise<HomeFeaturedProducts> => {
+  const supabase = await createClient();
+
+  const [newRes, priceRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .eq("is_new", true)
+      .order("title", { ascending: true })
+      .limit(8),
+    supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("price", { ascending: false })
+      .limit(8),
+  ]);
+
+  const mapRows = (rows: unknown[] | null): CatalogProduct[] =>
+    (rows ?? []).map((row) =>
+      mapProduct({
+        ...(row as object),
+        specifications: null,
+        features: null,
+        includes: null,
+        specs: null,
+        catalog_variant: null,
+      } as RawProduct),
+    );
+
+  const novedadesRaw = mapRows(newRes.data as unknown[] | null);
+  const novedades = novedadesRaw.length > 0 ? novedadesRaw.slice(0, 4) : [];
+
+  const destacados = mapRows(priceRes.data as unknown[] | null).slice(0, 4);
+
+  if (novedades.length === 0 && destacados.length === 0) {
+    const { data } = await supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("title", { ascending: true })
+      .limit(4);
+
+    const fallback = mapRows(data as unknown[] | null);
+    return { novedades: fallback, destacados: fallback };
+  }
+
+  if (novedades.length === 0) {
+    const { data } = await supabase
+      .from("products")
+      .select(HOME_FEATURED_SELECT)
+      .eq("is_published", true)
+      .order("title", { ascending: true })
+      .limit(4);
+    return { novedades: mapRows(data as unknown[] | null), destacados };
+  }
+
+  return { novedades, destacados };
+});
+
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 /** Resuelve un slug de taxonomía a su id; null si no existe. */
@@ -45,12 +208,13 @@ async function resolveId(
  * Lista de productos del catálogo. Por defecto solo publicados.
  * Filtros opcionales por categoría, subcategoría, marca (por slug) y texto.
  */
-export async function getCatalogProducts(
+async function fetchCatalogProducts(
   filters: CatalogFilters = {},
 ): Promise<CatalogProduct[]> {
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
-  let query = supabase.from("products").select(PRODUCT_SELECT);
+  let query = supabase.from("products").select(select);
 
   if (!filters.includeUnpublished) {
     query = query.eq("is_published", true);
@@ -84,15 +248,21 @@ export async function getCatalogProducts(
   return (data as unknown as RawProduct[]).map(mapProduct);
 }
 
+export const getCatalogProducts = cache(
+  async (filters: CatalogFilters = {}): Promise<CatalogProduct[]> =>
+    fetchCatalogProducts(filters),
+);
+
 /** Un producto por slug (solo publicado). null si no existe o es borrador. */
 export async function getProductBySlug(
   slug: string,
 ): Promise<CatalogProduct | null> {
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -111,10 +281,11 @@ export async function getProductsByIds(
   if (!ids.length) return [];
 
   const supabase = await createClient();
+  const select = await resolveProductSelect(supabase);
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .in("id", ids)
     .eq("is_published", true);
 
@@ -159,9 +330,10 @@ export async function getRelatedProducts(
 
   if (!base) return [];
 
+  const select = await resolveProductSelect(supabase);
   let query = supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(select)
     .eq("is_published", true)
     .neq("id", productId);
 
@@ -180,14 +352,21 @@ export async function getRelatedProducts(
 }
 
 /** Árbol de categorías con subcategorías anidadas (menús/filtros). */
-export async function getCategoriesTree(): Promise<CatalogCategoryTree[]> {
+export async function getCategoriesTree(opts: {
+  activeOnly?: boolean;
+  includeSubcategoryIds?: string[];
+} = {}): Promise<CatalogCategoryTree[]> {
+  const { activeOnly = true, includeSubcategoryIds = [] } = opts;
   const supabase = await createClient();
+  const officialSubNames = new Set(
+    getOfficialCatalogTypeSubcategories().map((s) => s.name.toLowerCase()),
+  );
 
   const [{ data: cats }, { data: subs }] = await Promise.all([
     supabase.from("categories").select("id, name, slug").order("sort_order"),
     supabase
       .from("subcategories")
-      .select("id, name, slug, category_id")
+      .select("id, name, slug, category_id, is_active")
       .order("sort_order"),
   ]);
 
@@ -196,6 +375,10 @@ export async function getCategoriesTree(): Promise<CatalogCategoryTree[]> {
   const subsByCategory = new Map<string, RawSubcategory[]>();
   for (const s of (subs ?? []) as RawSubcategory[]) {
     if (!s?.category_id) continue;
+    const isIncluded = includeSubcategoryIds.includes(s.id);
+    const isActive = (s as RawSubcategory & { is_active?: boolean }).is_active !== false;
+    const isOfficial = officialSubNames.has(s.name.toLowerCase());
+    if (activeOnly && !isIncluded && (!isActive || !isOfficial)) continue;
     const list = subsByCategory.get(s.category_id) ?? [];
     list.push(s);
     subsByCategory.set(s.category_id, list);
@@ -236,27 +419,33 @@ export async function getActiveTaxonomyNames(): Promise<{
 }
 
 /**
- * Marcas ordenadas. Por defecto devuelve todas (admin/formulario de producto).
- * Pasa `{ activeOnly: true }` en superficies públicas para excluir ocultas.
+ * Marcas ordenadas según la lista oficial del menú.
+ * Por defecto solo activas; en edición pasa `includeBrandIds` para conservar la marca actual.
  */
 export async function getBrands(
-  opts: { activeOnly?: boolean } = {},
+  opts: { activeOnly?: boolean; includeBrandIds?: string[] } = {},
 ): Promise<CatalogBrand[]> {
+  const { activeOnly = true, includeBrandIds = [] } = opts;
   const supabase = await createClient();
 
-  let query = supabase
-    .from("brands")
-    .select("id, name, slug, logo_url")
-    .order("sort_order")
-    .order("name");
+  let query = supabase.from("brands").select("id, name, slug, logo_url, is_active");
 
-  if (opts.activeOnly) query = query.eq("is_active", true);
+  if (activeOnly && includeBrandIds.length > 0) {
+    query = query.or(
+      `is_active.eq.true,id.in.(${includeBrandIds.map((id) => `"${id}"`).join(",")})`,
+    );
+  } else if (activeOnly) {
+    query = query.eq("is_active", true);
+  }
 
   const { data, error } = await query;
 
   if (error || !data) return [];
 
-  return (data as RawBrand[])
-    .map(mapBrand)
-    .filter((b): b is CatalogBrand => b !== null);
+  return sortByOfficialBrandOrder(
+    (data as RawBrand[])
+      .map(mapBrand)
+      .filter((b): b is CatalogBrand => b !== null)
+      .filter((b) => isOfficialBrandName(b.name)),
+  );
 }

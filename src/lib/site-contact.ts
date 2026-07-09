@@ -39,20 +39,16 @@ export const SITE_CONTACT = {
     {
       id: "chalco",
       name: "Chalco",
-      displayName: "Valle de Chalco",
+      displayName: "Chalco",
       address: "Av. Solidaridad 142, Centro, Chalco, Edo. Méx.",
       region: "Estado de México",
-      hours: [
-        "Lun – Vie · 10:00 – 20:00",
-        "Sáb · 10:00 – 19:00",
-        "Dom · 11:00 – 16:00",
-      ],
+      hours: ["Lun – Sáb · 10:00 – 20:00 hrs", "Dom · 11:00 – 20:00 hrs"],
       phoneE164: "+525530924459",
       phoneDisplay: "+52 55 3092 4459",
       whatsappE164: "525651571531",
       mapUrl: "https://maps.app.goo.gl/TEwHRzLuiGikNffaA",
       mapEmbedUrl:
-        "https://www.google.com/maps?q=Chalco+Centro,+Estado+de+Mexico&output=embed",
+        "https://www.google.com/maps/embed?pb=!4v1782884304260!6m8!1m7!1s_tnNo4t_yvw5AT3I3PyBEQ!2m2!1d19.2617641248416!2d-98.89709752375768!3f214.81914572962734!4f1.0492760690724907!5f0.7820865974627469",
     },
     {
       id: "amecameca",
@@ -60,17 +56,13 @@ export const SITE_CONTACT = {
       displayName: "Amecameca",
       address: "Plaza Juárez 28, Centro, Amecameca, Edo. Méx.",
       region: "Estado de México",
-      hours: [
-        "Lun – Vie · 10:00 – 19:00",
-        "Sáb · 10:00 – 18:00",
-        "Dom · cerrado",
-      ],
-      phoneE164: "+525530924459",
-      phoneDisplay: "+52 55 3092 4459",
+      hours: ["Lun – Sáb · 10:00 – 20:00 hrs", "Dom · cerrado"],
+      phoneE164: "+525971151631",
+      phoneDisplay: "+52 597 115 1631",
       whatsappE164: "525651571531",
-      mapUrl: "https://maps.app.goo.gl/BsaRPavhtJ1sg5rH9",
+      mapUrl: "https://maps.app.goo.gl/VBgQpME37zmwbgyf6",
       mapEmbedUrl:
-        "https://www.google.com/maps?q=Amecameca+Centro,+Estado+de+Mexico&output=embed",
+        "https://www.google.com/maps/embed?pb=!4v1782884880264!6m8!1m7!1s-mhd-SStVLja3FNSsg4Z1A!2m2!1d19.12971077505697!2d-98.76947144260808!3f356.78936707573496!4f7.613334448553758!5f0.7820865974627469",
     },
   ] satisfies StoreLocation[],
   /** Resumen en footer (horario general de referencia) */

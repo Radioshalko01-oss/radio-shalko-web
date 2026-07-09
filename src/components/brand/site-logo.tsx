@@ -7,7 +7,7 @@ import {
 
 export type SiteLogoVariant = "horizontal" | "icon";
 export type SiteLogoSize = "sm" | "md" | "lg";
-export type SiteLogoContext = "default" | "header" | "admin" | "login";
+export type SiteLogoContext = "default" | "header" | "mobileHeader" | "admin" | "login";
 /** `on-dark` — wordmark claro sobre hero; el isotipo conserva su arte original (fondo negro + símbolo). */
 export type SiteLogoTone = "default" | "on-dark";
 
@@ -51,6 +51,7 @@ function resolveSize(
   if (size) return size;
   if (context === "admin") return "sm";
   if (context === "login") return "md";
+  if (context === "mobileHeader") return "sm";
   if (context === "header") return "md";
   return "md";
 }
@@ -71,6 +72,30 @@ export function SiteLogo({
   // El isotipo ya trae fondo negro + símbolo blanco: no invertir (rompe el arte).
   // Solo el wordmark (texto negro) se invierte para leerse sobre el hero.
   const wordmarkOnDark = tone === "on-dark" ? "brightness-0 invert" : "";
+
+  if (context === "mobileHeader") {
+    return (
+      <span className={cn("inline-flex h-8 min-w-0 items-center gap-1.5", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={BRAND_ICON_SRC}
+          alt=""
+          aria-hidden
+          width={32}
+          height={32}
+          className={cn("block h-8 w-8 shrink-0 object-contain", imgFade)}
+        />
+        <span
+          className={cn(
+            "site-header__mobile-wordmark block shrink-0 truncate font-display text-[12px] font-semibold uppercase leading-none tracking-[0.05em]",
+            imgFade,
+          )}
+        >
+          Radio Shalko
+        </span>
+      </span>
+    );
+  }
 
   if (variant === "icon") {
     return (

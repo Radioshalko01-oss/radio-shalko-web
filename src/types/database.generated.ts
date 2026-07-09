@@ -808,12 +808,15 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          features: string | null
           id: string
+          includes: string | null
           is_new: boolean
           is_published: boolean
           price: number
           sku: string | null
           slug: string
+          specifications: string | null
           subcategory_id: string | null
           subtitle: string | null
           title: string
@@ -824,12 +827,15 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          features?: string | null
           id?: string
+          includes?: string | null
           is_new?: boolean
           is_published?: boolean
           price?: number
           sku?: string | null
           slug: string
+          specifications?: string | null
           subcategory_id?: string | null
           subtitle?: string | null
           title: string
@@ -840,12 +846,15 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          features?: string | null
           id?: string
+          includes?: string | null
           is_new?: boolean
           is_published?: boolean
           price?: number
           sku?: string | null
           slug?: string
+          specifications?: string | null
           subcategory_id?: string | null
           subtitle?: string | null
           title?: string

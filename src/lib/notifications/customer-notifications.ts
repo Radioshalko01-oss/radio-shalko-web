@@ -134,11 +134,11 @@ export async function createOrderNotification(
     },
     order_approved: {
       title: "Tu solicitud fue aprobada",
-      message: `Tu solicitud ${orderNumber} fue aprobada. Pronto estará disponible el pago.`,
+      message: `Tu solicitud ${orderNumber} fue aprobada. Te compartiremos las instrucciones de pago oficiales.`,
     },
     payment_available: {
-      title: "Pago disponible",
-      message: `Tu pedido ${orderNumber} ya tiene pago disponible.`,
+      title: "Instrucciones de pago",
+      message: `Tu pedido ${orderNumber} fue aprobado. Revisa las instrucciones de pago en tu cuenta o contáctanos.`,
     },
     payment_confirmed: {
       title: "Pago confirmado",

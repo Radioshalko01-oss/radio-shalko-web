@@ -9,6 +9,7 @@ import type {
   CatalogCategoryTree,
   CatalogProduct,
 } from "@/lib/catalog/types";
+import { ProductClassificationFields, type ProductClassificationValue } from "@/components/admin/product-classification-fields";
 import { AdminButton } from "@/components/admin/admin-button";
 import {
   AdminFieldGroup,
@@ -16,10 +17,8 @@ import {
   AdminSectionCard,
   AdminToggle,
   adminInputClass,
-  adminSelectClass,
   adminTextareaClass,
 } from "@/components/admin/admin-patterns";
-import { cn } from "@/lib/utils";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -47,31 +46,24 @@ export function ProductForm({
   const [price, setPrice] = useState(
     product?.price != null ? String(product.price) : "",
   );
-  const [brandId, setBrandId] = useState(product?.brand?.id ?? "");
-  const [categoryId, setCategoryId] = useState(product?.category?.id ?? "");
-  const [subcategoryId, setSubcategoryId] = useState(
-    product?.subcategory?.id ?? "",
-  );
+  const [classification, setClassification] = useState<ProductClassificationValue>({
+    brandId: product?.brand?.id ?? "",
+    categoryId: product?.category?.id ?? "",
+    subcategoryId: product?.subcategory?.id ?? "",
+    catalogVariant: product?.catalogVariant ?? null,
+  });
   const [subtitle, setSubtitle] = useState(product?.subtitle ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
+  const [specifications, setSpecifications] = useState(product?.specifications ?? "");
+  const [features, setFeatures] = useState(product?.features ?? "");
+  const [includes, setIncludes] = useState(product?.includes ?? "");
   const [isNew, setIsNew] = useState(product?.isNew ?? false);
   const [isPublished, setIsPublished] = useState(product?.isPublished ?? false);
 
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const subcategories = useMemo(() => {
-    const cat = categories.find((c) => c.id === categoryId);
-    return cat?.subcategories ?? [];
-  }, [categories, categoryId]);
-
-  function handleCategoryChange(nextCategoryId: string) {
-    setCategoryId(nextCategoryId);
-    const cat = categories.find((c) => c.id === nextCategoryId);
-    const stillValid = cat?.subcategories.some((s) => s.id === subcategoryId);
-    if (!stillValid) setSubcategoryId("");
-  }
+  const [saveBaseline, setSaveBaseline] = useState<string | null>(null);
 
   function buildInput(): ProductInput {
     return {
@@ -79,15 +71,40 @@ export function ProductForm({
       slug: slug.trim() || undefined,
       sku: sku.trim() || null,
       price: price.trim() as unknown as number,
-      brandId,
-      categoryId,
-      subcategoryId: subcategoryId || null,
+      brandId: classification.brandId,
+      categoryId: classification.categoryId,
+      subcategoryId: classification.subcategoryId,
+      catalogVariant: classification.catalogVariant,
       subtitle: subtitle.trim() || null,
       description: description.trim() || null,
+      specifications: specifications.trim() || null,
+      features: features.trim() || null,
+      includes: includes.trim() || null,
       isNew,
       isPublished,
     };
   }
+
+  const currentSnapshot = useMemo(
+    () => JSON.stringify(buildInput()),
+    [
+      title,
+      slug,
+      sku,
+      price,
+      classification,
+      subtitle,
+      description,
+      specifications,
+      features,
+      includes,
+      isNew,
+      isPublished,
+    ],
+  );
+
+  const isSyncedWithBaseline =
+    saveBaseline !== null && currentSnapshot === saveBaseline;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -113,7 +130,8 @@ export function ProductForm({
         router.push(`/admin/productos/${res.data.id}/editar`);
         router.refresh();
       } else {
-        setSuccess("Cambios guardados.");
+        setSuccess("Cambios guardados correctamente.");
+        setSaveBaseline(JSON.stringify(input));
         setSlug(res.data.slug);
         router.refresh();
       }
@@ -182,74 +200,73 @@ export function ProductForm({
       </AdminSectionCard>
 
       <AdminSectionCard title="Clasificación">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AdminFieldGroup label="Marca" required error={errors.brandId}>
-            <select
-              value={brandId}
-              onChange={(e) => setBrandId(e.target.value)}
-              className={adminSelectClass(Boolean(errors.brandId))}
-            >
-              <option value="">Selecciona…</option>
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </AdminFieldGroup>
-
-          <AdminFieldGroup label="Categoría" required error={errors.categoryId}>
-            <select
-              value={categoryId}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className={adminSelectClass(Boolean(errors.categoryId))}
-            >
-              <option value="">Selecciona…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </AdminFieldGroup>
-
-          <AdminFieldGroup label="Subcategoría" error={errors.subcategoryId}>
-            <select
-              value={subcategoryId}
-              onChange={(e) => setSubcategoryId(e.target.value)}
-              disabled={!categoryId || subcategories.length === 0}
-              className={cn(
-                adminSelectClass(Boolean(errors.subcategoryId)),
-                "disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground",
-              )}
-            >
-              <option value="">
-                {!categoryId
-                  ? "Elige una categoría"
-                  : subcategories.length === 0
-                    ? "Sin subcategorías"
-                    : "Sin subcategoría"}
-              </option>
-              {subcategories.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </AdminFieldGroup>
+        <p className="text-xs text-muted-foreground">
+          Misma taxonomía del menú de productos del sitio: familia, tipo, variante y marca.
+        </p>
+        <div className="mt-4">
+          <ProductClassificationFields
+            brands={brands}
+            categories={categories}
+            value={classification}
+            onChange={setClassification}
+            initialFromProduct={
+              product
+                ? {
+                    categoryName: product.category?.name,
+                    subcategoryName: product.subcategory?.name,
+                    catalogVariant: product.catalogVariant,
+                  }
+                : undefined
+            }
+            errors={{
+              brandId: errors.brandId,
+              categoryId: errors.categoryId,
+              subcategoryId: errors.subcategoryId,
+              catalogVariant: errors.catalogVariant,
+            }}
+          />
         </div>
       </AdminSectionCard>
 
-      <AdminSectionCard title="Descripción">
-        <AdminFieldGroup label="Descripción" error={errors.description}>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            placeholder="Describe el producto, sus características y diferenciadores."
-            className={adminTextareaClass(Boolean(errors.description))}
-          />
-        </AdminFieldGroup>
+      <AdminSectionCard title="Detalle del producto">
+        <div className="space-y-4">
+          <AdminFieldGroup label="Descripción" error={errors.description}>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+              placeholder="Describe el producto, su propósito y beneficios principales."
+              className={adminTextareaClass(Boolean(errors.description))}
+            />
+          </AdminFieldGroup>
+          <AdminFieldGroup label="Especificaciones" error={errors.specifications}>
+            <textarea
+              value={specifications}
+              onChange={(e) => setSpecifications(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por dato. Ejemplo:\nTeclado: 61 teclas\nPolifonía: 48 voces"}
+              className={adminTextareaClass(Boolean(errors.specifications))}
+            />
+          </AdminFieldGroup>
+          <AdminFieldGroup label="Características" error={errors.features}>
+            <textarea
+              value={features}
+              onChange={(e) => setFeatures(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por característica. Ejemplo:\nDiseño ligero con empuñadura\nFuncionamiento intuitivo"}
+              className={adminTextareaClass(Boolean(errors.features))}
+            />
+          </AdminFieldGroup>
+          <AdminFieldGroup label="Incluye" error={errors.includes}>
+            <textarea
+              value={includes}
+              onChange={(e) => setIncludes(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por ítem incluido. Ejemplo:\nTeclado\nAdaptador de corriente\nManual de usuario"}
+              className={adminTextareaClass(Boolean(errors.includes))}
+            />
+          </AdminFieldGroup>
+        </div>
       </AdminSectionCard>
 
       <AdminSectionCard title="Estado">
@@ -270,15 +287,31 @@ export function ProductForm({
       </AdminSectionCard>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        {isSyncedWithBaseline && (
+          <p className="text-sm font-medium text-emerald-600 sm:mr-auto" role="status">
+            Cambios guardados
+          </p>
+        )}
         <AdminButton asChild variant="secondary">
           <Link href="/admin/productos">Cancelar</Link>
         </AdminButton>
-        <AdminButton type="submit" disabled={pending} variant="primary">
+        <AdminButton
+          type="submit"
+          disabled={pending || (mode === "edit" && isSyncedWithBaseline)}
+          variant="primary"
+          className={
+            mode === "edit" && isSyncedWithBaseline
+              ? "bg-emerald-600 hover:bg-emerald-600 disabled:opacity-100"
+              : undefined
+          }
+        >
           {pending
             ? "Guardando…"
-            : mode === "create"
-              ? "Crear producto"
-              : "Guardar cambios"}
+            : mode === "edit" && isSyncedWithBaseline
+              ? "Guardado ✓"
+              : mode === "create"
+                ? "Crear producto"
+                : "Guardar cambios"}
         </AdminButton>
       </div>
     </form>

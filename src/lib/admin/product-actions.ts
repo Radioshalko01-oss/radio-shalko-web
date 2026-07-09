@@ -16,6 +16,13 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { slugify } from "@/lib/catalog/format";
+import {
+  hasProductDetailColumns,
+  hasCatalogVariantColumn,
+  productCatalogVariantWriteField,
+  productDetailWriteFields,
+} from "@/lib/catalog/product-select";
+import { syncDetailSectionsToSpecs } from "@/lib/catalog/detail-specs-fallback";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -32,6 +39,9 @@ const productSchema = z.object({
   slug: z.string().trim().optional(),
   subtitle: z.string().trim().nullish(),
   description: z.string().trim().nullish(),
+  specifications: z.string().trim().nullish(),
+  features: z.string().trim().nullish(),
+  includes: z.string().trim().nullish(),
   price: z.coerce
     .number()
     .int("El precio debe ser un entero (MXN sin decimales).")
@@ -41,7 +51,8 @@ const productSchema = z.object({
   isPublished: z.boolean().optional().default(false),
   brandId: uuid,
   categoryId: uuid,
-  subcategoryId: uuid.nullish(),
+  subcategoryId: uuid,
+  catalogVariant: z.string().trim().nullish(),
 });
 
 export type ProductInput = z.input<typeof productSchema>;
@@ -146,6 +157,8 @@ export async function createProduct(
   }
 
   const slug = await ensureUniqueSlug(supabase, d.slug || d.title);
+  const detailColumns = await hasProductDetailColumns(supabase);
+  const catalogVariantColumn = await hasCatalogVariantColumn(supabase);
 
   const { data: created, error } = await supabase
     .from("products")
@@ -153,6 +166,14 @@ export async function createProduct(
       title: d.title,
       subtitle: nullifyEmpty(d.subtitle),
       description: nullifyEmpty(d.description),
+      ...productDetailWriteFields(
+        {
+          specifications: nullifyEmpty(d.specifications),
+          features: nullifyEmpty(d.features),
+          includes: nullifyEmpty(d.includes),
+        },
+        detailColumns,
+      ),
       price: d.price,
       sku: nullifyEmpty(d.sku),
       is_new: d.isNew,
@@ -160,8 +181,11 @@ export async function createProduct(
       brand_id: d.brandId,
       category_id: d.categoryId,
       subcategory_id: d.subcategoryId ?? null,
+      ...productCatalogVariantWriteField(nullifyEmpty(d.catalogVariant), catalogVariantColumn),
       slug,
-    })
+    // Spread condicional de columnas opcionales (detalle / variante).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload dinámico según migraciones aplicadas
+    } as any)
     .select("id, slug")
     .single();
 
@@ -180,6 +204,14 @@ export async function createProduct(
       branches.map((b) => ({ product_id: created.id, branch_id: b.id, quantity: 0 })),
       { onConflict: "product_id,branch_id", ignoreDuplicates: true },
     );
+  }
+
+  if (!detailColumns) {
+    await syncDetailSectionsToSpecs(supabase, created.id, {
+      specifications: nullifyEmpty(d.specifications),
+      features: nullifyEmpty(d.features),
+      includes: nullifyEmpty(d.includes),
+    });
   }
 
   revalidatePublic(created.slug);
@@ -218,6 +250,8 @@ export async function updateProduct(
   }
 
   const slug = await ensureUniqueSlug(supabase, d.slug || d.title, id);
+  const detailColumns = await hasProductDetailColumns(supabase);
+  const catalogVariantColumn = await hasCatalogVariantColumn(supabase);
 
   const { error } = await supabase
     .from("products")
@@ -225,6 +259,14 @@ export async function updateProduct(
       title: d.title,
       subtitle: nullifyEmpty(d.subtitle),
       description: nullifyEmpty(d.description),
+      ...productDetailWriteFields(
+        {
+          specifications: nullifyEmpty(d.specifications),
+          features: nullifyEmpty(d.features),
+          includes: nullifyEmpty(d.includes),
+        },
+        detailColumns,
+      ),
       price: d.price,
       sku: nullifyEmpty(d.sku),
       is_new: d.isNew,
@@ -232,11 +274,21 @@ export async function updateProduct(
       brand_id: d.brandId,
       category_id: d.categoryId,
       subcategory_id: d.subcategoryId ?? null,
+      ...productCatalogVariantWriteField(nullifyEmpty(d.catalogVariant), catalogVariantColumn),
       slug,
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload dinámico según migraciones aplicadas
+    } as any)
     .eq("id", id);
 
   if (error) return { ok: false, error: mapWriteError(error.message) };
+
+  if (!detailColumns) {
+    await syncDetailSectionsToSpecs(supabase, id, {
+      specifications: nullifyEmpty(d.specifications),
+      features: nullifyEmpty(d.features),
+      includes: nullifyEmpty(d.includes),
+    });
+  }
 
   // Revalidar slug viejo y nuevo (por si cambió).
   revalidatePublic(existing.slug, slug);

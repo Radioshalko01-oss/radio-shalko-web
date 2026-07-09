@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { ImageIcon, Loader2, Plus, Star, Trash2, Upload } from "lucide-react";
 import { createProduct, updateProductInventory, type ProductInput } from "@/lib/admin/product-actions";
 import { addProductImage } from "@/lib/admin/product-gallery-actions";
@@ -20,6 +20,7 @@ import type {
 type FieldErrors = Record<string, string[]>;
 type PendingImage = { id: string; file: File; previewUrl: string };
 
+import { ProductClassificationFields, type ProductClassificationValue } from "@/components/admin/product-classification-fields";
 import { AdminButton } from "@/components/admin/admin-button";
 import {
   AdminFieldGroup,
@@ -60,11 +61,17 @@ export function ProductCreateForm({
   const [slug, setSlug] = useState("");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState("");
-  const [brandId, setBrandId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [subcategoryId, setSubcategoryId] = useState("");
+  const [classification, setClassification] = useState<ProductClassificationValue>({
+    brandId: "",
+    categoryId: "",
+    subcategoryId: "",
+    catalogVariant: null,
+  });
   const [subtitle, setSubtitle] = useState("");
   const [description, setDescription] = useState("");
+  const [specifications, setSpecifications] = useState("");
+  const [features, setFeatures] = useState("");
+  const [includes, setIncludes] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
 
@@ -82,18 +89,6 @@ export function ProductCreateForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
-
-  const subcategories = useMemo(() => {
-    const cat = categories.find((c) => c.id === categoryId);
-    return cat?.subcategories ?? [];
-  }, [categories, categoryId]);
-
-  function handleCategoryChange(next: string) {
-    setCategoryId(next);
-    const cat = categories.find((c) => c.id === next);
-    const stillValid = cat?.subcategories.some((s) => s.id === subcategoryId);
-    if (!stillValid) setSubcategoryId("");
-  }
 
   // --- Galería ---
   function addFiles(files: FileList | File[]) {
@@ -161,11 +156,15 @@ export function ProductCreateForm({
       slug: slug.trim() || undefined,
       sku: sku.trim() || null,
       price: price.trim() as unknown as number,
-      brandId,
-      categoryId,
-      subcategoryId: subcategoryId || null,
+      brandId: classification.brandId,
+      categoryId: classification.categoryId,
+      subcategoryId: classification.subcategoryId,
+      catalogVariant: classification.catalogVariant,
       subtitle: subtitle.trim() || null,
       description: description.trim() || null,
+      specifications: specifications.trim() || null,
+      features: features.trim() || null,
+      includes: includes.trim() || null,
       isNew,
       isPublished,
     };
@@ -422,61 +421,63 @@ export function ProductCreateForm({
       {/* Clasificación */}
       <section className={cn(adminShell.cardSection, "p-6")}>
         <h2 className={adminShell.sectionTitleSm}>Clasificación</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Field label="Marca" required error={errors.brandId}>
-            <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className={inputCls(Boolean(errors.brandId))}>
-              <option value="">Selecciona…</option>
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Categoría" required error={errors.categoryId}>
-            <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className={inputCls(Boolean(errors.categoryId))}>
-              <option value="">Selecciona…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Subcategoría" error={errors.subcategoryId}>
-            <select
-              value={subcategoryId}
-              onChange={(e) => setSubcategoryId(e.target.value)}
-              disabled={!categoryId || subcategories.length === 0}
-              className={cn(
-                inputCls(Boolean(errors.subcategoryId)),
-                "disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground",
-              )}
-            >
-              <option value="">
-                {!categoryId ? "Elige una categoría" : subcategories.length === 0 ? "Sin subcategorías" : "Sin subcategoría"}
-              </option>
-              {subcategories.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Misma taxonomía del menú de productos del sitio: familia, tipo, variante y marca.
+        </p>
+        <div className="mt-4">
+          <ProductClassificationFields
+            brands={brands}
+            categories={categories}
+            value={classification}
+            onChange={setClassification}
+            errors={{
+              brandId: errors.brandId,
+              categoryId: errors.categoryId,
+              subcategoryId: errors.subcategoryId,
+              catalogVariant: errors.catalogVariant,
+            }}
+          />
         </div>
       </section>
 
-      {/* Descripción */}
+      {/* Detalle del producto */}
       <section className={cn(adminShell.cardSection, "p-6")}>
-        <h2 className={adminShell.sectionTitleSm}>Descripción</h2>
-        <div className="mt-4">
+        <h2 className={adminShell.sectionTitleSm}>Detalle del producto</h2>
+        <div className="mt-4 space-y-4">
           <Field label="Descripción" error={errors.description}>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
-              placeholder="Describe el producto, sus características y diferenciadores."
+              placeholder="Describe el producto, su propósito y beneficios principales."
               className={adminTextareaClass(Boolean(errors.description))}
+            />
+          </Field>
+          <Field label="Especificaciones" error={errors.specifications}>
+            <textarea
+              value={specifications}
+              onChange={(e) => setSpecifications(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por dato. Ejemplo:\nTeclado: 61 teclas\nPolifonía: 48 voces"}
+              className={adminTextareaClass(Boolean(errors.specifications))}
+            />
+          </Field>
+          <Field label="Características" error={errors.features}>
+            <textarea
+              value={features}
+              onChange={(e) => setFeatures(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por característica. Ejemplo:\nDiseño ligero con empuñadura\nFuncionamiento intuitivo"}
+              className={adminTextareaClass(Boolean(errors.features))}
+            />
+          </Field>
+          <Field label="Incluye" error={errors.includes}>
+            <textarea
+              value={includes}
+              onChange={(e) => setIncludes(e.target.value)}
+              rows={4}
+              placeholder={"Una línea por ítem incluido. Ejemplo:\nTeclado\nAdaptador de corriente\nManual de usuario"}
+              className={adminTextareaClass(Boolean(errors.includes))}
             />
           </Field>
         </div>

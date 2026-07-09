@@ -4,13 +4,15 @@ import { Check, ShoppingBag } from "lucide-react";
 import type { CartProductRow } from "@/hooks/use-cart-products";
 import { formatPrice } from "@/lib/catalog/format";
 import { typography } from "@/lib/design/tokens";
+import { PurchaseTrustLinkRow } from "@/components/trust/purchase-trust-note";
 import { cn } from "@/lib/utils";
 
 const TRUST_ITEMS = [
   "Atención personalizada",
   "Garantía Radio Shalko",
   "Recoges en la sucursal que elijas",
-  "Confirmaremos disponibilidad antes del pago",
+  "Confirmamos disponibilidad antes del pago",
+  "Solo paga por canales oficiales",
 ] as const;
 
 type CheckoutSummaryProps = {
@@ -111,6 +113,10 @@ export function CheckoutSummary({ rows, compact, className }: CheckoutSummaryPro
             </li>
           ))}
         </ul>
+      )}
+
+      {!compact && (
+        <PurchaseTrustLinkRow className="mt-4 border-t border-border/60 pt-4" />
       )}
     </div>
   );

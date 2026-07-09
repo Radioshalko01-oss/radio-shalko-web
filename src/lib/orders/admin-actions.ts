@@ -11,14 +11,21 @@ import {
 } from "@/lib/orders/types";
 import { isValidYmd, mexicoTodayYmd, mexicoTomorrowYmd } from "@/lib/orders/dates";
 import { branchDisplayName } from "@/lib/orders/status-labels";
-import {
-  createCheckoutSessionForOrder,
-  validateOrderForStripeCheckout,
-} from "@/lib/stripe/checkout";
-import { isStripeConfigured } from "@/lib/stripe/client";
-import { notifyCustomerPaymentLink } from "@/lib/notifications/customer-payment-email";
 import { notifyCustomerPickupReady } from "@/lib/notifications/customer-pickup-email";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
+import { logAdminAudit } from "@/lib/admin/audit-log";
+import {
+  canValidateManualPayment,
+  mergeOperationalMetadata,
+  parseOperationalMetadata,
+  serializeOperationalMetadata,
+  warrantyDisplayLabel,
+  type OrderOperationalMeta,
+  type WarrantyCustomUnit,
+  type WarrantyOption,
+  WARRANTY_OPTIONS,
+} from "@/lib/orders/operational-metadata";
+import { notifyCustomerPaymentInstructions } from "@/lib/notifications/customer-payment-instructions-email";
 
 const uuidSchema = z.string().uuid("Identificador de pedido inválido.");
 
@@ -142,12 +149,29 @@ export async function submitOrderAvailabilityReview(input: {
     console.error("[submitOrderAvailabilityReview] history insert:", historyError.message);
   }
 
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.availability_review_submitted",
+    entity: "order",
+    entityId: orderId,
+    metadata: {
+      order_id: orderId,
+      order_number: order.order_number,
+      previous_status: order.status,
+      new_status: newStatus,
+      payment_status: "unpaid",
+      availability_decision: decision,
+      pickup_available_date: dateResult.date,
+      reviewed_at: reviewedAt,
+    },
+  });
+
   if (!isUnavailable && order.user_id) {
     notifyCustomer({
       userId: order.user_id,
       type: "order_approved",
       title: "Tu solicitud fue aprobada",
-      message: `Tu solicitud ${order.order_number} fue aprobada. Pronto estará disponible el pago.`,
+      message: `Tu solicitud ${order.order_number} fue aprobada. Te compartiremos las instrucciones de pago oficiales.`,
       href: `/cuenta/pedidos/${orderId}`,
       orderId,
       metadata: { order_number: order.order_number },
@@ -165,169 +189,501 @@ export async function submitOrderAvailabilityReview(input: {
   return { ok: true };
 }
 
-export type CreateStripeCheckoutResult =
-  | { ok: true; url: string; reused: boolean }
-  | { ok: false; error: string };
+const MANUAL_PAYMENT_METHODS = ["bank_transfer", "pay_in_store"] as const;
+const MANUAL_STORE_LOCATIONS = ["chalco", "amecameca"] as const;
+
+const manualPaymentSchema = z
+  .object({
+    orderId: uuidSchema,
+    paymentMethod: z.enum(MANUAL_PAYMENT_METHODS),
+    storeLocation: z.enum(MANUAL_STORE_LOCATIONS).optional(),
+    paymentReference: z.string().trim().optional(),
+    adminNote: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMethod === "pay_in_store" && !data.storeLocation) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona la tienda donde se realizó el pago presencial.",
+        path: ["storeLocation"],
+      });
+    }
+  });
+
+function manualPaymentHistoryNote(
+  methodLabel: string,
+  paymentReference?: string,
+  adminNote?: string,
+): string {
+  let note = `Pago validado manualmente por admin. Método: ${methodLabel}`;
+  if (paymentReference?.trim()) {
+    note += `. Referencia: ${paymentReference.trim()}`;
+  }
+  if (adminNote?.trim()) {
+    note += `. Nota: ${adminNote.trim()}`;
+  }
+  return note;
+}
+
+function manualPaymentMethodLabel(
+  paymentMethod: (typeof MANUAL_PAYMENT_METHODS)[number],
+  storeLocation?: (typeof MANUAL_STORE_LOCATIONS)[number],
+): string {
+  if (paymentMethod === "bank_transfer") return "Transferencia bancaria";
+  if (storeLocation === "chalco") return "Pago presencial Chalco";
+  if (storeLocation === "amecameca") return "Pago presencial Amecameca";
+  return "Pago presencial en tienda";
+}
 
 /**
- * Genera (o reutiliza) Stripe Checkout Session para pedido aprobado · SALES-6.
+ * Registra pago manual validado por admin (transferencia o tienda) · C.1.
  */
-export async function createStripeCheckoutForOrder(
-  orderId: string,
-): Promise<CreateStripeCheckoutResult> {
+export async function registerManualPaymentForOrder(input: {
+  orderId: string;
+  paymentMethod: string;
+  storeLocation?: string;
+  paymentReference?: string;
+  adminNote?: string;
+}): Promise<ActionResult> {
   const user = await requireAdmin();
 
-  if (!isStripeConfigured()) {
-    return {
-      ok: false,
-      error:
-        "Stripe no está configurado. Agrega STRIPE_SECRET_KEY en las variables de entorno.",
-    };
+  const parsed = manualPaymentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
+  const { orderId, paymentMethod, storeLocation, paymentReference, adminNote } = parsed.data;
   const supabase = await createClient();
 
   const { data: order, error: fetchError } = await supabase
     .from("orders")
-    .select(
-      `
-      id,
-      order_number,
-      user_id,
-      customer_email,
-      customer_name,
-      status,
-      payment_status,
-      fulfillment_status,
-      total,
-      shipping_cost,
-      customer_message,
-      stripe_payment_url,
-      stripe_checkout_session_id,
-      branches ( slug, display_name, name ),
-      order_items (
-        product_title, quantity, unit_price
-      )
-    `,
-    )
+    .select("id, order_number, user_id, status, payment_status, admin_internal_note")
     .eq("id", orderId)
     .maybeSingle();
 
   if (fetchError) return { ok: false, error: fetchError.message };
   if (!order) return { ok: false, error: "Pedido no encontrado." };
 
-  const row = order as unknown as {
-    id: string;
-    order_number: string;
-    user_id: string | null;
-    customer_email: string;
-    customer_name: string;
-    status: string;
-    payment_status: string;
-    fulfillment_status: string;
-    total: number;
-    shipping_cost: number;
-    customer_message: string | null;
-    stripe_payment_url: string | null;
-    stripe_checkout_session_id: string | null;
-    branches: { slug: string; display_name: string; name: string } | null;
-    order_items: Array<{
-      product_title: string;
-      quantity: number;
-      unit_price: number;
-    }> | null;
-  };
-
-  if (row.stripe_payment_url && row.payment_status === "unpaid") {
-    return { ok: true, url: row.stripe_payment_url, reused: true };
+  if (order.status === "cancelled") {
+    return { ok: false, error: "No se puede validar pago en un pedido cancelado." };
+  }
+  if (order.payment_status === "paid") {
+    return { ok: false, error: "Este pedido ya tiene el pago registrado." };
+  }
+  if (order.status !== "confirmed") {
+    return {
+      ok: false,
+      error: "Solo pedidos aprobados pueden registrar pago manual.",
+    };
   }
 
-  const lineItems = (row.order_items ?? []).map((item) => ({
-    productTitle: item.product_title,
-    quantity: item.quantity,
-    unitPrice: item.unit_price,
-  }));
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  if (!canValidateManualPayment(operational)) {
+    return {
+      ok: false,
+      error:
+        "Antes de validar el pago debes confirmar precio final, garantía y forma de pago.",
+    };
+  }
 
-  const validation = validateOrderForStripeCheckout({
-    status: row.status,
-    payment_status: row.payment_status,
-    fulfillment_status: row.fulfillment_status,
-    total: row.total,
-    customer_email: row.customer_email,
-    stripe_payment_url: row.stripe_payment_url,
-    order_items: lineItems,
+  const methodLabel = manualPaymentMethodLabel(paymentMethod, storeLocation);
+  const paidAt = new Date().toISOString();
+  const historyNote = manualPaymentHistoryNote(methodLabel, paymentReference, adminNote);
+
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({
+      payment_status: "paid",
+      payment_method: paymentMethod,
+      stripe_paid_at: paidAt,
+    })
+    .eq("id", orderId)
+    .eq("payment_status", "unpaid")
+    .eq("status", "confirmed");
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  const { error: historyError } = await supabase.from("order_status_history").insert({
+    order_id: orderId,
+    actor_id: user.id,
+    from_status: order.status,
+    to_status: order.status,
+    note: historyNote,
   });
 
-  if (!validation.ok) return validation;
+  if (historyError) {
+    console.error("[registerManualPaymentForOrder] history insert:", historyError.message);
+  }
 
-  try {
-    const { sessionId, url } = await createCheckoutSessionForOrder({
-      id: row.id,
-      orderNumber: row.order_number,
-      userId: row.user_id,
-      customerEmail: row.customer_email,
-      shippingCost: row.shipping_cost,
-      total: row.total,
-      items: lineItems,
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.manual_payment_registered",
+    entity: "order",
+    entityId: orderId,
+    metadata: {
+      order_id: orderId,
+      order_number: order.order_number,
+      payment_method: paymentMethod,
+      store_location: storeLocation ?? null,
+      payment_reference: paymentReference?.trim() || null,
+    },
+  });
+
+  if (order.user_id) {
+    notifyCustomer({
+      userId: order.user_id,
+      type: "payment_confirmed",
+      title: "Pago confirmado",
+      message: `Recibimos el pago de tu pedido ${order.order_number}.`,
+      href: `/cuenta/pedidos/${orderId}`,
+      orderId,
+      metadata: { order_number: order.order_number },
     });
+  }
 
-    const now = new Date().toISOString();
+  revalidateOrderPaths(orderId);
+  return { ok: true };
+}
 
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        stripe_checkout_session_id: sessionId,
-        stripe_payment_url: url,
-        stripe_payment_created_at: now,
-        payment_requested_at: now,
-        payment_requested_by: user.id,
-        payment_provider: "stripe",
-      })
-      .eq("id", orderId);
+const PRE_PAYMENT_BLOCK_MESSAGE =
+  "Antes de validar el pago debes confirmar precio final, garantía y forma de pago.";
 
-    if (updateError) return { ok: false, error: updateError.message };
+async function fetchConfirmedOrderForPrePayment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+) {
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select("id, order_number, user_id, status, payment_status, admin_internal_note, total")
+    .eq("id", orderId)
+    .maybeSingle();
 
-    const branchLabel = branchDisplayName(
-      row.branches?.slug ?? null,
-      row.branches?.display_name ?? row.branches?.name,
-    );
+  if (error) return { ok: false as const, error: error.message };
+  if (!order) return { ok: false as const, error: "Pedido no encontrado." };
+  if (order.status === "cancelled") {
+    return { ok: false as const, error: "Este pedido está cancelado." };
+  }
+  if (order.status !== "confirmed") {
+    return { ok: false as const, error: "Solo pedidos aprobados pueden avanzar en este flujo." };
+  }
+  if (order.payment_status === "paid") {
+    return { ok: false as const, error: "Este pedido ya tiene el pago registrado." };
+  }
+  return { ok: true as const, order };
+}
 
-    void notifyCustomerPaymentLink({
-      orderNumber: row.order_number,
-      customerEmail: row.customer_email,
-      customerName: row.customer_name,
-      branchLabel,
-      total: row.total,
-      customerMessage: row.customer_message,
-      paymentUrl: url,
-    });
+async function persistOperationalMetadata(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+  rawNote: string | null,
+  meta: OrderOperationalMeta,
+) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ admin_internal_note: serializeOperationalMetadata(meta) })
+    .eq("id", orderId);
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
 
-    if (row.user_id) {
-      notifyCustomer({
-        userId: row.user_id,
-        type: "payment_available",
-        title: "Pago disponible",
-        message: `Tu pedido ${row.order_number} ya tiene pago disponible.`,
-        href: `/cuenta/pedidos/${row.id}`,
-        orderId: row.id,
-        metadata: { order_number: row.order_number },
+const finalPriceSchema = z.object({
+  orderId: uuidSchema,
+  amount: z.coerce.number().positive("Ingresa un precio final válido."),
+  note: z.string().trim().optional(),
+});
+
+/** Paso 3 · Confirmar precio final acordado con el cliente. */
+export async function confirmOrderFinalPrice(input: {
+  orderId: string;
+  amount: number;
+  note?: string;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = finalPriceSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const supabase = await createClient();
+  const fetched = await fetchConfirmedOrderForPrePayment(supabase, parsed.data.orderId);
+  if (!fetched.ok) return fetched;
+
+  const now = new Date().toISOString();
+  const meta = mergeOperationalMetadata(fetched.order.admin_internal_note, {
+    finalPrice: {
+      amount: Math.round(parsed.data.amount),
+      note: parsed.data.note?.trim() || null,
+      confirmedAt: now,
+      confirmedBy: user.id,
+    },
+  });
+
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({
+      admin_internal_note: serializeOperationalMetadata(meta),
+      total: Math.round(parsed.data.amount),
+    })
+    .eq("id", parsed.data.orderId);
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: fetched.order.status,
+    to_status: fetched.order.status,
+    note: `Precio final confirmado: $${Math.round(parsed.data.amount).toLocaleString("es-MX")} MXN${
+      parsed.data.note?.trim() ? `. Nota: ${parsed.data.note.trim()}` : ""
+    }`,
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.final_price_confirmed",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { amount: Math.round(parsed.data.amount) },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+const warrantySchema = z
+  .object({
+    orderId: uuidSchema,
+    type: z.enum(WARRANTY_OPTIONS),
+    noneReason: z.string().trim().optional(),
+    customValue: z.coerce.number().optional(),
+    customUnit: z.enum(["days", "months", "years"]).optional(),
+    note: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "none" && !data.noneReason?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Indica el motivo cuando la garantía no aplica.",
+        path: ["noneReason"],
       });
     }
+    if (data.type === "custom") {
+      if (!data.customValue || data.customValue <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ingresa la duración personalizada de la garantía.",
+          path: ["customValue"],
+        });
+      }
+      if (!data.customUnit) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Selecciona la unidad de la garantía personalizada.",
+          path: ["customUnit"],
+        });
+      }
+    }
+  });
 
-    revalidatePath("/admin/pedidos");
-    revalidatePath(`/admin/pedidos/${orderId}`);
-    revalidatePath("/cuenta");
-    revalidatePath("/cuenta/pedidos");
-    revalidatePath(`/cuenta/pedidos/${orderId}`);
-    revalidatePath("/cuenta/notificaciones");
-
-    return { ok: true, url, reused: false };
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "No se pudo crear la sesión de pago.";
-    console.error("[createStripeCheckoutForOrder]", message);
-    return { ok: false, error: message };
+/** Paso 4 · Definir garantía del pedido. */
+export async function defineOrderWarranty(input: {
+  orderId: string;
+  type: string;
+  noneReason?: string;
+  customValue?: number;
+  customUnit?: string;
+  note?: string;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = warrantySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
+
+  const supabase = await createClient();
+  const fetched = await fetchConfirmedOrderForPrePayment(supabase, parsed.data.orderId);
+  if (!fetched.ok) return fetched;
+
+  const operational = parseOperationalMetadata(fetched.order.admin_internal_note);
+  if (!operational.finalPrice?.confirmedAt) {
+    return { ok: false, error: "Primero debes confirmar el precio final." };
+  }
+
+  const now = new Date().toISOString();
+  const meta = mergeOperationalMetadata(fetched.order.admin_internal_note, {
+    warranty: {
+      type: parsed.data.type as WarrantyOption,
+      noneReason: parsed.data.noneReason?.trim() || null,
+      customValue: parsed.data.customValue ?? null,
+      customUnit: (parsed.data.customUnit as WarrantyCustomUnit | undefined) ?? null,
+      note: parsed.data.note?.trim() || null,
+      definedAt: now,
+      definedBy: user.id,
+    },
+  });
+
+  const persisted = await persistOperationalMetadata(
+    supabase,
+    parsed.data.orderId,
+    fetched.order.admin_internal_note,
+    meta,
+  );
+  if (!persisted.ok) return persisted;
+
+  const label = warrantyDisplayLabel(meta.warranty);
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: fetched.order.status,
+    to_status: fetched.order.status,
+    note: `Garantía definida: ${label ?? parsed.data.type}`,
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.warranty_defined",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { warranty_type: parsed.data.type },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+const paymentMethodConfirmSchema = z.object({
+  orderId: uuidSchema,
+  instructionsSent: z.boolean().optional(),
+});
+
+/** Paso 5 · Confirmar forma de pago e instrucciones enviadas al cliente. */
+export async function confirmOrderPaymentMethod(input: {
+  orderId: string;
+  instructionsSent?: boolean;
+}): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = paymentMethodConfirmSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const supabase = await createClient();
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select(
+      "id, order_number, user_id, status, payment_status, payment_method, admin_internal_note, total, customer_email, customer_name, branches ( slug, display_name, name )",
+    )
+    .eq("id", parsed.data.orderId)
+    .maybeSingle();
+
+  if (fetchError) return { ok: false, error: fetchError.message };
+  if (!order) return { ok: false, error: "Pedido no encontrado." };
+  if (order.status !== "confirmed" || order.payment_status === "paid") {
+    return { ok: false, error: "Este pedido no puede confirmar forma de pago en este momento." };
+  }
+
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  if (!operational.finalPrice?.confirmedAt) {
+    return { ok: false, error: "Primero debes confirmar el precio final." };
+  }
+  if (!operational.warranty?.definedAt) {
+    return { ok: false, error: "Primero debes definir la garantía." };
+  }
+
+  const now = new Date().toISOString();
+  const instructionsSent = parsed.data.instructionsSent ?? true;
+  const meta = mergeOperationalMetadata(order.admin_internal_note, {
+    paymentMethodConfirmed: {
+      confirmedAt: now,
+      confirmedBy: user.id,
+      instructionsSent,
+    },
+  });
+
+  const persisted = await persistOperationalMetadata(
+    supabase,
+    parsed.data.orderId,
+    order.admin_internal_note,
+    meta,
+  );
+  if (!persisted.ok) return persisted;
+
+  await supabase.from("order_status_history").insert({
+    order_id: parsed.data.orderId,
+    actor_id: user.id,
+    from_status: order.status,
+    to_status: order.status,
+    note: instructionsSent
+      ? "Forma de pago confirmada e instrucciones enviadas al cliente"
+      : "Forma de pago confirmada",
+  });
+
+  void logAdminAudit({
+    actorId: user.id,
+    action: "order.payment_method_confirmed",
+    entity: "order",
+    entityId: parsed.data.orderId,
+    metadata: { instructions_sent: instructionsSent },
+  });
+
+  revalidateOrderPaths(parsed.data.orderId);
+  return { ok: true };
+}
+
+/** Envía instrucciones de transferencia por correo (opcional · Resend). */
+export async function sendOrderPaymentInstructionsEmail(
+  orderId: string,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select(
+      "id, order_number, customer_email, customer_name, payment_method, total, admin_internal_note",
+    )
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  if (!order) return { ok: false, error: "Pedido no encontrado." };
+  if (order.payment_method !== "bank_transfer") {
+    return { ok: false, error: "Las instrucciones por correo aplican solo a transferencia." };
+  }
+
+  const operational = parseOperationalMetadata(order.admin_internal_note);
+  const amount = operational.finalPrice?.amount ?? order.total;
+
+  void notifyCustomerPaymentInstructions({
+    orderNumber: order.order_number,
+    customerEmail: order.customer_email,
+    customerName: order.customer_name,
+    amount,
+  });
+
+  return { ok: true };
+}
+
+export type CreateStripeCheckoutResult =
+  | { ok: true; url: string; reused: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Genera (o reutiliza) Stripe Checkout Session para pedido aprobado · SALES-6.
+ * C.1: deshabilitado — los pagos manuales reemplazan la generación de enlaces Stripe.
+ */
+export async function createStripeCheckoutForOrder(
+  orderId: string,
+): Promise<CreateStripeCheckoutResult> {
+  await requireAdmin();
+  void orderId;
+
+  return {
+    ok: false,
+    error:
+      "Los pagos con tarjeta no están disponibles. Usa transferencia bancaria o pago presencial en tienda.",
+  };
 }
 
 const readyForPickupSchema = z.object({

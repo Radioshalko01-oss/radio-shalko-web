@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  AUTH_NEXT_COOKIE,
+  AUTH_ORIGIN_COOKIE,
+  isLanIpOrigin,
+  isPrivateOrLocalOrigin,
+  oauthCallbackRedirectUrl,
+  safeAuthNextPath,
+} from "@/lib/site/site-url";
 import { cn } from "@/lib/utils";
 
 type GoogleSignInButtonProps = {
@@ -10,8 +18,34 @@ type GoogleSignInButtonProps = {
   buttonClassName?: string;
 };
 
+function setAuthCookies(next: string, origin: string) {
+  const safeNext = safeAuthNextPath(next);
+  const secure = origin.startsWith("https://") ? "; Secure" : "";
+  document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(safeNext)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
+  document.cookie = `${AUTH_ORIGIN_COOKIE}=${encodeURIComponent(origin)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
+}
+
+function resolveClientOAuthOrigin(): string {
+  const origin = window.location.origin.replace(/\/+$/, "");
+  if (!origin.endsWith(".vercel.app")) return origin;
+
+  const branchHost = process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL?.trim();
+  if (!branchHost) return origin;
+
+  try {
+    const host = new URL(origin).hostname;
+    if (host !== branchHost && host.endsWith("-radio-shalko.vercel.app")) {
+      return `https://${branchHost}`;
+    }
+  } catch {
+    return origin;
+  }
+
+  return origin;
+}
+
 /**
- * Botón "Continuar con Google". Inicia OAuth (PKCE) con selector de cuenta.
+ * localhost: OAuth en cliente. LAN IP: requiere túnel. Producción: /auth/google.
  */
 export function GoogleSignInButton({
   next = "/cuenta",
@@ -24,20 +58,51 @@ export function GoogleSignInButton({
   const signIn = async () => {
     setLoading(true);
     setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        queryParams: {
-          prompt: "select_account",
-        },
-      },
-    });
-    if (error) {
-      setError(error.message);
+
+    const origin = resolveClientOAuthOrigin();
+    const safeNext = safeAuthNextPath(next);
+    setAuthCookies(safeNext, origin);
+
+    if (isLanIpOrigin(origin)) {
+      const tunnel = process.env.NEXT_PUBLIC_OAUTH_PUBLIC_ORIGIN?.trim().replace(/\/+$/, "");
+      if (tunnel) {
+        const login = new URL("/login", tunnel);
+        login.searchParams.set("next", safeNext);
+        window.location.assign(login.toString());
+        return;
+      }
+
+      setError(
+        "Login con Google no funciona por IP local (192.168.x.x). En Mac usa localhost:3002/login; en iPhone ejecuta npm run tunnel:oauth en la Mac.",
+      );
       setLoading(false);
+      return;
     }
+
+    if (isPrivateOrLocalOrigin(origin)) {
+      const supabase = createClient();
+      const redirectTo = oauthCallbackRedirectUrl(origin);
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      });
+      if (oauthError) {
+        setError(oauthError.message);
+        setLoading(false);
+      }
+      return;
+    }
+
+    const params = new URLSearchParams({
+      next: safeNext,
+      origin,
+    });
+    window.location.assign(`/auth/google?${params.toString()}`);
   };
 
   return (

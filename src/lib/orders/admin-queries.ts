@@ -5,6 +5,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { branchDisplayName } from "@/lib/orders/status-labels";
+import {
+  canValidateManualPayment,
+  isPaymentMethodConfirmed,
+  parseOperationalMetadata,
+  warrantyDisplayLabel,
+  type OrderOperationalMeta,
+} from "@/lib/orders/operational-metadata";
 
 export type AdminOrderFilter =
   | "all"
@@ -67,6 +74,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
   adminInternalNote: string | null;
   stripePaymentUrl: string | null;
   stripePaidAt: string | null;
+  paymentMethod: string;
   paymentRequestedAt: string | null;
   preparedAt: string | null;
   readyForPickupAt: string | null;
@@ -75,6 +83,15 @@ export type AdminOrderDetail = AdminOrderListItem & {
   pickupReadyEstimate: string | null;
   items: AdminOrderLineItem[];
   history: AdminOrderHistoryEntry[];
+  operational: OrderOperationalMeta;
+  legacyAdminNote: string | null;
+  confirmedFinalPrice: number | null;
+  confirmedFinalPriceNote: string | null;
+  confirmedFinalPriceAt: string | null;
+  warrantyLabel: string | null;
+  paymentMethodConfirmed: boolean;
+  paymentInstructionsSent: boolean;
+  canValidatePayment: boolean;
 };
 
 export type AdminOrderListFilters = {
@@ -115,6 +132,7 @@ const ORDER_SELECT = `
   admin_internal_note,
   stripe_payment_url,
   stripe_paid_at,
+  payment_method,
   payment_requested_at,
   prepared_at,
   ready_for_pickup_at,
@@ -149,6 +167,7 @@ type RawOrder = {
   admin_internal_note: string | null;
   stripe_payment_url: string | null;
   stripe_paid_at: string | null;
+  payment_method: string;
   payment_requested_at: string | null;
   prepared_at: string | null;
   ready_for_pickup_at: string | null;
@@ -386,6 +405,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     }))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
+  const operational = parseOperationalMetadata(row.admin_internal_note);
+
   return {
     ...base,
     notes: row.notes,
@@ -398,6 +419,7 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     adminInternalNote: row.admin_internal_note,
     stripePaymentUrl: row.stripe_payment_url,
     stripePaidAt: row.stripe_paid_at,
+    paymentMethod: row.payment_method,
     paymentRequestedAt: row.payment_requested_at,
     preparedAt: row.prepared_at,
     readyForPickupAt: row.ready_for_pickup_at,
@@ -406,5 +428,14 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     pickupReadyEstimate: row.pickup_ready_estimate,
     items,
     history,
+    operational,
+    legacyAdminNote: operational.legacyAdminNote ?? null,
+    confirmedFinalPrice: operational.finalPrice?.amount ?? null,
+    confirmedFinalPriceNote: operational.finalPrice?.note ?? null,
+    confirmedFinalPriceAt: operational.finalPrice?.confirmedAt ?? null,
+    warrantyLabel: warrantyDisplayLabel(operational.warranty),
+    paymentMethodConfirmed: isPaymentMethodConfirmed(operational),
+    paymentInstructionsSent: Boolean(operational.paymentMethodConfirmed?.instructionsSent),
+    canValidatePayment: canValidateManualPayment(operational),
   };
 }

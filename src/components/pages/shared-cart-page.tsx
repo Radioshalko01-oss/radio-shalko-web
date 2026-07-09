@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
-import { SiteLogo } from "@/components/brand/site-logo";
+import { Check, MessageCircle, ShoppingBag } from "lucide-react";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { typography } from "@/lib/design/tokens";
 import { siteShell } from "@/lib/design/site-shell";
@@ -63,40 +64,50 @@ export function SharedCartPage({ cart }: { cart: SharedCartView }) {
 
   if (rows.length === 0) {
     return (
-      <div className={cn(siteShell.emptyState, "mx-auto max-w-md py-28 md:py-32")}>
-        <ShoppingBag className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-xl font-semibold">Selección no disponible</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Este enlace expiró o los productos ya no están disponibles.
-        </p>
-        <Button asChild className="mt-8 h-11 rounded-full px-8">
-          <Link href="/productos">Explorar catálogo</Link>
-        </Button>
-      </div>
+      <>
+        <SitePageHero
+          breadcrumbs={finalizeBreadcrumbs([
+            siteCrumbs.home,
+            siteCrumbs.carrito,
+            { label: "Selección no disponible" },
+          ])}
+          title="Selección no disponible"
+          description="Este enlace expiró o los productos ya no están disponibles."
+        />
+        <div className={cn(siteShell.emptyState, "mx-auto max-w-md py-12 md:py-16")}>
+          <ShoppingBag className="mx-auto h-10 w-10 text-muted-foreground" />
+          <Button asChild className="mt-8 h-11 rounded-full px-8">
+            <Link href="/productos">Explorar catálogo</Link>
+          </Button>
+        </div>
+      </>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 md:py-24 lg:px-8">
-      <header className="text-center">
-        <SiteLogo variant="horizontal" context="header" size="sm" className="mx-auto" />
-        <div className="mx-auto mt-8 max-w-lg">
-          <p className="inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-copper">
-            <Sparkles className="h-3.5 w-3.5" />
-            Selección personalizada
-          </p>
-          <h1 className="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl md:text-[2rem]">
-            Radio Shalko preparó esta selección para ti
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            {cart.saleLabel ? `${cart.saleLabel} · ` : ""}
-            {formatSaleDateTime(cart.createdAt)}
-            {cart.branchName ? ` · ${cart.branchName}` : ""}
-          </p>
-        </div>
-      </header>
+  const heroDescription = [
+    cart.saleLabel,
+    formatSaleDateTime(cart.createdAt),
+    cart.branchName,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
-      <section className="mt-10 md:mt-12" aria-label="Productos seleccionados">
+  return (
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.carrito,
+          { label: "Selección compartida" },
+        ])}
+        title="Selección personalizada"
+        description={
+          heroDescription ||
+          "Radio Shalko preparó esta selección de productos para ti."
+        }
+      />
+
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pb-24 md:pb-28">
         <div className="hidden border-b border-border px-1 pb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-4">
           <span>Producto</span>
           <span className="text-right">Subtotal</span>
@@ -147,7 +158,6 @@ export function SharedCartPage({ cart }: { cart: SharedCartView }) {
             </li>
           ))}
         </ul>
-      </section>
 
       <aside className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-[0_12px_40px_-24px_rgba(0,0,0,0.12)] sm:p-6">
         <div className="flex items-end justify-between gap-4 border-b border-border pb-5">
@@ -196,5 +206,6 @@ export function SharedCartPage({ cart }: { cart: SharedCartView }) {
         </div>
       </aside>
     </div>
+    </>
   );
 }

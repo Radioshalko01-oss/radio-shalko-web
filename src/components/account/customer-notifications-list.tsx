@@ -9,7 +9,8 @@ import {
   markNotificationAsRead,
 } from "@/lib/notifications/notification-actions";
 import { resolveNotificationHref } from "@/lib/notifications/resolve-notification-href";
-import { siteShell } from "@/lib/design/site-shell";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
+import { PurchaseTrustLinkRow } from "@/components/trust/purchase-trust-note";
 import type { CustomerNotificationItem } from "@/lib/notifications/customer-notification-queries";
 
 function formatDateTime(iso: string) {
@@ -51,22 +52,20 @@ export function CustomerNotificationsList({
 
   if (notifications.length === 0) {
     return (
-      <div className={siteShell.emptyState}>
-        <Bell className="h-9 w-9 text-muted-foreground/40" />
-        <div>
-          <p className="text-sm font-medium text-foreground">No tienes notificaciones</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            {isAdmin
-              ? "Cuando haya novedades sobre pedidos o carrito, aparecerán aquí."
-              : "Cuando haya novedades sobre tus pedidos o carrito, aparecerán aquí."}
-          </p>
-        </div>
-      </div>
+      <SiteEmptyState
+        icon={<Bell className="h-6 w-6" />}
+        title="No tienes notificaciones"
+        description={
+          isAdmin
+            ? "Cuando haya novedades sobre pedidos o carrito, aparecerán aquí."
+            : "Cuando haya novedades sobre tus pedidos o carrito, aparecerán aquí."
+        }
+      />
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {unreadCount > 0 && (
         <div className="flex justify-end">
           <button
@@ -85,7 +84,7 @@ export function CustomerNotificationsList({
         </div>
       )}
 
-      <ul className="grid gap-2">
+      <ul className="grid gap-3">
         {notifications.map((notification) => (
           <li key={notification.id}>
             <button
@@ -145,7 +144,8 @@ export function CustomerNotificationsList({
           </>
         ) : (
           <>
-            También puedes revisar tus pedidos en{" "}
+            Las novedades sobre disponibilidad y pago llegan por aquí y por canales oficiales.
+            Revisa también{" "}
             <Link href="/cuenta/pedidos" className="font-medium text-foreground underline-offset-2 hover:underline">
               Mis pedidos
             </Link>
@@ -153,6 +153,13 @@ export function CustomerNotificationsList({
           </>
         )}
       </p>
+
+      {!isAdmin && (
+        <PurchaseTrustLinkRow
+          className="border-t border-border/60 pt-4"
+          linkKeys={["compraSegura", "metodosPago"]}
+        />
+      )}
     </div>
   );
 }

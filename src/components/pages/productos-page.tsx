@@ -5,10 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/catalog/format";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { ProductCard } from "@/components/catalog/product-card";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { SiteClosingCta } from "@/components/site/site-closing-cta";
+import { whatsappHref, SITE_CONTACT } from "@/lib/site-contact";
+import { productosCatalogBreadcrumbs } from "@/lib/site/breadcrumbs";
 import { siteShell } from "@/lib/design/site-shell";
-import { PageHeader } from "@/components/ui/page-header";
-import { LayoutGrid, Grid2x2, List, Plus, SlidersHorizontal, X } from "lucide-react";
+import { LayoutGrid, Grid2x2, List, Plus, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -32,6 +36,90 @@ const CATEGORY_ORDER = ["Instrumentos", "Accesorios", "Equipos de Audio"];
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000;
+const PRICE_STEP = 50;
+
+function snapPrice(value: number) {
+  const snapped = Math.round(value / PRICE_STEP) * PRICE_STEP;
+  return Math.min(PRICE_MAX, Math.max(PRICE_MIN, snapped));
+}
+
+function PriceRangeFields({
+  price,
+  setPrice,
+}: {
+  price: [number, number];
+  setPrice: (value: [number, number]) => void;
+}) {
+  const [minText, setMinText] = useState(String(price[0]));
+  const [maxText, setMaxText] = useState(String(price[1]));
+
+  useEffect(() => {
+    setMinText(String(price[0]));
+    setMaxText(String(price[1]));
+  }, [price[0], price[1]]);
+
+  const commitMin = () => {
+    const parsed = Number(minText);
+    if (minText.trim() === "" || Number.isNaN(parsed)) {
+      setMinText(String(price[0]));
+      return;
+    }
+    const next = snapPrice(parsed);
+    setPrice([Math.min(next, price[1]), price[1]]);
+  };
+
+  const commitMax = () => {
+    const parsed = Number(maxText);
+    if (maxText.trim() === "" || Number.isNaN(parsed)) {
+      setMaxText(String(price[1]));
+      return;
+    }
+    const next = snapPrice(parsed);
+    setPrice([price[0], Math.max(next, price[0])]);
+  };
+
+  return (
+    <div className="mt-4 flex items-center gap-2">
+      <label className="relative min-w-0 flex-1">
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[12px] text-muted-foreground">
+          $
+        </span>
+        <Input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={minText}
+          onChange={(e) => setMinText(e.target.value.replace(/[^\d]/g, ""))}
+          onBlur={commitMin}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="h-9 pl-7 pr-2 text-[13px] tabular-nums"
+          aria-label="Precio mínimo"
+        />
+      </label>
+      <span className="shrink-0 text-[12px] text-muted-foreground">a</span>
+      <label className="relative min-w-0 flex-1">
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[12px] text-muted-foreground">
+          $
+        </span>
+        <Input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={maxText}
+          onChange={(e) => setMaxText(e.target.value.replace(/[^\d]/g, ""))}
+          onBlur={commitMax}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="h-9 pl-7 pr-2 text-[13px] tabular-nums"
+          aria-label="Precio máximo"
+        />
+      </label>
+    </div>
+  );
+}
 
 export function ProductosPage({
   products,
@@ -165,6 +253,21 @@ export function ProductosPage({
     ...(query ? [`"${query}"`] : []),
   ];
 
+  const breadcrumbs = useMemo(() => {
+    const brand = activeBrands.size === 1 ? Array.from(activeBrands)[0] : null;
+    if (brand) {
+      return productosCatalogBreadcrumbs({ brand });
+    }
+
+    const cat = activeCats.size === 1 ? Array.from(activeCats)[0] : null;
+    const sub = activeSubs.size === 1 ? Array.from(activeSubs)[0] : null;
+    const topCategory =
+      cat ??
+      (sub ? allCategories.find((c) => categoryTree[c]?.includes(sub)) ?? null : null);
+
+    return productosCatalogBreadcrumbs({ category: topCategory });
+  }, [activeCats, activeSubs, activeBrands, allCategories, categoryTree]);
+
   const gridClass =
     size === "lg"
       ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
@@ -173,128 +276,121 @@ export function ProductosPage({
       : "flex flex-col gap-3";
 
   return (
-    <div className="pt-28 md:pt-32">
-        {/* Header */}
-        <section id="catalogo" className="mx-auto max-w-7xl px-5 md:px-8">
-          <PageHeader
-            eyebrow="Catálogo"
-            title="Productos"
-            description={`${products.length}+ instrumentos seleccionados y equipo de audio profesional para todos los niveles.`}
-          />
-        </section>
+    <>
+        {/* Header — fondo oscuro bajo el nav fijo */}
+        <SitePageHero
+          id="catalogo"
+          breadcrumbs={breadcrumbs}
+          title="Productos"
+          description="Una colección pensada para músicos que buscan crear algo inolvidable."
+        />
 
 
         {/* Toolbar */}
-        <section className="sticky top-16 z-30 mt-12 border-y border-border/60 bg-background/85 backdrop-blur-xl md:top-20">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3 md:px-8">
-            <div className="flex items-center gap-2">
-              {/* Filters trigger — always visible (sheet on mobile, button still useful on desktop) */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <button
-                    aria-label="Filtros"
-                    className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold uppercase tracking-wider hover:border-copper/60 hover:text-copper md:hidden"
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Filtros
-                    {activeFilterChips.length > 0 && (
-                      <span className="grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
-                        {activeFilterChips.length}
-                      </span>
-                    )}
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background">
-                  <SheetHeader className="text-left">
-                    <SheetTitle className="font-display text-lg font-semibold tracking-tight">Filtros</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FiltersPanel
-                      openCat={openCat}
-                      setOpenCat={setOpenCat}
-                      activeCats={activeCats}
-                      setActiveCats={setActiveCats}
-                      activeSubs={activeSubs}
-                      setActiveSubs={setActiveSubs}
-                      activeBrands={activeBrands}
-                      setActiveBrands={setActiveBrands}
-                      price={price}
-                      setPrice={setPrice}
-                      allBrands={allBrands}
-                      allCategories={allCategories}
-                      categoryTree={categoryTree}
-                      toggle={toggle}
-                      clearFilters={clearFilters}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
+        <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
+          <div className="mx-auto max-w-7xl px-5 md:px-8">
+            <div className="grid gap-2 py-2.5 max-md:grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-3 md:py-3">
+              <div className="flex min-w-0 items-center justify-between gap-2 max-md:gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button
+                      aria-label="Filtros"
+                      className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold uppercase tracking-wider hover:border-copper/60 hover:text-copper lg:hidden"
+                    >
+                      <SlidersHorizontal className="h-3.5 w-3.5" />
+                      Filtros
+                      {activeFilterChips.length > 0 && (
+                        <span className="grid h-4 min-w-4 place-items-center rounded-full bg-copper px-1 text-[10px] font-semibold text-copper-foreground">
+                          {activeFilterChips.length}
+                        </span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background">
+                    <SheetHeader className="text-left">
+                      <SheetTitle className="font-display text-lg font-semibold tracking-tight">Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FiltersPanel
+                        openCat={openCat}
+                        setOpenCat={setOpenCat}
+                        activeCats={activeCats}
+                        setActiveCats={setActiveCats}
+                        activeSubs={activeSubs}
+                        setActiveSubs={setActiveSubs}
+                        activeBrands={activeBrands}
+                        setActiveBrands={setActiveBrands}
+                        price={price}
+                        setPrice={setPrice}
+                        allBrands={allBrands}
+                        allCategories={allCategories}
+                        categoryTree={categoryTree}
+                        toggle={toggle}
+                        clearFilters={clearFilters}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
 
-              <div className="hidden items-center gap-1.5 rounded-full border border-border bg-card p-1 sm:flex">
-                {[
-                  { k: "lg", I: LayoutGrid },
-                  { k: "md", I: Grid2x2 },
-                  { k: "list", I: List },
-                ].map(({ k, I }) => (
-                  <button
-                    key={k}
-                    onClick={() => setSize(k as typeof size)}
-                    aria-label={`Vista ${k}`}
-                    className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${
-                      size === k
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <I className="h-4 w-4" />
-                  </button>
-                ))}
+                <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+                  {[
+                    { k: "lg", I: LayoutGrid },
+                    { k: "md", I: Grid2x2 },
+                    { k: "list", I: List },
+                  ].map(({ k, I }) => (
+                    <button
+                      key={k}
+                      onClick={() => setSize(k as typeof size)}
+                      aria-label={`Vista ${k}`}
+                      className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${
+                        size === k
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <I className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+
+                </div>
+
+                <p className="shrink-0 text-xs text-muted-foreground md:hidden">
+                  {filtered.length} productos
+                </p>
+              </div>
+
+              <p className="hidden text-center text-xs text-muted-foreground sm:text-sm md:block">
+                <span className="sm:hidden">{filtered.length} productos</span>
+                <span className="hidden sm:inline">
+                  Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {products.length} productos
+                </span>
+              </p>
+
+              <div className="max-md:w-full max-md:justify-self-stretch md:justify-self-end">
+                <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+                  <SelectTrigger className="h-9 w-full rounded-full border-border bg-card text-xs sm:h-10 sm:text-sm md:w-[150px] max-md:max-w-none sm:w-[210px]">
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Por categorías</SelectItem>
+                    <SelectItem value="price-asc">Precio: menor a mayor</SelectItem>
+                    <SelectItem value="price-desc">Precio: mayor a menor</SelectItem>
+                    <SelectItem value="az">Alfabéticamente A-Z</SelectItem>
+                    <SelectItem value="za">Alfabéticamente Z-A</SelectItem>
+                    <SelectItem value="new">Nuevos productos</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-
-            <p className="hidden text-sm text-muted-foreground lg:block">
-              Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {products.length} productos
-            </p>
-
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="h-9 w-[150px] rounded-full border-border bg-card text-xs sm:h-10 sm:w-[210px] sm:text-sm">
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Por categorías</SelectItem>
-                <SelectItem value="price-asc">Precio: menor a mayor</SelectItem>
-                <SelectItem value="price-desc">Precio: mayor a menor</SelectItem>
-                <SelectItem value="az">Alfabéticamente A-Z</SelectItem>
-                <SelectItem value="za">Alfabéticamente Z-A</SelectItem>
-                <SelectItem value="new">Nuevos productos</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-
-          {activeFilterChips.length > 0 && (
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-5 pb-3 md:px-8">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Filtrando:
-              </span>
-              {activeFilterChips.map((chip) => (
-                <span
-                  key={chip}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-copper/40 bg-copper/10 px-3 py-1 text-xs font-medium text-copper"
-                >
-                  {chip}
-                </span>
-              ))}
-              <button onClick={clearFilters} className="ml-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                <X className="h-3 w-3" /> Limpiar
-              </button>
-            </div>
-          )}
         </section>
 
         {/* Layout */}
-        <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-24 pt-10 md:grid-cols-[260px_1fr] md:px-8 md:pb-32">
+        <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-8 pt-10 lg:grid-cols-[260px_1fr] lg:px-8 lg:pb-10">
           {/* Sidebar filters (desktop) */}
-          <aside className="hidden md:sticky md:top-40 md:block md:self-start md:max-h-[calc(100vh-11rem)] md:overflow-y-auto md:pr-2">
+          <aside className="hidden lg:sticky lg:top-40 lg:block lg:self-start lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:pb-8 lg:pr-4 [scrollbar-gutter:stable]">
             <FiltersPanel
               openCat={openCat}
               setOpenCat={setOpenCat}
@@ -315,7 +411,7 @@ export function ProductosPage({
           </aside>
 
           {/* Grid */}
-          <div>
+          <div className="min-w-0 w-full max-w-full">
 
             {filtered.length === 0 ? (
               <div className={siteShell.emptyState}>
@@ -340,7 +436,20 @@ export function ProductosPage({
             )}
           </div>
         </section>
-    </div>
+
+        <SiteClosingCta
+          className="mt-0 pt-0 pb-14 md:pt-1 md:pb-20"
+          eyebrow="¿No encuentras lo que buscas?"
+          title="Te lo conseguimos"
+          description="Nuestro catálogo crece cada semana y también hacemos pedidos especiales. Dinos qué instrumento, marca o modelo necesitas y lo localizamos por ti."
+          primary={{
+            label: "Pedir por WhatsApp",
+            href: whatsappHref(SITE_CONTACT.whatsapp.e164, "Hola, busco un producto que no encontré en el catálogo:"),
+            external: true,
+          }}
+          secondary={{ label: "Explorar marcas", href: "/marcas" }}
+        />
+    </>
   );
 }
 
@@ -368,7 +477,7 @@ function FiltersPanel({
   price, setPrice, allBrands, allCategories, categoryTree, toggle, clearFilters,
 }: FiltersPanelProps) {
   return (
-    <div>
+    <div className="pb-2">
       <div className="flex items-center justify-between">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Filtros</h2>
         <button onClick={clearFilters} className="text-xs text-copper hover:underline">Limpiar</button>
@@ -430,21 +539,22 @@ function FiltersPanel({
         </ul>
       </div>
 
-      <div className="mt-7 border-t border-border pt-6">
+      <div className="mt-7 border-t border-border pb-10 pt-6">
         <p className="font-display text-base font-medium">Precio</p>
-        <div className="mt-4 px-1">
+        <div className="mt-4 px-1 py-2 touch-pan-x" onPointerDown={(e) => e.stopPropagation()}>
           <Slider
             min={PRICE_MIN}
             max={PRICE_MAX}
-            step={500}
+            step={PRICE_STEP}
+            minStepsBetweenThumbs={0}
             value={price}
-            onValueChange={(v) => setPrice([v[0], v[1]] as [number, number])}
+            onValueChange={(v) =>
+              setPrice([snapPrice(v[0]), snapPrice(v[1])] as [number, number])
+            }
+            className="max-md:py-2"
           />
         </div>
-        <div className="mt-3 flex items-center justify-between text-[12px] text-muted-foreground">
-          <span>{formatPrice(price[0])}</span>
-          <span>{formatPrice(price[1])}</span>
-        </div>
+        <PriceRangeFields price={price} setPrice={setPrice} />
       </div>
     </div>
   );

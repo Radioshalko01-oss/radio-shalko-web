@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyCustomer } from "@/lib/notifications/customer-notifications";
 import { notifyCustomerPaymentConfirmedEmail } from "@/lib/notifications/customer-email-events";
+import { pesosToStripeAmount } from "@/lib/stripe/checkout";
 
 export type WebhookProcessResult =
   | { ok: true; alreadyPaid?: boolean }
@@ -25,7 +26,7 @@ export async function processCheckoutSessionCompleted(
   const { data: order, error: fetchError } = await supabase
     .from("orders")
     .select(
-      "id, order_number, user_id, customer_email, customer_name, status, payment_status, stripe_checkout_session_id, stripe_paid_at",
+      "id, order_number, user_id, customer_email, customer_name, status, payment_status, total, stripe_checkout_session_id, stripe_paid_at",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -55,6 +56,43 @@ export async function processCheckoutSessionCompleted(
 
   if (order.status === "cancelled") {
     return { ok: false, error: "Order cancelled", status: 400 };
+  }
+
+  const expectedAmountCents = pesosToStripeAmount(order.total);
+  const paidAmountCents = session.amount_total;
+
+  if (paidAmountCents === null || paidAmountCents !== expectedAmountCents) {
+    console.error("[stripe webhook] amount mismatch", {
+      orderId,
+      orderNumber: order.order_number,
+      expectedAmountCents,
+      paidAmountCents,
+      sessionId: session.id,
+    });
+
+    const { error: failUpdateError } = await supabase
+      .from("orders")
+      .update({ payment_status: "failed" })
+      .eq("id", orderId)
+      .eq("payment_status", "unpaid");
+
+    if (failUpdateError) {
+      console.error("[stripe webhook] failed to mark payment failed:", failUpdateError.message);
+    }
+
+    const { error: historyError } = await supabase.from("order_status_history").insert({
+      order_id: orderId,
+      actor_id: null,
+      from_status: order.status,
+      to_status: order.status,
+      note: `Pago Stripe rechazado: monto no coincide (esperado ${expectedAmountCents} centavos, recibido ${paidAmountCents ?? "null"})`,
+    });
+
+    if (historyError) {
+      console.error("[stripe webhook] history insert (amount mismatch):", historyError.message);
+    }
+
+    return { ok: false, error: "Amount mismatch", status: 400 };
   }
 
   const paidAt = new Date().toISOString();

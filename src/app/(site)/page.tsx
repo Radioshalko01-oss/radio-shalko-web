@@ -3,7 +3,8 @@ import { Categories } from "@/components/site/categories";
 import { FeaturedProducts } from "@/components/site/featured-products";
 import { Hero } from "@/components/site/hero";
 import { StoryStrip } from "@/components/site/story-strip";
-import { getCatalogProducts } from "@/lib/catalog";
+import { SiteClosingCta } from "@/components/site/site-closing-cta";
+import { getHomeFeaturedProducts } from "@/lib/catalog";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,14 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const products = await getCatalogProducts();
-
-  // Novedades: productos is_new (fallback a los primeros publicados).
-  const isNew = products.filter((p) => p.isNew).slice(0, 4);
-  const novedades = isNew.length > 0 ? isNew : products.slice(0, 4);
-
-  // Destacados: selección por precio (más premium) sobre lo publicado.
-  const destacados = [...products].sort((a, b) => b.price - a.price).slice(0, 4);
+  const { novedades: novedadesRaw, destacados } = await getHomeFeaturedProducts();
+  const novedades = novedadesRaw;
 
   return (
     <>
@@ -34,6 +29,13 @@ export default async function HomePage() {
       <Brands />
       <FeaturedProducts novedades={novedades} destacados={destacados} />
       <Categories />
+      <SiteClosingCta
+        className="mt-0 max-md:mt-6 max-md:px-5 max-md:pb-10 max-md:pt-0 md:mt-14 md:px-8 md:pb-20 md:pt-4"
+        eyebrow="40 años acompañando músicos"
+        title="Tu música merece quien la entienda"
+        description="En Chalco y Amecameca, músicos y técnicos te orientan con criterio para elegir el instrumento o el equipo que realmente necesitas. Escríbenos o visítanos — sin prisa, sin presión."
+        secondary={{ label: "Ver catálogo", href: "/productos" }}
+      />
     </>
   );
 }

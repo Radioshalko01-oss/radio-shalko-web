@@ -46,7 +46,9 @@
   --card-foreground: oklch(0.16 0.005 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.005 60);
-  --copper: oklch(0.52 0.09 55);
+  /* Acento de marca (negro). Se conserva el nombre del token `copper`
+     para no reescribir todas las clases del sitio. */
+  --copper: oklch(0.16 0.005 60);
   --copper-foreground: oklch(0.985 0.003 80);
   --primary: oklch(0.16 0.005 60);
   --primary-foreground: oklch(0.985 0.003 80);
@@ -61,6 +63,8 @@
   --border: oklch(0.16 0.005 60 / 0.1);
   --input: oklch(0.16 0.005 60 / 0.14);
   --ring: oklch(0.16 0.005 60);
+  --selection-bg: #b3d7ff;
+  --selection-fg: #0a0a0a;
 }
 
 @layer base {
@@ -69,16 +73,54 @@
   }
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  @supports not (overflow: clip) {
+    html,
+    body {
+      overflow-x: hidden;
+    }
+  }
+  /* Evita que el header “salte” al abrir/cerrar sheets (Radix + react-remove-scroll) */
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
   }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  [role="button"],
+  a,
+  label,
+  summary {
+    touch-action: manipulation;
+  }
+  /* iOS Safari: evita zoom al enfocar campos con font-size < 16px */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
   ::selection {
-    background-color: color-mix(in oklab, var(--copper) 50%, transparent);
-    color: var(--foreground);
+    background-color: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+  ::-moz-selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
   [id] {
@@ -155,4 +197,269 @@
 }
 @utility animate-fade-up {
   animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes brands-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--marquee-distance, -50%), 0, 0);
+    -webkit-transform: translate3d(var(--marquee-distance, -50%), 0, 0);
+  }
+}
+
+.brands-marquee-track {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brands-marquee-track {
+    animation: none;
+    -webkit-animation: none;
+  }
+}
+
+@keyframes hero-text-in {
+  from {
+    opacity: 0.001;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hero-ken-burns {
+  0% {
+    transform: scale(1) translateZ(0);
+  }
+  100% {
+    transform: scale(1.06) translateZ(0);
+  }
+}
+
+.hero-text-in {
+  opacity: 0;
+  animation: hero-text-in 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  -webkit-animation: hero-text-in 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@utility animate-hero-ken-burns {
+  animation: hero-ken-burns 10s ease-in-out infinite alternate;
+  -webkit-animation: hero-ken-burns 10s ease-in-out infinite alternate;
+}
+
+@media (max-width: 767px) {
+  .hero-mobile-full {
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100svh;
+  }
+
+  @keyframes hero-ken-burns-wrap {
+    0% {
+      transform: scale(1) translate3d(0, 0, 0);
+    }
+    100% {
+      transform: scale(1.06) translate3d(0, 0, 0);
+    }
+  }
+
+  .hero-ken-burns-wrap {
+    animation: hero-ken-burns-wrap 10s ease-in-out infinite alternate;
+    -webkit-animation: hero-ken-burns-wrap 10s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-ken-burns-wrap {
+      animation: none;
+      -webkit-animation: none;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-text-in {
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text-in {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .animate-hero-ken-burns {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* Header home: progreso vía --header-reveal (DOM), sin re-render React por frame */
+.site-header {
+  --header-reveal: 0;
+  isolation: isolate;
+}
+
+.site-header[data-has-hero="false"] {
+  --header-reveal: 1;
+}
+
+.site-header__bg {
+  z-index: 0;
+  opacity: var(--header-reveal);
+  box-shadow: 0 1px 0 0 rgb(0 0 0 / calc(0.04 * var(--header-reveal)));
+}
+
+@media (max-width: 1023px) {
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__bg {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__bar,
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__actions,
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-logo {
+    background: transparent;
+  }
+
+  .site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__icon-btn {
+    background-color: transparent;
+  }
+}
+
+.site-header__bar {
+  position: relative;
+  z-index: 2;
+}
+
+.site-header__mega {
+  position: relative;
+  z-index: 2;
+  color: var(--foreground);
+}
+
+.site-header__scrim {
+  opacity: calc(1 - var(--header-reveal));
+}
+
+.site-header__logo-light {
+  opacity: calc(1 - var(--header-reveal));
+}
+
+.site-header__logo-dark {
+  opacity: var(--header-reveal);
+}
+
+/* Hero: blanco por defecto; sólido al scroll (Safari no mezcla bien color-mix + --header-reveal) */
+.site-header[data-has-hero="true"] .site-header__nav-link {
+  color: rgb(255 255 255 / 0.92);
+  transition: color 280ms ease;
+}
+
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__nav-link {
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+}
+
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__nav-link:hover {
+  color: var(--foreground);
+}
+
+.site-header[data-has-hero="true"] .site-header__nav-underline {
+  background-color: rgb(255 255 255 / 0.9);
+  transition: background-color 280ms ease;
+}
+
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__nav-underline {
+  background-color: var(--copper);
+}
+
+.site-header[data-has-hero="true"] .site-header__icon-btn {
+  color: rgb(255 255 255 / 0.92);
+  transition: color 280ms ease;
+}
+
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__icon-btn {
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+}
+
+.site-header[data-has-hero="true"] .site-header__divider {
+  background-color: rgb(255 255 255 / 0.25);
+  transition: background-color 280ms ease;
+}
+
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__divider {
+  background-color: color-mix(in oklab, var(--border) 70%, transparent);
+}
+
+/* Wordmark móvil: claro sobre hero, oscuro al hacer scroll o sin hero.
+   Sin utilidad Tailwind text-foreground en el span: en Android Chrome puede
+   ganar la cascada y dejar el texto oscuro invisible sobre el hero. */
+.site-header[data-has-hero="true"]:not([data-state="solid"]) .site-header__mobile-wordmark {
+  color: rgb(255 255 255 / 0.95);
+  -webkit-text-fill-color: rgb(255 255 255 / 0.95);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.site-header[data-has-hero="false"] .site-header__mobile-wordmark,
+.site-header[data-has-hero="true"][data-state="solid"] .site-header__mobile-wordmark {
+  color: var(--foreground);
+  -webkit-text-fill-color: var(--foreground);
+  text-shadow: none;
+}
+
+.site-header[data-has-hero="false"] .site-header__nav-link {
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+}
+
+.site-header[data-has-hero="false"] .site-header__nav-link:hover {
+  color: var(--foreground);
+}
+
+.site-header[data-has-hero="false"] .site-header__nav-underline {
+  background-color: var(--copper);
+}
+
+.site-header[data-has-hero="false"] .site-header__icon-btn {
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+}
+
+.site-header[data-has-hero="false"] .site-header__divider {
+  background-color: color-mix(in oklab, var(--border) 70%, transparent);
+}
+
+.site-header[data-state="hero"] .site-header__icon-btn:hover {
+  background-color: rgb(255 255 255 / 0.12);
+}
+
+.site-header[data-state="solid"] .site-header__icon-btn:hover {
+  background-color: var(--color-muted);
+  color: var(--foreground);
+}
+
+.site-header[data-state="hero"] .site-header__badge {
+  --tw-ring-color: transparent;
+}
+
+.site-header[data-state="solid"] .site-header__badge {
+  --tw-ring-color: var(--background);
+}
+
+.site-header[data-state="hero"] .site-header__account-dot {
+  background-color: var(--copper);
+  --tw-ring-color: transparent;
+}
+
+.site-header[data-state="solid"] .site-header__account-dot {
+  background-color: var(--foreground);
+  --tw-ring-color: var(--background);
 }

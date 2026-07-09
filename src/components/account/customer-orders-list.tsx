@@ -5,6 +5,8 @@ import {
   customerOrderStatusBadgeClass,
   customerOrderStatusUi,
 } from "@/lib/orders/customer-status-labels";
+import { SiteEmptyState } from "@/components/site/site-empty-state";
+import { PurchaseTrustLinkRow, PurchaseTrustNote } from "@/components/trust/purchase-trust-note";
 import { siteShell } from "@/lib/design/site-shell";
 import { cn } from "@/lib/utils";
 import type { CustomerOrderListItem } from "@/lib/orders/customer-queries";
@@ -16,26 +18,73 @@ function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
+function OrderStatusLegend() {
+  return (
+    <dl className="space-y-2 text-[11px] leading-snug text-muted-foreground">
+      <div>
+        <dt className="font-medium text-foreground/85">Solicitud recibida</dt>
+        <dd>Estamos revisando disponibilidad y datos de tu pedido.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">Aprobado · esperando pago</dt>
+        <dd>Tu solicitud fue confirmada; te enviaremos instrucciones de pago.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">Pago confirmado</dt>
+        <dd>Recibimos tu pago y preparamos tu pedido para recolección.</dd>
+      </div>
+      <div>
+        <dt className="font-medium text-foreground/85">No disponible</dt>
+        <dd>Por el momento no fue posible continuar con esta solicitud.</dd>
+      </div>
+    </dl>
+  );
+}
+
 export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[] }) {
   if (orders.length === 0) {
     return (
-      <div className={siteShell.emptyState}>
-        <Package className="h-9 w-9 text-muted-foreground/40" />
-        <div>
-          <p className="text-sm font-medium text-foreground">Aún no tienes pedidos</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Cuando envíes una solicitud de compra, aparecerá aquí.
-          </p>
-        </div>
-        <Link href="/productos" className={cn(siteShell.ctaDark, "mt-2 h-10 px-5")}>
-          Explorar productos
-        </Link>
-      </div>
+      <SiteEmptyState
+        icon={<Package className="h-6 w-6" />}
+        title="Aún no tienes pedidos"
+        description="Cuando envíes una solicitud de compra, aparecerá aquí con su estado y seguimiento."
+        action={{ label: "Explorar productos", href: "/productos" }}
+      />
     );
   }
 
   return (
-    <ul className="grid gap-3">
+    <div className="space-y-5">
+      <PurchaseTrustNote
+        compact
+        title="¿Tienes dudas sobre tu pago?"
+        lines={[
+          "Cada solicitud pasa por revisión antes de confirmarse.",
+          "Solo realiza pagos cuando recibas instrucciones por canales oficiales.",
+        ]}
+        linkKeys={["metodosPago", "compraSegura", "comoComprar"]}
+      />
+
+      <details className="rounded-xl border border-border/80 bg-muted/20 md:hidden">
+        <summary className="cursor-pointer list-none px-4 py-3.5 text-xs font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center justify-between gap-2">
+            Estados de tu solicitud
+            <span className="text-[11px] font-normal text-muted-foreground">Ver leyenda</span>
+          </span>
+        </summary>
+        <div className="border-t border-border/60 px-4 pb-3.5 pt-2.5">
+          <OrderStatusLegend />
+        </div>
+      </details>
+
+      <div className="hidden rounded-xl border border-border/80 bg-muted/20 px-4 py-3.5 md:block">
+        <p className="text-xs font-medium text-foreground">Estados de tu solicitud</p>
+        <div className="mt-2.5">
+          <OrderStatusLegend />
+        </div>
+      </div>
+
+    <ul className="grid gap-4">
       {orders.map((order) => {
         const status = customerOrderStatusUi(order.status, order.paymentStatus, {
           hasPaymentUrl: order.hasPaymentUrl,
@@ -82,6 +131,12 @@ export function CustomerOrdersList({ orders }: { orders: CustomerOrderListItem[]
         );
       })}
     </ul>
+
+      <PurchaseTrustLinkRow
+        className="justify-start gap-x-3 gap-y-2 pt-1 sm:justify-center"
+        linkKeys={["compraSegura", "metodosPago"]}
+      />
+    </div>
   );
 }
 

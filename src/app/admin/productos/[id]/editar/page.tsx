@@ -19,14 +19,18 @@ export default async function EditarProductoPage({
 }) {
   const { id } = await params;
 
-  const [product, brands, categories, branches] = await Promise.all([
-    getAdminProductById(id),
-    getBrands(),
-    getCategoriesTree(),
+  const product = await getAdminProductById(id);
+  if (!product) notFound();
+
+  const [brands, categories, branches] = await Promise.all([
+    getBrands({
+      includeBrandIds: product.brand?.id ? [product.brand.id] : [],
+    }),
+    getCategoriesTree({
+      includeSubcategoryIds: product.subcategory?.id ? [product.subcategory.id] : [],
+    }),
     getBranches(),
   ]);
-
-  if (!product) notFound();
 
   return (
     <div className="mx-auto max-w-3xl">

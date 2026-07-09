@@ -28,9 +28,4 @@ export function isStripeWebhookConfigured(): boolean {
   );
 }
 
-export function siteBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  );
-}
+export { siteBaseUrl } from "@/lib/site/site-url";

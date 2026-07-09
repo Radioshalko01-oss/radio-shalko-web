@@ -96,9 +96,10 @@ function buildLineItems(order: StripeCheckoutOrder): Stripe.Checkout.SessionCrea
 
 export async function createCheckoutSessionForOrder(
   order: StripeCheckoutOrder,
+  options?: { returnBaseUrl?: string },
 ): Promise<{ sessionId: string; url: string }> {
   const stripe = getStripeClient();
-  const base = siteBaseUrl();
+  const base = (options?.returnBaseUrl ?? siteBaseUrl()).replace(/\/+$/, "");
   const metadata = {
     order_id: order.id,
     order_number: order.orderNumber,

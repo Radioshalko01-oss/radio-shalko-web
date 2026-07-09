@@ -30,7 +30,7 @@ export function CheckoutSubmitBlock({
         {submitting ? "Enviando…" : "Enviar solicitud"}
       </Button>
       <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        No se realizará ningún cobro en este momento.
+        No se realizará ningún cobro en este momento. Solo paga por canales oficiales.
       </p>
     </div>
   );

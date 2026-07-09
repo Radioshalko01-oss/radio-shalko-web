@@ -1,20 +1,29 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { AUTH_NEXT_COOKIE, AUTH_ORIGIN_COOKIE, requestSiteOrigin, safeAuthNextPath } from "@/lib/site/site-url";
 
 /**
  * Callback OAuth (PKCE). Canjea el `code` por sesión y redirige a `next`.
  *
- * Diagnóstico: en cualquier fallo se loggea el error REAL en el servidor y se
- * redirige a /login?error=auth con un `detail` legible (sin secretos), para
- * poder distinguir entre: error del proveedor, code ausente o canje fallido.
+ * `next` se lee de cookie rs_auth_next (seteada antes de signInWithOAuth).
+ * Fallback: query ?next= para compatibilidad con URLs antiguas.
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestHeaders = new Headers(request.headers);
+  const origin = requestSiteOrigin(requestHeaders);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
 
-  // Errores devueltos por el proveedor / Supabase (provider deshabilitado,
-  // redirect no autorizado, consentimiento cancelado, etc.).
+  const cookieStore = await cookies();
+  const nextFromCookie = cookieStore.get(AUTH_NEXT_COOKIE)?.value;
+  const originFromCookie = cookieStore.get(AUTH_ORIGIN_COOKIE)?.value?.trim();
+  const next = safeAuthNextPath(
+    nextFromCookie ? decodeURIComponent(nextFromCookie) : searchParams.get("next") ?? undefined,
+    "/",
+  );
+  const redirectOrigin = originFromCookie || origin;
+
   const providerError = searchParams.get("error");
   const providerErrorDescription =
     searchParams.get("error_description") ?? searchParams.get("error_code");
@@ -23,7 +32,10 @@ export async function GET(request: Request) {
     const url = new URL(`${origin}/login`);
     url.searchParams.set("error", "auth");
     url.searchParams.set("detail", detail);
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    response.cookies.set(AUTH_NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+    response.cookies.set(AUTH_ORIGIN_COOKIE, "", { path: "/", maxAge: 0 });
+    return response;
   };
 
   if (providerError) {
@@ -54,5 +66,8 @@ export async function GET(request: Request) {
     return fail(error.message);
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  const response = NextResponse.redirect(`${redirectOrigin}${next}`);
+  response.cookies.set(AUTH_NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(AUTH_ORIGIN_COOKIE, "", { path: "/", maxAge: 0 });
+  return response;
 }

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/auth/account";
 import { listCustomerNotifications } from "@/lib/notifications/customer-notification-queries";
+import { AccountPageShell } from "@/components/account/account-page-shell";
 import { CustomerNotificationsList } from "@/components/account/customer-notifications-list";
-import { PageHeader } from "@/components/ui/page-header";
+import { SitePageHero } from "@/components/site/site-page-hero";
+import { finalizeBreadcrumbs, siteCrumbs } from "@/lib/site/breadcrumbs";
 
 export const metadata: Metadata = {
   title: "Notificaciones | Radio Shalko",
@@ -17,10 +19,13 @@ export default async function CuentaNotificacionesPage() {
   const notifications = await listCustomerNotifications();
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 pb-28 pt-28 md:px-8 md:pt-32">
-      <PageHeader
-        variant="account"
-        backLink={{ href: "/cuenta", label: "Volver a mi cuenta", icon: "arrow" }}
+    <>
+      <SitePageHero
+        breadcrumbs={finalizeBreadcrumbs([
+          siteCrumbs.home,
+          siteCrumbs.cuenta,
+          siteCrumbs.notificaciones,
+        ])}
         title="Notificaciones"
         description={
           account.isAdmin
@@ -29,9 +34,9 @@ export default async function CuentaNotificacionesPage() {
         }
       />
 
-      <div className="mt-6">
+      <AccountPageShell>
         <CustomerNotificationsList notifications={notifications} isAdmin={account.isAdmin} />
-      </div>
-    </div>
+      </AccountPageShell>
+    </>
   );
 }
