@@ -50,7 +50,7 @@ export function SitePageHero({
               ? "flex min-h-[7.5rem] flex-col items-center justify-center pb-5 text-center md:min-h-[8.5rem] md:pb-6"
               : compact
                 ? "pb-5 pt-1 max-md:pb-4 md:pb-6 md:pt-2"
-                : "flex max-md:min-h-[5.5rem] max-md:flex-col max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
+                : "flex w-full flex-col max-md:min-h-[5.5rem] max-md:justify-center pb-10 pt-1 max-md:py-0 max-md:pb-5 md:pb-12 md:pt-2",
           )}
         >
           {showBreadcrumbs ? (
@@ -82,7 +82,7 @@ export function SitePageHero({
                 ? "flex flex-col items-center text-center"
                 : compact
                   ? "mt-4 md:mt-5"
-                  : "mx-auto flex max-w-2xl flex-col items-center text-center max-md:mt-0 md:mt-8",
+                  : "mx-auto flex w-full max-w-2xl flex-col items-center text-center max-md:mt-0 md:mt-4",
             )}
           >
             <h1

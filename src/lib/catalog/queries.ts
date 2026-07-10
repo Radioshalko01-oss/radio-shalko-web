@@ -132,7 +132,7 @@ export const getHomeFeaturedProducts = cache(async (): Promise<HomeFeaturedProdu
       .select(HOME_FEATURED_SELECT)
       .eq("is_published", true)
       .eq("is_new", true)
-      .order("title", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(8),
     supabase
       .from("products")

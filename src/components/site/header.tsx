@@ -508,7 +508,7 @@ export function SiteHeader({
       <div className="site-header__bar relative flex h-14 w-full items-center justify-between gap-1 px-3 sm:gap-2 sm:px-5 md:h-20 md:px-7 lg:px-10">
         <Link
           href="/"
-          className="group relative z-10 flex h-14 min-w-0 shrink items-center lg:h-auto"
+          className="group relative z-10 flex h-14 min-w-0 shrink items-center md:h-full"
           aria-label={BRAND_ARIA_LABEL}
         >
           <div className="relative flex h-full items-center lg:hidden">
@@ -519,9 +519,9 @@ export function SiteHeader({
               className="site-header__mobile-logo"
             />
           </div>
-          <div className="relative hidden lg:block">
+          <div className="relative hidden h-full lg:block">
             {heroBlend && (
-              <div className="site-header__logo-light">
+              <div className="site-header__logo-light flex h-full items-center">
                 <SiteLogo
                   variant="horizontal"
                   context="header"
@@ -530,7 +530,12 @@ export function SiteHeader({
                 />
               </div>
             )}
-            <div className={cn(heroBlend && "site-header__logo-dark absolute inset-0")}>
+            <div
+              className={cn(
+                "flex items-center",
+                heroBlend && "site-header__logo-dark absolute inset-0",
+              )}
+            >
               <SiteLogo
                 variant="horizontal"
                 context="header"
