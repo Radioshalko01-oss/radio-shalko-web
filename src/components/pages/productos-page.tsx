@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { formatPrice } from "@/lib/catalog/format";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { CatalogProduct } from "@/lib/catalog/types";
+import {
+  CATALOG_FAMILIES,
+  catalogFilterFromSearchParams,
+  catalogFilterToHref,
+  EMPTY_CATALOG_FILTER,
+  productMatchesCatalogFilter,
+  type CatalogFamily,
+  type CatalogFilterSelection,
+  type CatalogMenuItem,
+} from "@/lib/navigation/catalog-taxonomy";
 import { ProductCard } from "@/components/catalog/product-card";
 import { SitePageHero } from "@/components/site/site-page-hero";
 import { SiteClosingCta } from "@/components/site/site-closing-cta";
@@ -31,9 +40,6 @@ type SortKey =
   | "za"
   | "new";
 
-/** Orden preferido de categorías; las no listadas van al final. */
-const CATEGORY_ORDER = ["Instrumentos", "Accesorios", "Equipos de Audio"];
-
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000;
 const PRICE_STEP = 50;
@@ -41,6 +47,10 @@ const PRICE_STEP = 50;
 function snapPrice(value: number) {
   const snapped = Math.round(value / PRICE_STEP) * PRICE_STEP;
   return Math.min(PRICE_MAX, Math.max(PRICE_MIN, snapped));
+}
+
+function typeKey(familyCat: string, typeLabel: string) {
+  return `${familyCat}::${typeLabel}`;
 }
 
 function PriceRangeFields({
@@ -123,53 +133,32 @@ function PriceRangeFields({
 
 export function ProductosPage({
   products,
-  activeCategoryNames,
-  activeSubcategoryNames,
 }: {
   products: CatalogProduct[];
-  /** Nombres de categorías/subcategorías activas para filtrar opciones. */
+  /** @deprecated El sidebar usa CATALOG_FAMILIES; se conserva por compatibilidad de ruta. */
   activeCategoryNames?: string[];
   activeSubcategoryNames?: string[];
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const search = {
     cat: searchParams.get("cat") ?? undefined,
     sub: searchParams.get("sub") ?? undefined,
     brand: searchParams.get("brand") ?? undefined,
     q: searchParams.get("q") ?? undefined,
+    tipo: searchParams.get("tipo") ?? undefined,
+    instrumento: searchParams.get("instrumento") ?? undefined,
   };
+
   const [size, setSize] = useState<"lg" | "md" | "list">("md");
   const [sort, setSort] = useState<SortKey>("default");
-  const [openCat, setOpenCat] = useState<string | null>("Instrumentos");
-  const [activeCats, setActiveCats] = useState<Set<string>>(new Set());
-  const [activeSubs, setActiveSubs] = useState<Set<string>>(new Set());
+  const [catalogFilter, setCatalogFilter] = useState<CatalogFilterSelection>(EMPTY_CATALOG_FILTER);
+  /** Acordeón visual (independiente del filtro activo). */
+  const [accordionFamily, setAccordionFamily] = useState<string | null>(null);
+  const [accordionType, setAccordionType] = useState<string | null>(null);
   const [activeBrands, setActiveBrands] = useState<Set<string>>(new Set());
   const [price, setPrice] = useState<[number, number]>([PRICE_MIN, PRICE_MAX]);
   const [query, setQuery] = useState("");
-
-  // Taxonomía derivada de los productos reales (categoría → subcategorías).
-  // Si se proveen nombres activos, solo se ofrecen como filtro los activos
-  // (las categorías/subcategorías ocultas no aparecen como opción).
-  const { categoryTree, allCategories, allSubs } = useMemo(() => {
-    const catActive = activeCategoryNames ? new Set(activeCategoryNames) : null;
-    const subActive = activeSubcategoryNames ? new Set(activeSubcategoryNames) : null;
-    const tree: Record<string, string[]> = {};
-    for (const p of products) {
-      const cat = p.category?.name;
-      const sub = p.subcategory?.name;
-      if (!cat || (catActive && !catActive.has(cat))) continue;
-      if (!tree[cat]) tree[cat] = [];
-      if (sub && (!subActive || subActive.has(sub)) && !tree[cat].includes(sub)) {
-        tree[cat].push(sub);
-      }
-    }
-    const cats = Object.keys(tree).sort((a, b) => {
-      const ia = CATEGORY_ORDER.indexOf(a);
-      const ib = CATEGORY_ORDER.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    });
-    return { categoryTree: tree, allCategories: cats, allSubs: Object.values(tree).flat() };
-  }, [products, activeCategoryNames, activeSubcategoryNames]);
 
   const allBrands = useMemo(
     () =>
@@ -179,35 +168,47 @@ export function ProductosPage({
     [products],
   );
 
+  const applyCatalogFilter = (next: CatalogFilterSelection) => {
+    const url = new URL(catalogFilterToHref(next), "http://local");
+    const brand = searchParams.get("brand");
+    const q = searchParams.get("q");
+    if (brand) url.searchParams.set("brand", brand);
+    if (q) url.searchParams.set("q", q);
+    router.replace(`${url.pathname}${url.search}`, { scroll: false });
+  };
+
   useEffect(() => {
-    if (search.cat && allCategories.includes(search.cat)) {
-      setActiveCats(new Set([search.cat]));
-      setOpenCat(search.cat);
+    const fromUrl = catalogFilterFromSearchParams({
+      cat: search.cat,
+      sub: search.sub,
+      tipo: search.tipo,
+      instrumento: search.instrumento,
+    });
+    setCatalogFilter(fromUrl);
+
+    if (!fromUrl.familyCat) {
+      setAccordionFamily(null);
+      setAccordionType(null);
     } else {
-      setActiveCats(new Set());
+      setAccordionFamily(fromUrl.familyCat);
+      setAccordionType(
+        fromUrl.typeLabel ? typeKey(fromUrl.familyCat, fromUrl.typeLabel) : null,
+      );
     }
-    if (search.sub && allSubs.includes(search.sub)) {
-      setActiveSubs(new Set([search.sub]));
-      const parent = allCategories.find((c) => categoryTree[c]?.includes(search.sub!));
-      if (parent) setOpenCat(parent);
-    } else {
-      setActiveSubs(new Set());
-    }
+
     setActiveBrands(search.brand ? new Set([search.brand]) : new Set());
     setQuery(search.q ?? "");
-  }, [search.cat, search.sub, search.brand, search.q, allCategories, allSubs, categoryTree]);
+  }, [search.cat, search.sub, search.brand, search.q, search.tipo, search.instrumento]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = products.filter((p) => {
-      const cat = p.category?.name ?? "";
-      const sub = p.subcategory?.name ?? "";
+      if (!productMatchesCatalogFilter(p, catalogFilter)) return false;
       const brand = p.brand?.name ?? "";
-      if (activeCats.size && !activeCats.has(cat)) return false;
-      if (activeSubs.size && !activeSubs.has(sub)) return false;
       if (activeBrands.size && !activeBrands.has(brand)) return false;
       if (p.price < price[0] || p.price > price[1]) return false;
       if (q) {
+        const sub = p.subcategory?.name ?? "";
         const hay = `${p.name} ${brand} ${sub}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
@@ -230,7 +231,7 @@ export function ProductosPage({
       }
     }
     return list;
-  }, [products, activeCats, activeSubs, activeBrands, price, sort, query]);
+  }, [products, catalogFilter, activeBrands, price, sort, query]);
 
   const toggle = <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => {
     const next = new Set(set);
@@ -238,35 +239,102 @@ export function ProductosPage({
     setter(next);
   };
 
+  const selectFamily = (family: CatalogFamily) => {
+    const familyOnlyActive =
+      catalogFilter.familyCat === family.cat &&
+      !catalogFilter.typeLabel &&
+      !catalogFilter.variantLabel;
+
+    if (familyOnlyActive) {
+      setAccordionFamily(accordionFamily === family.cat ? null : family.cat);
+      setAccordionType(null);
+      return;
+    }
+
+    setAccordionFamily(family.cat);
+    setAccordionType(null);
+    applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
+  };
+
+  const selectType = (family: CatalogFamily, item: CatalogMenuItem) => {
+    const tk = typeKey(family.cat, item.label);
+    const hasChildren = Boolean(item.children?.length);
+    const typeOnlyActive =
+      catalogFilter.familyCat === family.cat &&
+      catalogFilter.typeLabel === item.label &&
+      !catalogFilter.variantLabel;
+
+    if (typeOnlyActive) {
+      if (hasChildren) {
+        setAccordionType(accordionType === tk ? null : tk);
+      } else {
+        setAccordionType(null);
+        applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
+      }
+      return;
+    }
+
+    setAccordionFamily(family.cat);
+    setAccordionType(hasChildren ? tk : null);
+    applyCatalogFilter({
+      familyCat: family.cat,
+      typeLabel: item.label,
+      variantLabel: null,
+    });
+  };
+
+  const selectVariant = (
+    family: CatalogFamily,
+    item: CatalogMenuItem,
+    child: CatalogMenuItem,
+  ) => {
+    const isActive =
+      catalogFilter.familyCat === family.cat &&
+      catalogFilter.typeLabel === item.label &&
+      catalogFilter.variantLabel === child.label;
+    if (isActive) {
+      setAccordionType(typeKey(family.cat, item.label));
+      applyCatalogFilter({
+        familyCat: family.cat,
+        typeLabel: item.label,
+        variantLabel: null,
+      });
+      return;
+    }
+    setAccordionFamily(family.cat);
+    setAccordionType(typeKey(family.cat, item.label));
+    applyCatalogFilter({
+      familyCat: family.cat,
+      typeLabel: item.label,
+      variantLabel: child.label,
+    });
+  };
+
   const clearFilters = () => {
-    setActiveCats(new Set());
-    setActiveSubs(new Set());
+    applyCatalogFilter(EMPTY_CATALOG_FILTER);
+    setAccordionFamily(null);
+    setAccordionType(null);
     setActiveBrands(new Set());
     setPrice([PRICE_MIN, PRICE_MAX]);
     setQuery("");
+    router.replace("/productos", { scroll: false });
   };
 
+  const activeFamilyMeta = CATALOG_FAMILIES.find((f) => f.cat === catalogFilter.familyCat);
+
   const activeFilterChips: string[] = [
-    ...Array.from(activeCats),
-    ...Array.from(activeSubs),
+    ...(activeFamilyMeta ? [activeFamilyMeta.title] : []),
+    ...(catalogFilter.typeLabel ? [catalogFilter.typeLabel] : []),
+    ...(catalogFilter.variantLabel ? [catalogFilter.variantLabel] : []),
     ...Array.from(activeBrands),
     ...(query ? [`"${query}"`] : []),
   ];
 
   const breadcrumbs = useMemo(() => {
     const brand = activeBrands.size === 1 ? Array.from(activeBrands)[0] : null;
-    if (brand) {
-      return productosCatalogBreadcrumbs({ brand });
-    }
-
-    const cat = activeCats.size === 1 ? Array.from(activeCats)[0] : null;
-    const sub = activeSubs.size === 1 ? Array.from(activeSubs)[0] : null;
-    const topCategory =
-      cat ??
-      (sub ? allCategories.find((c) => categoryTree[c]?.includes(sub)) ?? null : null);
-
-    return productosCatalogBreadcrumbs({ category: topCategory });
-  }, [activeCats, activeSubs, activeBrands, allCategories, categoryTree]);
+    if (brand) return productosCatalogBreadcrumbs({ brand });
+    return productosCatalogBreadcrumbs({ category: catalogFilter.familyCat });
+  }, [activeBrands, catalogFilter.familyCat]);
 
   const gridClass =
     size === "lg"
@@ -275,9 +343,26 @@ export function ProductosPage({
       ? "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
       : "flex flex-col gap-3";
 
+  const filtersPanel = (
+    <FiltersPanel
+      accordionFamily={accordionFamily}
+      accordionType={accordionType}
+      catalogFilter={catalogFilter}
+      activeBrands={activeBrands}
+      setActiveBrands={setActiveBrands}
+      price={price}
+      setPrice={setPrice}
+      allBrands={allBrands}
+      toggle={toggle}
+      selectFamily={selectFamily}
+      selectType={selectType}
+      selectVariant={selectVariant}
+      clearFilters={clearFilters}
+    />
+  );
+
   return (
     <>
-        {/* Header — fondo oscuro bajo el nav fijo */}
         <SitePageHero
           id="catalogo"
           breadcrumbs={breadcrumbs}
@@ -285,8 +370,6 @@ export function ProductosPage({
           description="Una colección pensada para músicos que buscan crear algo inolvidable."
         />
 
-
-        {/* Toolbar */}
         <section className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 border-y border-border/60 bg-background/95 shadow-[0_8px_24px_-20px_rgba(0,0,0,0.25)] backdrop-blur-md md:top-20">
           <div className="mx-auto max-w-7xl px-5 md:px-8">
             <div className="grid gap-2 py-2.5 max-md:grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-3 md:py-3">
@@ -311,25 +394,7 @@ export function ProductosPage({
                     <SheetHeader className="text-left">
                       <SheetTitle className="font-display text-lg font-semibold tracking-tight">Filtros</SheetTitle>
                     </SheetHeader>
-                    <div className="mt-6">
-                      <FiltersPanel
-                        openCat={openCat}
-                        setOpenCat={setOpenCat}
-                        activeCats={activeCats}
-                        setActiveCats={setActiveCats}
-                        activeSubs={activeSubs}
-                        setActiveSubs={setActiveSubs}
-                        activeBrands={activeBrands}
-                        setActiveBrands={setActiveBrands}
-                        price={price}
-                        setPrice={setPrice}
-                        allBrands={allBrands}
-                        allCategories={allCategories}
-                        categoryTree={categoryTree}
-                        toggle={toggle}
-                        clearFilters={clearFilters}
-                      />
-                    </div>
+                    <div className="mt-6">{filtersPanel}</div>
                   </SheetContent>
                 </Sheet>
 
@@ -387,32 +452,12 @@ export function ProductosPage({
           </div>
         </section>
 
-        {/* Layout */}
         <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-8 pt-10 lg:grid-cols-[260px_1fr] lg:px-8 lg:pb-10">
-          {/* Sidebar filters (desktop) */}
           <aside className="hidden lg:sticky lg:top-40 lg:block lg:self-start lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:pb-8 lg:pr-4 [scrollbar-gutter:stable]">
-            <FiltersPanel
-              openCat={openCat}
-              setOpenCat={setOpenCat}
-              activeCats={activeCats}
-              setActiveCats={setActiveCats}
-              activeSubs={activeSubs}
-              setActiveSubs={setActiveSubs}
-              activeBrands={activeBrands}
-              setActiveBrands={setActiveBrands}
-              price={price}
-              setPrice={setPrice}
-              allBrands={allBrands}
-              allCategories={allCategories}
-              categoryTree={categoryTree}
-              toggle={toggle}
-              clearFilters={clearFilters}
-            />
+            {filtersPanel}
           </aside>
 
-          {/* Grid */}
           <div className="min-w-0 w-full max-w-full">
-
             {filtered.length === 0 ? (
               <div className={siteShell.emptyState}>
                 <p className="font-display text-lg font-medium text-foreground">Sin resultados</p>
@@ -454,27 +499,35 @@ export function ProductosPage({
 }
 
 type FiltersPanelProps = {
-  openCat: string | null;
-  setOpenCat: (c: string | null) => void;
-  activeCats: Set<string>;
-  setActiveCats: (s: Set<string>) => void;
-  activeSubs: Set<string>;
-  setActiveSubs: (s: Set<string>) => void;
+  accordionFamily: string | null;
+  accordionType: string | null;
+  catalogFilter: CatalogFilterSelection;
   activeBrands: Set<string>;
   setActiveBrands: (s: Set<string>) => void;
   price: [number, number];
   setPrice: (p: [number, number]) => void;
   allBrands: string[];
-  allCategories: string[];
-  categoryTree: Record<string, string[]>;
   toggle: <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => void;
+  selectFamily: (family: CatalogFamily) => void;
+  selectType: (family: CatalogFamily, item: CatalogMenuItem) => void;
+  selectVariant: (family: CatalogFamily, item: CatalogMenuItem, child: CatalogMenuItem) => void;
   clearFilters: () => void;
 };
 
 function FiltersPanel({
-  openCat, setOpenCat, activeCats, setActiveCats,
-  activeSubs, setActiveSubs, activeBrands, setActiveBrands,
-  price, setPrice, allBrands, allCategories, categoryTree, toggle, clearFilters,
+  accordionFamily,
+  accordionType,
+  catalogFilter,
+  activeBrands,
+  setActiveBrands,
+  price,
+  setPrice,
+  allBrands,
+  toggle,
+  selectFamily,
+  selectType,
+  selectVariant,
+  clearFilters,
 }: FiltersPanelProps) {
   return (
     <div className="pb-2">
@@ -486,39 +539,86 @@ function FiltersPanel({
       <div className="mt-5">
         <p className="font-display text-base font-medium">Tipos de productos</p>
         <ul className="mt-3 space-y-1.5">
-          {allCategories.map((cat) => (
-            <li key={cat}>
-              <button
-                onClick={() => {
-                  setOpenCat(openCat === cat ? null : cat);
-                  toggle(activeCats, cat, setActiveCats);
-                }}
-                className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                  activeCats.has(cat)
-                    ? "bg-foreground/5 font-semibold text-foreground"
-                    : "text-foreground/80 hover:bg-foreground/5"
-                }`}
-              >
-                <span>{cat}</span>
-                <Plus className={`h-3.5 w-3.5 transition-transform ${openCat === cat ? "rotate-45" : ""}`} />
-              </button>
-              {openCat === cat && (
-                <ul className="mt-1 space-y-1 border-l border-border pl-3">
-                  {(categoryTree[cat] ?? []).map((sub) => (
-                    <li key={sub}>
-                      <label className="flex cursor-pointer items-center gap-2 py-1 text-[13px] text-muted-foreground hover:text-foreground">
-                        <Checkbox
-                          checked={activeSubs.has(sub)}
-                          onCheckedChange={() => toggle(activeSubs, sub, setActiveSubs)}
-                        />
-                        {sub}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+          {CATALOG_FAMILIES.map((family) => {
+            const familyActive = catalogFilter.familyCat === family.cat;
+            const familyOpen = accordionFamily === family.cat;
+            return (
+              <li key={family.cat}>
+                <button
+                  type="button"
+                  onClick={() => selectFamily(family)}
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                    familyActive && !catalogFilter.typeLabel
+                      ? "bg-foreground/5 font-semibold text-foreground"
+                      : familyActive
+                        ? "font-semibold text-foreground"
+                        : "text-foreground/80 hover:bg-foreground/5"
+                  }`}
+                >
+                  <span>{family.title}</span>
+                  <Plus
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform ${familyOpen ? "rotate-45" : ""}`}
+                  />
+                </button>
+
+                {familyOpen && (
+                  <ul className="mt-1 space-y-1 border-l border-border pl-3">
+                    {family.items.map((item) => {
+                      const tk = typeKey(family.cat, item.label);
+                      const typeActive =
+                        catalogFilter.familyCat === family.cat &&
+                        catalogFilter.typeLabel === item.label;
+                      const typeOpen = accordionType === tk;
+                      const hasChildren = Boolean(item.children?.length);
+
+                      return (
+                        <li key={item.label}>
+                          <button
+                            type="button"
+                            onClick={() => selectType(family, item)}
+                            className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-[13px] transition-colors ${
+                              typeActive && !catalogFilter.variantLabel
+                                ? "font-semibold text-foreground"
+                                : typeActive
+                                  ? "font-medium text-foreground"
+                                  : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <span>{item.label}</span>
+                            {hasChildren && (
+                              <Plus
+                                className={`h-3 w-3 shrink-0 transition-transform ${typeOpen ? "rotate-45" : ""}`}
+                              />
+                            )}
+                          </button>
+
+                          {hasChildren && typeOpen && (
+                            <ul className="mt-1 space-y-0.5 border-l border-border/60 pl-3">
+                              {item.children!.map((child) => {
+                                const variantActive =
+                                  typeActive && catalogFilter.variantLabel === child.label;
+                                return (
+                                  <li key={child.label}>
+                                    <label className="flex cursor-pointer items-center gap-2 py-1 text-[12px] text-muted-foreground hover:text-foreground">
+                                      <Checkbox
+                                        checked={variantActive}
+                                        onCheckedChange={() => selectVariant(family, item, child)}
+                                      />
+                                      {child.label}
+                                    </label>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 

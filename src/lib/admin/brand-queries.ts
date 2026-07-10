@@ -6,10 +6,7 @@
  * protección de rol vive en el layout/acciones que las invocan (requireAdmin).
  */
 import { createClient } from "@/lib/supabase/server";
-import {
-  isOfficialBrandName,
-  sortByOfficialBrandOrder,
-} from "@/lib/navigation/catalog-taxonomy";
+import { sortByOfficialBrandOrder } from "@/lib/navigation/catalog-taxonomy";
 
 export type AdminBrand = {
   id: string;
@@ -57,9 +54,7 @@ export async function listAdminBrands(): Promise<AdminBrand[]> {
   }
 
   return sortByOfficialBrandOrder(
-    (brands as RawAdminBrand[])
-      .filter((b) => isOfficialBrandName(b.name))
-      .map((b) => ({
+    (brands as RawAdminBrand[]).map((b) => ({
         id: b.id,
         name: b.name,
         slug: b.slug,

@@ -81,14 +81,36 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
     cat: "Instrumentos",
     items: [
       {
-        label: "Guitarras acústicas",
-        sub: "Guitarras acústicas",
-        href: catalogHref({ cat: "Instrumentos", sub: "Guitarras acústicas" }),
-      },
-      {
-        label: "Guitarras eléctricas",
-        sub: "Guitarras eléctricas",
-        href: catalogHref({ cat: "Instrumentos", sub: "Guitarras eléctricas" }),
+        label: "Guitarras",
+        href: catalogHref({ cat: "Instrumentos", tipo: "guitarras" }),
+        children: [
+          {
+            label: "Clásicas",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Guitarras acústicas",
+              tipo: "clasicas",
+            }),
+          },
+          {
+            label: "Acústicas",
+            sub: "Guitarras acústicas",
+            href: catalogHref({ cat: "Instrumentos", sub: "Guitarras acústicas" }),
+          },
+          {
+            label: "Electroacústicas",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Guitarras acústicas",
+              tipo: "electroacusticas",
+            }),
+          },
+          {
+            label: "Eléctricas",
+            sub: "Guitarras eléctricas",
+            href: catalogHref({ cat: "Instrumentos", sub: "Guitarras eléctricas" }),
+          },
+        ],
       },
       {
         label: "Bajos",
@@ -97,10 +119,20 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
         children: [
           {
             label: "Bajos eléctricos",
-            sub: "Bajos",
-            href: catalogHref({ cat: "Instrumentos", sub: "Bajos" }),
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Bajos",
+              tipo: "bajos-electricos",
+            }),
           },
-          { label: "Bajos acústicos", href: catalogHref({ cat: "Instrumentos", sub: "Bajos" }) },
+          {
+            label: "Bajos acústicos",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Bajos",
+              tipo: "bajos-acusticos",
+            }),
+          },
         ],
       },
       {
@@ -133,7 +165,27 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
       {
         label: "Ukuleles",
         sub: "Ukuleles",
-        href: catalogHref({ cat: "Instrumentos", sub: "Ukuleles" }),
+        href: catalogHref({ cat: "Instrumentos", tipo: "ukuleles" }),
+        children: [
+          {
+            label: "Soprano",
+            sub: "Ukuleles",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Ukuleles",
+              instrumento: "soprano",
+            }),
+          },
+          {
+            label: "Concierto",
+            sub: "Ukuleles",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Ukuleles",
+              instrumento: "concierto",
+            }),
+          },
+        ],
       },
       {
         label: "Teclados",
@@ -142,16 +194,45 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
       },
       {
         label: "Baterías y percusión",
-        href: catalogHref({ cat: "Instrumentos", sub: "Baterías" }),
+        href: catalogHref({ cat: "Instrumentos", tipo: "baterias-y-percusion" }),
         children: [
           {
             label: "Baterías",
             sub: "Baterías",
             href: catalogHref({ cat: "Instrumentos", sub: "Baterías" }),
           },
-          { label: "Bongos", href: catalogHref({ cat: "Instrumentos", tipo: "bongos" }) },
-          { label: "Tarolas", href: catalogHref({ cat: "Instrumentos", tipo: "tarolas" }) },
-          { label: "Xilófonos", href: catalogHref({ cat: "Instrumentos", tipo: "xilofonos" }) },
+          {
+            label: "Tarolas",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Baterías",
+              tipo: "tarolas",
+            }),
+          },
+          {
+            label: "Platillos",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Baterías",
+              tipo: "platillos",
+            }),
+          },
+          {
+            label: "Percusiones",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Baterías",
+              tipo: "percusiones",
+            }),
+          },
+          {
+            label: "Accesorios de batería",
+            href: catalogHref({
+              cat: "Instrumentos",
+              sub: "Baterías",
+              tipo: "accesorios-de-bateria",
+            }),
+          },
         ],
       },
       { label: "Mandolinas", href: catalogHref({ cat: "Instrumentos", tipo: "mandolinas" }) },
@@ -245,7 +326,27 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
       {
         label: "Bafles",
         sub: "Bafles",
-        href: catalogHref({ cat: "Equipos de Audio", sub: "Bafles" }),
+        href: catalogHref({ cat: "Equipos de Audio", tipo: "bafles" }),
+        children: [
+          {
+            label: "Pasivos",
+            sub: "Bafles",
+            href: catalogHref({
+              cat: "Equipos de Audio",
+              sub: "Bafles",
+              instrumento: "pasivos",
+            }),
+          },
+          {
+            label: "Activos",
+            sub: "Bafles",
+            href: catalogHref({
+              cat: "Equipos de Audio",
+              sub: "Bafles",
+              instrumento: "activos",
+            }),
+          },
+        ],
       },
       {
         label: "Bocinas",
@@ -254,7 +355,6 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
           { label: "10 pulgadas", href: catalogHref({ cat: "Equipos de Audio", tipo: "bocinas", instrumento: "10" }) },
           { label: "12 pulgadas", href: catalogHref({ cat: "Equipos de Audio", tipo: "bocinas", instrumento: "12" }) },
           { label: "15 pulgadas", href: catalogHref({ cat: "Equipos de Audio", tipo: "bocinas", instrumento: "15" }) },
-          { label: "18 pulgadas", href: catalogHref({ cat: "Equipos de Audio", tipo: "bocinas", instrumento: "18" }) },
         ],
       },
       { label: "Subwoofers", href: catalogHref({ cat: "Equipos de Audio", tipo: "subwoofers" }) },
@@ -288,6 +388,7 @@ export const CATALOG_FAMILIES: CatalogFamily[] = [
           { label: "Spider", href: catalogHref({ cat: "Equipos de Audio", tipo: "iluminacion-dmx", instrumento: "spider" }) },
           { label: "Barras LED", href: catalogHref({ cat: "Equipos de Audio", tipo: "iluminacion-dmx", instrumento: "barras-led" }) },
           { label: "Luces de escenario", href: catalogHref({ cat: "Equipos de Audio", tipo: "iluminacion-dmx", instrumento: "luces-escenario" }) },
+          { label: "Láser", href: catalogHref({ cat: "Equipos de Audio", tipo: "iluminacion-dmx", instrumento: "laser" }) },
         ],
       },
     ],
@@ -388,7 +489,29 @@ export function getSubcategoryNameForMenuItem(item: CatalogMenuItem): string {
   const parsed = parseCatalogHref(item.href);
   if (parsed.sub) return parsed.sub;
   if (item.label === "Baterías y percusión") return "Baterías";
+  if (item.label === "Guitarras") return "Guitarras acústicas";
   return item.label;
+}
+
+/** Subcategoría BD + variant slug para un hijo del menú (tipo/variante). */
+export function resolveChildClassification(
+  parentItem: CatalogMenuItem,
+  child: CatalogMenuItem,
+): { subcategoryName: string; catalogVariant: string | null } {
+  const parsed = parseCatalogHref(child.href);
+  const subcategoryName =
+    child.sub ?? parsed.sub ?? getSubcategoryNameForMenuItem(parentItem);
+  const variantSlug = parsed.instrumento ?? parsed.tipo ?? null;
+
+  if (child.sub && !variantSlug) {
+    return { subcategoryName: child.sub, catalogVariant: null };
+  }
+
+  if (variantSlug) {
+    return { subcategoryName, catalogVariant: variantSlug };
+  }
+
+  return { subcategoryName, catalogVariant: slugify(child.label) };
 }
 
 export type CatalogTypeOption = {
@@ -468,17 +591,21 @@ export function resolveClassificationSelection(
   const category = categories.find((c) => c.name === family.cat);
   if (!category) return null;
 
-  const subName = getSubcategoryNameForMenuItem(typeItem);
+  let subName = getSubcategoryNameForMenuItem(typeItem);
+  let catalogVariant: string | null = null;
+
+  if (selection.variantLabel && typeItem.children?.length) {
+    const variantChild = typeItem.children.find((c) => c.label === selection.variantLabel);
+    if (!variantChild) return null;
+    const resolved = resolveChildClassification(typeItem, variantChild);
+    subName = resolved.subcategoryName;
+    catalogVariant = resolved.catalogVariant;
+  }
+
   const sub = category.subcategories.find(
     (s) => s.name.toLowerCase() === subName.toLowerCase(),
   );
   if (!sub) return null;
-
-  let catalogVariant: string | null = null;
-  if (selection.variantLabel && typeItem.children?.length) {
-    const variant = typeItem.children.find((c) => c.label === selection.variantLabel);
-    if (variant) catalogVariant = slugify(selection.variantLabel);
-  }
 
   return {
     categoryId: category.id,
@@ -500,12 +627,40 @@ export function classificationFromStoredProduct(input: {
   if (!family) return null;
 
   for (const item of family.items) {
+    if (item.children?.length) {
+      for (const child of item.children) {
+        const resolved = resolveChildClassification(item, child);
+        if (resolved.subcategoryName.toLowerCase() !== subcategoryName.toLowerCase()) {
+          continue;
+        }
+
+        const childVariant = resolved.catalogVariant?.toLowerCase() ?? null;
+        const storedVariant = catalogVariant?.toLowerCase() ?? null;
+
+        if (childVariant && storedVariant && childVariant !== storedVariant) {
+          continue;
+        }
+        if (!childVariant && storedVariant) {
+          continue;
+        }
+
+        return {
+          familyKey: family.key,
+          typeLabel: item.label,
+          variantLabel: child.label,
+        };
+      }
+    }
+
     const itemSub = getSubcategoryNameForMenuItem(item);
     if (itemSub.toLowerCase() !== subcategoryName.toLowerCase()) continue;
 
     let variantLabel: string | undefined;
     if (catalogVariant && item.children?.length) {
-      const match = item.children.find((c) => slugify(c.label) === catalogVariant);
+      const match = item.children.find((c) => {
+        const r = resolveChildClassification(item, c);
+        return r.catalogVariant?.toLowerCase() === catalogVariant.toLowerCase();
+      });
       if (match) variantLabel = match.label;
     }
 
@@ -547,4 +702,186 @@ export function sortByOfficialBrandOrder<T extends { name: string }>(brands: T[]
     const ib = order.get(b.name.toLowerCase()) ?? 999;
     return ia - ib || a.name.localeCompare(b.name, "es");
   });
+}
+
+/** Selección activa del filtro lateral / URL del catálogo público. */
+export type CatalogFilterSelection = {
+  familyCat: string | null;
+  typeLabel: string | null;
+  variantLabel: string | null;
+};
+
+export const EMPTY_CATALOG_FILTER: CatalogFilterSelection = {
+  familyCat: null,
+  typeLabel: null,
+  variantLabel: null,
+};
+
+function childMatchesSearchParams(
+  parentItem: CatalogMenuItem,
+  child: CatalogMenuItem,
+  sub?: string,
+  variantSlug?: string | null,
+): boolean {
+  const resolved = resolveChildClassification(parentItem, child);
+  const subOk = sub
+    ? resolved.subcategoryName.toLowerCase() === sub.toLowerCase()
+    : true;
+
+  if (!variantSlug) {
+    return false;
+  }
+
+  return subOk && resolved.catalogVariant?.toLowerCase() === variantSlug;
+}
+
+function typeFilterSlug(label: string): string {
+  return slugify(label);
+}
+
+/** Deriva la selección del filtro desde query params (`cat`, `sub`, `tipo`, `instrumento`). */
+export function catalogFilterFromSearchParams(params: {
+  cat?: string;
+  sub?: string;
+  tipo?: string;
+  instrumento?: string;
+}): CatalogFilterSelection {
+  const { cat, sub, tipo, instrumento } = params;
+  const variantSlug = (instrumento ?? tipo)?.toLowerCase() ?? null;
+
+  for (const family of CATALOG_FAMILIES) {
+    if (cat && family.cat !== cat) continue;
+
+    for (const item of family.items) {
+      const itemSub = getSubcategoryNameForMenuItem(item);
+      const parsed = parseCatalogHref(item.href);
+      const groupSlug = typeFilterSlug(item.label);
+
+      if (tipo && !sub && !instrumento && tipo.toLowerCase() === groupSlug) {
+        return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+      }
+
+      if (item.children?.length) {
+        for (const child of item.children) {
+          if (childMatchesSearchParams(item, child, sub, variantSlug)) {
+            return {
+              familyCat: family.cat,
+              typeLabel: item.label,
+              variantLabel: child.label,
+            };
+          }
+        }
+        if (sub && !variantSlug && itemSub.toLowerCase() === sub.toLowerCase()) {
+          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+        }
+      } else {
+        if (sub && itemSub.toLowerCase() === sub.toLowerCase() && !variantSlug) {
+          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+        }
+        if (variantSlug && parsed.tipo?.toLowerCase() === variantSlug) {
+          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+        }
+      }
+    }
+  }
+
+  if (cat) {
+    const family = CATALOG_FAMILIES.find((f) => f.cat === cat);
+    if (family) return { familyCat: family.cat, typeLabel: null, variantLabel: null };
+  }
+
+  if (sub && !cat) {
+    for (const family of CATALOG_FAMILIES) {
+      const nested = catalogFilterFromSearchParams({
+        cat: family.cat,
+        sub,
+        tipo,
+        instrumento,
+      });
+      if (nested.typeLabel || nested.variantLabel) return nested;
+    }
+  }
+
+  return EMPTY_CATALOG_FILTER;
+}
+
+/** Indica si un producto cumple la selección jerárquica del filtro. */
+export function productMatchesCatalogFilter(
+  product: {
+    category?: { name: string } | null;
+    subcategory?: { name: string } | null;
+    catalogVariant?: string | null;
+  },
+  filter: CatalogFilterSelection,
+): boolean {
+  if (!filter.familyCat) return true;
+
+  const cat = product.category?.name ?? "";
+  const sub = product.subcategory?.name ?? "";
+  const variant = (product.catalogVariant ?? "").toLowerCase();
+
+  if (cat !== filter.familyCat) return false;
+  if (!filter.typeLabel) return true;
+
+  const family = CATALOG_FAMILIES.find((f) => f.cat === filter.familyCat);
+  if (!family) return false;
+
+  const typeItem = family.items.find((i) => i.label === filter.typeLabel);
+  if (!typeItem) return false;
+
+  if (!filter.variantLabel) {
+    if (!typeItem.children?.length) {
+      const subName = getSubcategoryNameForMenuItem(typeItem);
+      const parsed = parseCatalogHref(typeItem.href);
+      if (parsed.tipo && !typeItem.sub && !parsed.sub) {
+        return variant === parsed.tipo.toLowerCase();
+      }
+      return sub.toLowerCase() === subName.toLowerCase();
+    }
+    return typeItem.children.some((child) => {
+      const r = resolveChildClassification(typeItem, child);
+      return sub.toLowerCase() === r.subcategoryName.toLowerCase();
+    });
+  }
+
+  const child = typeItem.children?.find((c) => c.label === filter.variantLabel);
+  if (!child) return false;
+
+  const r = resolveChildClassification(typeItem, child);
+  if (sub.toLowerCase() !== r.subcategoryName.toLowerCase()) return false;
+  if (r.catalogVariant) return variant === r.catalogVariant.toLowerCase();
+  return !variant;
+}
+
+/** Href de catálogo coherente con la selección del filtro (megamenú / sidebar). */
+export function catalogFilterToHref(filter: CatalogFilterSelection): string {
+  if (!filter.familyCat) return "/productos";
+
+  const family = CATALOG_FAMILIES.find((f) => f.cat === filter.familyCat);
+  if (!family || !filter.typeLabel) return catalogHref({ cat: filter.familyCat });
+
+  const typeItem = family.items.find((i) => i.label === filter.typeLabel);
+  if (!typeItem) return catalogHref({ cat: filter.familyCat });
+
+  if (!filter.variantLabel) {
+    if (typeItem.children?.length) {
+      return catalogHref({
+        cat: filter.familyCat,
+        tipo: typeFilterSlug(filter.typeLabel),
+      });
+    }
+    if (typeItem.href) {
+      const u = new URL(typeItem.href, "http://local");
+      return `${u.pathname}${u.search}`;
+    }
+    return catalogHref({ cat: filter.familyCat });
+  }
+
+  const child = typeItem.children?.find((c) => c.label === filter.variantLabel);
+  if (child?.href) {
+    const u = new URL(child.href, "http://local");
+    return `${u.pathname}${u.search}`;
+  }
+
+  return catalogHref({ cat: filter.familyCat });
 }

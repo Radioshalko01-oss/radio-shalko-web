@@ -1,10 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getOfficialCatalogTypeSubcategories,
-  isOfficialBrandName,
-  sortByOfficialBrandOrder,
-} from "@/lib/navigation/catalog-taxonomy";
+import { sortByOfficialBrandOrder } from "@/lib/navigation/catalog-taxonomy";
 import { resolveProductSelect } from "./product-select";
 import {
   mapProduct,
@@ -358,9 +354,6 @@ export async function getCategoriesTree(opts: {
 } = {}): Promise<CatalogCategoryTree[]> {
   const { activeOnly = true, includeSubcategoryIds = [] } = opts;
   const supabase = await createClient();
-  const officialSubNames = new Set(
-    getOfficialCatalogTypeSubcategories().map((s) => s.name.toLowerCase()),
-  );
 
   const [{ data: cats }, { data: subs }] = await Promise.all([
     supabase.from("categories").select("id, name, slug").order("sort_order"),
@@ -377,8 +370,7 @@ export async function getCategoriesTree(opts: {
     if (!s?.category_id) continue;
     const isIncluded = includeSubcategoryIds.includes(s.id);
     const isActive = (s as RawSubcategory & { is_active?: boolean }).is_active !== false;
-    const isOfficial = officialSubNames.has(s.name.toLowerCase());
-    if (activeOnly && !isIncluded && (!isActive || !isOfficial)) continue;
+    if (activeOnly && !isIncluded && !isActive) continue;
     const list = subsByCategory.get(s.category_id) ?? [];
     list.push(s);
     subsByCategory.set(s.category_id, list);
@@ -445,7 +437,6 @@ export async function getBrands(
   return sortByOfficialBrandOrder(
     (data as RawBrand[])
       .map(mapBrand)
-      .filter((b): b is CatalogBrand => b !== null)
-      .filter((b) => isOfficialBrandName(b.name)),
+      .filter((b): b is CatalogBrand => b !== null),
   );
 }
