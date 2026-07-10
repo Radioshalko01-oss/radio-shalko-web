@@ -1,23 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import {
   CATALOG_FAMILIES,
-  catalogMultiFilterFromSearchParams,
-  catalogMultiFilterToHref,
-  catalogTypeKey,
-  catalogVariantKey,
-  clearCatalogMultiFilterFamilyBranch,
-  clearCatalogMultiFilterTypeBranch,
-  cloneCatalogMultiFilter,
-  EMPTY_CATALOG_MULTI_FILTER,
-  normalizeCatalogMultiFilter,
-  productMatchesMultiCatalogFilter,
+  catalogFilterFromSearchParams,
+  catalogFilterToHref,
+  EMPTY_CATALOG_FILTER,
+  productMatchesCatalogFilter,
   type CatalogFamily,
+  type CatalogFilterSelection,
   type CatalogMenuItem,
-  type CatalogMultiFilterSelection,
 } from "@/lib/navigation/catalog-taxonomy";
 import { ProductCard } from "@/components/catalog/product-card";
 import { SitePageHero } from "@/components/site/site-page-hero";
@@ -55,60 +49,8 @@ function snapPrice(value: number) {
   return Math.min(PRICE_MAX, Math.max(PRICE_MIN, snapped));
 }
 
-type ActiveFilterChip = {
-  id: string;
-  label: string;
-  remove: () => void;
-};
-
-function buildFilterChips(
-  filter: CatalogMultiFilterSelection,
-  onUpdate: (next: CatalogMultiFilterSelection) => void,
-): ActiveFilterChip[] {
-  const chips: ActiveFilterChip[] = [];
-
-  for (const familyCat of filter.families) {
-    const meta = CATALOG_FAMILIES.find((f) => f.cat === familyCat);
-    chips.push({
-      id: `family:${familyCat}`,
-      label: meta?.title ?? familyCat,
-      remove: () => {
-        const next = cloneCatalogMultiFilter(filter);
-        next.families.delete(familyCat);
-        onUpdate(next);
-      },
-    });
-  }
-
-  for (const typeKey of filter.types) {
-    const sep = typeKey.indexOf("::");
-    const typeLabel = sep === -1 ? typeKey : typeKey.slice(sep + 2);
-    chips.push({
-      id: `type:${typeKey}`,
-      label: typeLabel,
-      remove: () => {
-        const next = cloneCatalogMultiFilter(filter);
-        next.types.delete(typeKey);
-        onUpdate(next);
-      },
-    });
-  }
-
-  for (const variantKey of filter.variants) {
-    const parts = variantKey.split("::");
-    const variantLabel = parts.length >= 3 ? parts.slice(2).join("::") : variantKey;
-    chips.push({
-      id: `variant:${variantKey}`,
-      label: variantLabel,
-      remove: () => {
-        const next = cloneCatalogMultiFilter(filter);
-        next.variants.delete(variantKey);
-        onUpdate(next);
-      },
-    });
-  }
-
-  return chips;
+function typeKey(familyCat: string, typeLabel: string) {
+  return `${familyCat}::${typeLabel}`;
 }
 
 function PriceRangeFields({
@@ -206,18 +148,14 @@ export function ProductosPage({
     q: searchParams.get("q") ?? undefined,
     tipo: searchParams.get("tipo") ?? undefined,
     instrumento: searchParams.get("instrumento") ?? undefined,
-    cats: searchParams.get("cats") ?? undefined,
-    types: searchParams.get("types") ?? undefined,
-    variants: searchParams.get("variants") ?? undefined,
   };
 
   const [size, setSize] = useState<"lg" | "md" | "list">("md");
   const [sort, setSort] = useState<SortKey>("default");
-  const [catalogMultiFilter, setCatalogMultiFilter] =
-    useState<CatalogMultiFilterSelection>(EMPTY_CATALOG_MULTI_FILTER);
-  /** Acordeón visual (independiente de filtros activos). */
-  const [accordionFamilies, setAccordionFamilies] = useState<Set<string>>(new Set());
-  const [accordionTypes, setAccordionTypes] = useState<Set<string>>(new Set());
+  const [catalogFilter, setCatalogFilter] = useState<CatalogFilterSelection>(EMPTY_CATALOG_FILTER);
+  /** Acordeón visual (independiente del filtro activo). */
+  const [accordionFamily, setAccordionFamily] = useState<string | null>(null);
+  const [accordionType, setAccordionType] = useState<string | null>(null);
   const [activeBrands, setActiveBrands] = useState<Set<string>>(new Set());
   const [price, setPrice] = useState<[number, number]>([PRICE_MIN, PRICE_MAX]);
   const [query, setQuery] = useState("");
@@ -230,70 +168,42 @@ export function ProductosPage({
     [products],
   );
 
-  const applyCatalogMultiFilter = useCallback(
-    (next: CatalogMultiFilterSelection) => {
-      const url = new URL(catalogMultiFilterToHref(next), "http://local");
-      const brand = searchParams.get("brand");
-      const q = searchParams.get("q");
-      if (brand) url.searchParams.set("brand", brand);
-      if (q) url.searchParams.set("q", q);
-      router.replace(`${url.pathname}${url.search}`, { scroll: false });
-    },
-    [router, searchParams],
-  );
-
-  const updateCatalogMultiFilter = useCallback(
-    (next: CatalogMultiFilterSelection) => {
-      const normalized = normalizeCatalogMultiFilter(next);
-      setCatalogMultiFilter(normalized);
-      applyCatalogMultiFilter(normalized);
-    },
-    [applyCatalogMultiFilter],
-  );
+  const applyCatalogFilter = (next: CatalogFilterSelection) => {
+    const url = new URL(catalogFilterToHref(next), "http://local");
+    const brand = searchParams.get("brand");
+    const q = searchParams.get("q");
+    if (brand) url.searchParams.set("brand", brand);
+    if (q) url.searchParams.set("q", q);
+    router.replace(`${url.pathname}${url.search}`, { scroll: false });
+  };
 
   useEffect(() => {
-    const fromUrl = catalogMultiFilterFromSearchParams(search);
-    setCatalogMultiFilter(fromUrl);
+    const fromUrl = catalogFilterFromSearchParams({
+      cat: search.cat,
+      sub: search.sub,
+      tipo: search.tipo,
+      instrumento: search.instrumento,
+    });
+    setCatalogFilter(fromUrl);
 
-    const openFamilies = new Set<string>();
-    const openTypes = new Set<string>();
-
-    for (const familyCat of fromUrl.families) openFamilies.add(familyCat);
-    for (const typeKey of fromUrl.types) {
-      const sep = typeKey.indexOf("::");
-      if (sep !== -1) {
-        openFamilies.add(typeKey.slice(0, sep));
-        openTypes.add(typeKey);
-      }
-    }
-    for (const variantKey of fromUrl.variants) {
-      const parts = variantKey.split("::");
-      if (parts.length >= 2) {
-        openFamilies.add(parts[0]);
-        openTypes.add(`${parts[0]}::${parts[1]}`);
-      }
+    if (!fromUrl.familyCat) {
+      setAccordionFamily(null);
+      setAccordionType(null);
+    } else {
+      setAccordionFamily(fromUrl.familyCat);
+      setAccordionType(
+        fromUrl.typeLabel ? typeKey(fromUrl.familyCat, fromUrl.typeLabel) : null,
+      );
     }
 
-    setAccordionFamilies(openFamilies);
-    setAccordionTypes(openTypes);
     setActiveBrands(search.brand ? new Set([search.brand]) : new Set());
     setQuery(search.q ?? "");
-  }, [
-    search.cat,
-    search.sub,
-    search.brand,
-    search.q,
-    search.tipo,
-    search.instrumento,
-    search.cats,
-    search.types,
-    search.variants,
-  ]);
+  }, [search.cat, search.sub, search.brand, search.q, search.tipo, search.instrumento]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = products.filter((p) => {
-      if (!productMatchesMultiCatalogFilter(p, catalogMultiFilter)) return false;
+      if (!productMatchesCatalogFilter(p, catalogFilter)) return false;
       const brand = p.brand?.name ?? "";
       if (activeBrands.size && !activeBrands.has(brand)) return false;
       if (p.price < price[0] || p.price > price[1]) return false;
@@ -321,7 +231,7 @@ export function ProductosPage({
       }
     }
     return list;
-  }, [products, catalogMultiFilter, activeBrands, price, sort, query]);
+  }, [products, catalogFilter, activeBrands, price, sort, query]);
 
   const toggle = <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => {
     const next = new Set(set);
@@ -329,88 +239,93 @@ export function ProductosPage({
     setter(next);
   };
 
-  const toggleAccordionFamily = (familyCat: string) => {
-    setAccordionFamilies((prev) => {
-      const next = new Set(prev);
-      next.has(familyCat) ? next.delete(familyCat) : next.add(familyCat);
-      return next;
-    });
-  };
+  const selectFamily = (family: CatalogFamily) => {
+    const familyOnlyActive =
+      catalogFilter.familyCat === family.cat &&
+      !catalogFilter.typeLabel &&
+      !catalogFilter.variantLabel;
 
-  const toggleAccordionType = (typeKeyValue: string) => {
-    setAccordionTypes((prev) => {
-      const next = new Set(prev);
-      next.has(typeKeyValue) ? next.delete(typeKeyValue) : next.add(typeKeyValue);
-      return next;
-    });
-  };
-
-  const toggleFamilyFilter = (family: CatalogFamily) => {
-    const next = cloneCatalogMultiFilter(catalogMultiFilter);
-    if (next.families.has(family.cat)) {
-      next.families.delete(family.cat);
-    } else {
-      next.families.add(family.cat);
-      clearCatalogMultiFilterFamilyBranch(next, family.cat);
-      setAccordionFamilies((prev) => new Set(prev).add(family.cat));
+    if (familyOnlyActive) {
+      setAccordionFamily(accordionFamily === family.cat ? null : family.cat);
+      setAccordionType(null);
+      return;
     }
-    updateCatalogMultiFilter(next);
+
+    setAccordionFamily(family.cat);
+    setAccordionType(null);
+    applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
   };
 
-  const toggleTypeFilter = (family: CatalogFamily, item: CatalogMenuItem) => {
-    const tk = catalogTypeKey(family.cat, item.label);
-    const next = cloneCatalogMultiFilter(catalogMultiFilter);
-    if (next.types.has(tk)) {
-      next.types.delete(tk);
-    } else {
-      next.types.add(tk);
-      next.families.delete(family.cat);
-      clearCatalogMultiFilterTypeBranch(next, tk);
-      setAccordionFamilies((prev) => new Set(prev).add(family.cat));
-      if (item.children?.length) {
-        setAccordionTypes((prev) => new Set(prev).add(tk));
+  const selectType = (family: CatalogFamily, item: CatalogMenuItem) => {
+    const tk = typeKey(family.cat, item.label);
+    const hasChildren = Boolean(item.children?.length);
+    const typeOnlyActive =
+      catalogFilter.familyCat === family.cat &&
+      catalogFilter.typeLabel === item.label &&
+      !catalogFilter.variantLabel;
+
+    if (typeOnlyActive) {
+      if (hasChildren) {
+        setAccordionType(accordionType === tk ? null : tk);
+      } else {
+        setAccordionType(null);
+        applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
       }
+      return;
     }
-    updateCatalogMultiFilter(next);
+
+    setAccordionFamily(family.cat);
+    setAccordionType(hasChildren ? tk : null);
+    applyCatalogFilter({
+      familyCat: family.cat,
+      typeLabel: item.label,
+      variantLabel: null,
+    });
   };
 
-  const toggleVariantFilter = (
+  const selectVariant = (
     family: CatalogFamily,
     item: CatalogMenuItem,
     child: CatalogMenuItem,
   ) => {
-    const vk = catalogVariantKey(family.cat, item.label, child.label);
-    const tk = catalogTypeKey(family.cat, item.label);
-    const next = cloneCatalogMultiFilter(catalogMultiFilter);
-    if (next.variants.has(vk)) {
-      next.variants.delete(vk);
-    } else {
-      next.variants.add(vk);
-      next.families.delete(family.cat);
-      next.types.delete(tk);
-      setAccordionFamilies((prev) => new Set(prev).add(family.cat));
-      setAccordionTypes((prev) => new Set(prev).add(tk));
+    const isActive =
+      catalogFilter.familyCat === family.cat &&
+      catalogFilter.typeLabel === item.label &&
+      catalogFilter.variantLabel === child.label;
+    if (isActive) {
+      setAccordionType(typeKey(family.cat, item.label));
+      applyCatalogFilter({
+        familyCat: family.cat,
+        typeLabel: item.label,
+        variantLabel: null,
+      });
+      return;
     }
-    updateCatalogMultiFilter(next);
+    setAccordionFamily(family.cat);
+    setAccordionType(typeKey(family.cat, item.label));
+    applyCatalogFilter({
+      familyCat: family.cat,
+      typeLabel: item.label,
+      variantLabel: child.label,
+    });
   };
 
   const clearFilters = () => {
-    updateCatalogMultiFilter(EMPTY_CATALOG_MULTI_FILTER);
-    setAccordionFamilies(new Set());
-    setAccordionTypes(new Set());
+    applyCatalogFilter(EMPTY_CATALOG_FILTER);
+    setAccordionFamily(null);
+    setAccordionType(null);
     setActiveBrands(new Set());
     setPrice([PRICE_MIN, PRICE_MAX]);
     setQuery("");
     router.replace("/productos", { scroll: false });
   };
 
-  const catalogFilterChips = useMemo(
-    () => buildFilterChips(catalogMultiFilter, updateCatalogMultiFilter),
-    [catalogMultiFilter, updateCatalogMultiFilter],
-  );
+  const activeFamilyMeta = CATALOG_FAMILIES.find((f) => f.cat === catalogFilter.familyCat);
 
   const activeFilterChips: string[] = [
-    ...catalogFilterChips.map((c) => c.label),
+    ...(activeFamilyMeta ? [activeFamilyMeta.title] : []),
+    ...(catalogFilter.typeLabel ? [catalogFilter.typeLabel] : []),
+    ...(catalogFilter.variantLabel ? [catalogFilter.variantLabel] : []),
     ...Array.from(activeBrands),
     ...(query ? [`"${query}"`] : []),
   ];
@@ -418,9 +333,8 @@ export function ProductosPage({
   const breadcrumbs = useMemo(() => {
     const brand = activeBrands.size === 1 ? Array.from(activeBrands)[0] : null;
     if (brand) return productosCatalogBreadcrumbs({ brand });
-    const firstFamily = catalogMultiFilter.families.values().next().value as string | undefined;
-    return productosCatalogBreadcrumbs({ category: firstFamily ?? null });
-  }, [activeBrands, catalogMultiFilter.families]);
+    return productosCatalogBreadcrumbs({ category: catalogFilter.familyCat });
+  }, [activeBrands, catalogFilter.familyCat]);
 
   const gridClass =
     size === "lg"
@@ -431,21 +345,18 @@ export function ProductosPage({
 
   const filtersPanel = (
     <FiltersPanel
-      accordionFamilies={accordionFamilies}
-      accordionTypes={accordionTypes}
-      catalogMultiFilter={catalogMultiFilter}
-      catalogFilterChips={catalogFilterChips}
+      accordionFamily={accordionFamily}
+      accordionType={accordionType}
+      catalogFilter={catalogFilter}
       activeBrands={activeBrands}
       setActiveBrands={setActiveBrands}
       price={price}
       setPrice={setPrice}
       allBrands={allBrands}
       toggle={toggle}
-      toggleAccordionFamily={toggleAccordionFamily}
-      toggleAccordionType={toggleAccordionType}
-      toggleFamilyFilter={toggleFamilyFilter}
-      toggleTypeFilter={toggleTypeFilter}
-      toggleVariantFilter={toggleVariantFilter}
+      selectFamily={selectFamily}
+      selectType={selectType}
+      selectVariant={selectVariant}
       clearFilters={clearFilters}
     />
   );
@@ -588,40 +499,34 @@ export function ProductosPage({
 }
 
 type FiltersPanelProps = {
-  accordionFamilies: Set<string>;
-  accordionTypes: Set<string>;
-  catalogMultiFilter: CatalogMultiFilterSelection;
-  catalogFilterChips: ActiveFilterChip[];
+  accordionFamily: string | null;
+  accordionType: string | null;
+  catalogFilter: CatalogFilterSelection;
   activeBrands: Set<string>;
   setActiveBrands: (s: Set<string>) => void;
   price: [number, number];
   setPrice: (p: [number, number]) => void;
   allBrands: string[];
   toggle: <T,>(set: Set<T>, value: T, setter: (s: Set<T>) => void) => void;
-  toggleAccordionFamily: (familyCat: string) => void;
-  toggleAccordionType: (typeKeyValue: string) => void;
-  toggleFamilyFilter: (family: CatalogFamily) => void;
-  toggleTypeFilter: (family: CatalogFamily, item: CatalogMenuItem) => void;
-  toggleVariantFilter: (family: CatalogFamily, item: CatalogMenuItem, child: CatalogMenuItem) => void;
+  selectFamily: (family: CatalogFamily) => void;
+  selectType: (family: CatalogFamily, item: CatalogMenuItem) => void;
+  selectVariant: (family: CatalogFamily, item: CatalogMenuItem, child: CatalogMenuItem) => void;
   clearFilters: () => void;
 };
 
 function FiltersPanel({
-  accordionFamilies,
-  accordionTypes,
-  catalogMultiFilter,
-  catalogFilterChips,
+  accordionFamily,
+  accordionType,
+  catalogFilter,
   activeBrands,
   setActiveBrands,
   price,
   setPrice,
   allBrands,
   toggle,
-  toggleAccordionFamily,
-  toggleAccordionType,
-  toggleFamilyFilter,
-  toggleTypeFilter,
-  toggleVariantFilter,
+  selectFamily,
+  selectType,
+  selectVariant,
   clearFilters,
 }: FiltersPanelProps) {
   return (
@@ -631,105 +536,75 @@ function FiltersPanel({
         <button onClick={clearFilters} className="text-xs text-copper hover:underline">Limpiar</button>
       </div>
 
-      {catalogFilterChips.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {catalogFilterChips.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={chip.remove}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-foreground/80 transition-colors hover:border-copper/50 hover:text-foreground"
-            >
-              {chip.label}
-              <span className="text-muted-foreground" aria-hidden="true">
-                ×
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="mt-5">
         <p className="font-display text-base font-medium">Tipos de productos</p>
         <ul className="mt-3 space-y-1.5">
           {CATALOG_FAMILIES.map((family) => {
-            const familyActive = catalogMultiFilter.families.has(family.cat);
-            const familyOpen = accordionFamilies.has(family.cat);
+            const familyActive = catalogFilter.familyCat === family.cat;
+            const familyOpen = accordionFamily === family.cat;
             return (
               <li key={family.cat}>
-                <div className="flex items-center gap-1 rounded-md px-1 py-0.5">
-                  <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1 text-sm text-foreground/80 hover:text-foreground">
-                    <Checkbox
-                      checked={familyActive}
-                      onCheckedChange={() => toggleFamilyFilter(family)}
-                    />
-                    <span className={familyActive ? "font-semibold text-foreground" : ""}>
-                      {family.title}
-                    </span>
-                  </label>
-                  <button
-                    type="button"
-                    aria-label={`${familyOpen ? "Cerrar" : "Abrir"} ${family.title}`}
-                    onClick={() => toggleAccordionFamily(family.cat)}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-                  >
-                    <Plus
-                      className={`h-3.5 w-3.5 transition-transform ${familyOpen ? "rotate-45" : ""}`}
-                    />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => selectFamily(family)}
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                    familyActive && !catalogFilter.typeLabel
+                      ? "bg-foreground/5 font-semibold text-foreground"
+                      : familyActive
+                        ? "font-semibold text-foreground"
+                        : "text-foreground/80 hover:bg-foreground/5"
+                  }`}
+                >
+                  <span>{family.title}</span>
+                  <Plus
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform ${familyOpen ? "rotate-45" : ""}`}
+                  />
+                </button>
 
                 {familyOpen && (
                   <ul className="mt-1 space-y-1 border-l border-border pl-3">
                     {family.items.map((item) => {
-                      const tk = catalogTypeKey(family.cat, item.label);
-                      const typeActive = catalogMultiFilter.types.has(tk);
-                      const typeOpen = accordionTypes.has(tk);
+                      const tk = typeKey(family.cat, item.label);
+                      const typeActive =
+                        catalogFilter.familyCat === family.cat &&
+                        catalogFilter.typeLabel === item.label;
+                      const typeOpen = accordionType === tk;
                       const hasChildren = Boolean(item.children?.length);
 
                       return (
                         <li key={item.label}>
-                          <div className="flex items-center gap-1 rounded-md px-1 py-0.5">
-                            <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1 text-[13px] text-muted-foreground hover:text-foreground">
-                              <Checkbox
-                                checked={typeActive}
-                                onCheckedChange={() => toggleTypeFilter(family, item)}
-                              />
-                              <span className={typeActive ? "font-semibold text-foreground" : ""}>
-                                {item.label}
-                              </span>
-                            </label>
+                          <button
+                            type="button"
+                            onClick={() => selectType(family, item)}
+                            className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-[13px] transition-colors ${
+                              typeActive && !catalogFilter.variantLabel
+                                ? "font-semibold text-foreground"
+                                : typeActive
+                                  ? "font-medium text-foreground"
+                                  : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <span>{item.label}</span>
                             {hasChildren && (
-                              <button
-                                type="button"
-                                aria-label={`${typeOpen ? "Cerrar" : "Abrir"} ${item.label}`}
-                                onClick={() => toggleAccordionType(tk)}
-                                className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-                              >
-                                <Plus
-                                  className={`h-3 w-3 transition-transform ${typeOpen ? "rotate-45" : ""}`}
-                                />
-                              </button>
+                              <Plus
+                                className={`h-3 w-3 shrink-0 transition-transform ${typeOpen ? "rotate-45" : ""}`}
+                              />
                             )}
-                          </div>
+                          </button>
 
                           {hasChildren && typeOpen && (
                             <ul className="mt-1 space-y-0.5 border-l border-border/60 pl-3">
                               {item.children!.map((child) => {
-                                const vk = catalogVariantKey(family.cat, item.label, child.label);
-                                const variantActive = catalogMultiFilter.variants.has(vk);
+                                const variantActive =
+                                  typeActive && catalogFilter.variantLabel === child.label;
                                 return (
                                   <li key={child.label}>
                                     <label className="flex cursor-pointer items-center gap-2 py-1 text-[12px] text-muted-foreground hover:text-foreground">
                                       <Checkbox
                                         checked={variantActive}
-                                        onCheckedChange={() =>
-                                          toggleVariantFilter(family, item, child)
-                                        }
+                                        onCheckedChange={() => selectVariant(family, item, child)}
                                       />
-                                      <span className={variantActive ? "font-medium text-foreground" : ""}>
-                                        {child.label}
-                                      </span>
+                                      {child.label}
                                     </label>
                                   </li>
                                 );
