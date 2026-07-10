@@ -519,7 +519,7 @@ export function SiteHeader({
               className="site-header__mobile-logo"
             />
           </div>
-          <div className="relative hidden h-full lg:block">
+          <div className="relative hidden h-full lg:block lg:self-stretch">
             {heroBlend && (
               <div className="site-header__logo-light flex h-full items-center">
                 <SiteLogo
@@ -532,7 +532,7 @@ export function SiteHeader({
             )}
             <div
               className={cn(
-                "flex items-center",
+                "flex h-full items-center",
                 heroBlend && "site-header__logo-dark absolute inset-0",
               )}
             >
