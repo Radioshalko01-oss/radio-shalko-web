@@ -718,26 +718,91 @@ export const EMPTY_CATALOG_FILTER: CatalogFilterSelection = {
   variantLabel: null,
 };
 
-function childMatchesSearchParams(
+/** Indica si los query params corresponden a una variante concreta del menú. */
+function childMatchesFilterParams(
   parentItem: CatalogMenuItem,
   child: CatalogMenuItem,
-  sub?: string,
-  variantSlug?: string | null,
+  params: { sub?: string; variantSlug: string | null },
 ): boolean {
+  const { sub, variantSlug } = params;
+  const childParsed = parseCatalogHref(child.href);
   const resolved = resolveChildClassification(parentItem, child);
-  const subOk = sub
-    ? resolved.subcategoryName.toLowerCase() === sub.toLowerCase()
-    : true;
 
-  if (!variantSlug) {
-    return false;
+  if (variantSlug) {
+    if (resolved.catalogVariant?.toLowerCase() !== variantSlug) return false;
+    if (sub) {
+      return resolved.subcategoryName.toLowerCase() === sub.toLowerCase();
+    }
+    const childTipo = childParsed.tipo?.toLowerCase() ?? null;
+    const childInstrumento = childParsed.instrumento?.toLowerCase() ?? null;
+    return (
+      variantSlug === childTipo ||
+      variantSlug === childInstrumento ||
+      variantSlug === resolved.catalogVariant?.toLowerCase()
+    );
   }
 
-  return subOk && resolved.catalogVariant?.toLowerCase() === variantSlug;
+  if (!sub) return false;
+
+  const subLower = sub.toLowerCase();
+  const childSub = (child.sub ?? childParsed.sub)?.toLowerCase() ?? null;
+  if (!childSub || childSub !== subLower) return false;
+
+  // Variante identificada solo por sub (p. ej. Acústicas, Eléctricas).
+  return !childParsed.tipo && !childParsed.instrumento;
 }
 
 function typeFilterSlug(label: string): string {
   return slugify(label);
+}
+
+function resolveFilterInFamily(
+  family: CatalogFamily,
+  params: { sub?: string; tipo?: string; instrumento?: string },
+): CatalogFilterSelection | null {
+  const { sub, tipo, instrumento } = params;
+  const variantSlug = (instrumento ?? tipo)?.toLowerCase() ?? null;
+  const tipoGroupOnly = tipo && !sub && !instrumento;
+
+  for (const item of family.items) {
+    const itemSub = getSubcategoryNameForMenuItem(item);
+    const parsed = parseCatalogHref(item.href);
+    const groupSlug = typeFilterSlug(item.label);
+
+    if (tipoGroupOnly && tipo.toLowerCase() === groupSlug) {
+      return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+    }
+
+    if (item.children?.length) {
+      for (const child of item.children) {
+        if (childMatchesFilterParams(item, child, { sub, variantSlug })) {
+          return {
+            familyCat: family.cat,
+            typeLabel: item.label,
+            variantLabel: child.label,
+          };
+        }
+      }
+
+      if (sub && !variantSlug && itemSub.toLowerCase() === sub.toLowerCase()) {
+        const claimedByChild = item.children.some((child) =>
+          childMatchesFilterParams(item, child, { sub, variantSlug: null }),
+        );
+        if (!claimedByChild) {
+          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+        }
+      }
+    } else {
+      if (sub && itemSub.toLowerCase() === sub.toLowerCase() && !variantSlug) {
+        return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+      }
+      if (variantSlug && parsed.tipo?.toLowerCase() === variantSlug) {
+        return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
+      }
+    }
+  }
+
+  return null;
 }
 
 /** Deriva la selección del filtro desde query params (`cat`, `sub`, `tipo`, `instrumento`). */
@@ -748,58 +813,21 @@ export function catalogFilterFromSearchParams(params: {
   instrumento?: string;
 }): CatalogFilterSelection {
   const { cat, sub, tipo, instrumento } = params;
-  const variantSlug = (instrumento ?? tipo)?.toLowerCase() ?? null;
-
-  for (const family of CATALOG_FAMILIES) {
-    if (cat && family.cat !== cat) continue;
-
-    for (const item of family.items) {
-      const itemSub = getSubcategoryNameForMenuItem(item);
-      const parsed = parseCatalogHref(item.href);
-      const groupSlug = typeFilterSlug(item.label);
-
-      if (tipo && !sub && !instrumento && tipo.toLowerCase() === groupSlug) {
-        return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
-      }
-
-      if (item.children?.length) {
-        for (const child of item.children) {
-          if (childMatchesSearchParams(item, child, sub, variantSlug)) {
-            return {
-              familyCat: family.cat,
-              typeLabel: item.label,
-              variantLabel: child.label,
-            };
-          }
-        }
-        if (sub && !variantSlug && itemSub.toLowerCase() === sub.toLowerCase()) {
-          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
-        }
-      } else {
-        if (sub && itemSub.toLowerCase() === sub.toLowerCase() && !variantSlug) {
-          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
-        }
-        if (variantSlug && parsed.tipo?.toLowerCase() === variantSlug) {
-          return { familyCat: family.cat, typeLabel: item.label, variantLabel: null };
-        }
-      }
-    }
-  }
 
   if (cat) {
     const family = CATALOG_FAMILIES.find((f) => f.cat === cat);
-    if (family) return { familyCat: family.cat, typeLabel: null, variantLabel: null };
+    if (!family) return EMPTY_CATALOG_FILTER;
+
+    const resolved = resolveFilterInFamily(family, { sub, tipo, instrumento });
+    if (resolved) return resolved;
+
+    return { familyCat: family.cat, typeLabel: null, variantLabel: null };
   }
 
-  if (sub && !cat) {
+  if (sub || tipo || instrumento) {
     for (const family of CATALOG_FAMILIES) {
-      const nested = catalogFilterFromSearchParams({
-        cat: family.cat,
-        sub,
-        tipo,
-        instrumento,
-      });
-      if (nested.typeLabel || nested.variantLabel) return nested;
+      const resolved = resolveFilterInFamily(family, { sub, tipo, instrumento });
+      if (resolved?.typeLabel || resolved?.variantLabel) return resolved;
     }
   }
 
@@ -851,7 +879,8 @@ export function productMatchesCatalogFilter(
   const r = resolveChildClassification(typeItem, child);
   if (sub.toLowerCase() !== r.subcategoryName.toLowerCase()) return false;
   if (r.catalogVariant) return variant === r.catalogVariant.toLowerCase();
-  return !variant;
+  // Variante sin slug (p. ej. Acústicas): toda la subcategoría.
+  return true;
 }
 
 /** Href de catálogo coherente con la selección del filtro (megamenú / sidebar). */

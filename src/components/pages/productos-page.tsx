@@ -253,7 +253,11 @@ export function ProductosPage({
 
     setAccordionFamily(family.cat);
     setAccordionType(null);
-    applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
+    applyCatalogFilter({
+      familyCat: family.cat,
+      typeLabel: null,
+      variantLabel: null,
+    });
   };
 
   const selectType = (family: CatalogFamily, item: CatalogMenuItem) => {
@@ -264,13 +268,9 @@ export function ProductosPage({
       catalogFilter.typeLabel === item.label &&
       !catalogFilter.variantLabel;
 
-    if (typeOnlyActive) {
-      if (hasChildren) {
-        setAccordionType(accordionType === tk ? null : tk);
-      } else {
-        setAccordionType(null);
-        applyCatalogFilter({ familyCat: family.cat, typeLabel: null, variantLabel: null });
-      }
+    if (typeOnlyActive && hasChildren) {
+      setAccordionFamily(family.cat);
+      setAccordionType(accordionType === tk ? null : tk);
       return;
     }
 
@@ -288,12 +288,16 @@ export function ProductosPage({
     item: CatalogMenuItem,
     child: CatalogMenuItem,
   ) => {
-    const isActive =
+    const tk = typeKey(family.cat, item.label);
+    const variantActive =
       catalogFilter.familyCat === family.cat &&
       catalogFilter.typeLabel === item.label &&
       catalogFilter.variantLabel === child.label;
-    if (isActive) {
-      setAccordionType(typeKey(family.cat, item.label));
+
+    setAccordionFamily(family.cat);
+    setAccordionType(tk);
+
+    if (variantActive) {
       applyCatalogFilter({
         familyCat: family.cat,
         typeLabel: item.label,
@@ -301,8 +305,7 @@ export function ProductosPage({
       });
       return;
     }
-    setAccordionFamily(family.cat);
-    setAccordionType(typeKey(family.cat, item.label));
+
     applyCatalogFilter({
       familyCat: family.cat,
       typeLabel: item.label,
