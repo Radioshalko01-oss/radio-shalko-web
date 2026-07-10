@@ -233,9 +233,9 @@ function CompareModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="compare-modal-title"
-        className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl min-[600px]:w-[calc(100vw-2rem)] sm:rounded-2xl"
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 md:px-6">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4 md:px-6">
           <h2 id="compare-modal-title" className="text-lg font-semibold tracking-tight">
             Comparación
           </h2>
@@ -248,8 +248,8 @@ function CompareModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-5 py-5 md:px-6">
-          <div className="grid gap-5 md:grid-cols-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 min-[600px]:px-6">
+          <div className="grid grid-cols-1 gap-5 min-[600px]:grid-cols-2">
             {ordered.map((product) => (
               <CompareProductColumn key={product.id} product={product} />
             ))}
@@ -266,13 +266,13 @@ function CompareProductColumn({ product }: { product: CatalogProduct }) {
   const image = product.images[0]?.url;
 
   return (
-    <article className="rounded-xl border border-border/70 bg-white p-4 md:p-5">
-      <div className="mx-auto flex w-full items-center justify-center py-2 md:py-4">
+    <article className="rounded-xl border border-border/70 bg-white p-4 min-[600px]:p-5">
+      <div className="mx-auto flex w-full items-center justify-center py-2 min-[600px]:py-3 md:py-4">
         {image ? (
           <img
             src={image}
             alt={product.name}
-            className="max-h-[200px] w-full object-contain object-center md:max-h-[340px] lg:max-h-[400px]"
+            className="max-h-[200px] w-full object-contain object-center min-[600px]:max-h-[240px] md:max-h-[340px] lg:max-h-[400px]"
           />
         ) : null}
       </div>
